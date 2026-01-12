@@ -1,11 +1,78 @@
 const pool = require('../config/database');
 
-// Get all master data
+// Table configuration to map type to database table, columns, and ID field
+const tableConfig = {
+  eselon1: {
+    tableName: 'master_eselon1',
+    idField: 'eselon1_id',
+    columns: ['nama_eselon1', 'singkatan', 'status_aktif'],
+    displayColumns: ['Nama Eselon 1', 'Singkatan', 'Status']
+  },
+  eselon2: {
+    tableName: 'master_eselon2',
+    idField: 'eselon2_id',
+    columns: ['eselon1_id', 'nama_eselon2', 'status_aktif'],
+    displayColumns: ['Eselon 1', 'Nama Eselon 2', 'Status']
+  },
+  frekuensi_pemakaian: {
+    tableName: 'frekuensi_pemakaian',
+    idField: 'frekuensi_pemakaian',
+    columns: ['nama_frekuensi', 'status_aktif'],
+    displayColumns: ['Nama Frekuensi', 'Status']
+  },
+  status_aplikasi: {
+    tableName: 'status_aplikasi',
+    idField: 'status_aplikasi_id',
+    columns: ['nama_status'],
+    displayColumns: ['Nama Status']
+  },
+  environment: {
+    tableName: 'environment',
+    idField: 'environment_id',
+    columns: ['jenis_environment', 'status_aktif'],
+    displayColumns: ['Jenis Environment', 'Status']
+  },
+  cara_akses: {
+    tableName: 'cara_akses',
+    idField: 'cara_akses_id',
+    columns: ['nama_cara_akses', 'status_aktif'],
+    displayColumns: ['Nama Cara Akses', 'Status']
+  },
+  pdn: {
+    tableName: 'PDN',
+    idField: 'pdn_id',
+    columns: ['kode_pdn', 'status_aktif'],
+    displayColumns: ['Kode PDN', 'Status']
+  },
+  format_laporan: {
+    tableName: 'format_laporan',
+    idField: 'format_laporan_id',
+    columns: ['nama_aplikasi', 'nama_format', 'status_aktif'],
+    displayColumns: ['Nama Aplikasi', 'Nama Format', 'Status']
+  }
+};
+
+// Get table config by type
+const getConfig = (type) => {
+  const config = tableConfig[type];
+  if (!config) {
+    throw new Error(`Tipe master data "${type}" tidak valid. Tipe yang tersedia: ${Object.keys(tableConfig).join(', ')}`);
+  }
+  return config;
+};
+
+// Get all master data by type
 exports.getAllMasterData = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM master_data ORDER BY created_at DESC');
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+
+    const [rows] = await pool.query(`SELECT * FROM ${config.tableName} ORDER BY ${config.idField} DESC`);
     res.json({
       success: true,
+      type: type,
+      columns: config.displayColumns,
+      idField: config.idField,
       data: rows
     });
   } catch (error) {
@@ -20,7 +87,10 @@ exports.getAllMasterData = async (req, res) => {
 // Get master data by ID
 exports.getMasterDataById = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM master_data WHERE id = ?', [req.params.id]);
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+
+    const [rows] = await pool.query(`SELECT * FROM ${config.tableName} WHERE ${config.idField} = ?`, [req.params.id]);
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -43,21 +113,61 @@ exports.getMasterDataById = async (req, res) => {
 // Create master data
 exports.createMasterData = async (req, res) => {
   try {
-    const { kategori, nama, deskripsi, status } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO master_data (kategori, nama, deskripsi, status) VALUES (?, ?, ?, ?)',
-      [kategori, nama, deskripsi, status || 'Aktif']
-    );
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+
+    console.log('=== CREATE MASTER DATA ===');
+    console.log('Type:', type);
+    console.log('Body:', req.body);
+
+    // Build dynamic insert query based on provided fields
+    const fields = [];
+    const values = [];
+    const placeholders = [];
+
+    for (const col of config.columns) {
+      if (req.body[col] !== undefined) {
+        fields.push(col);
+        values.push(req.body[col]);
+        placeholders.push('?');
+      }
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak ada field yang diberikan untuk insert'
+      });
+    }
+
+    const sql = `INSERT INTO ${config.tableName} (${fields.join(', ')}) VALUES (${placeholders.join(', ')})`;
+    console.log('SQL:', sql);
+    console.log('Values:', values);
+
+    const [result] = await pool.query(sql, values);
+
     res.status(201).json({
       success: true,
       message: 'Master data berhasil ditambahkan',
-      data: { id: result.insertId, kategori, nama, deskripsi, status }
+      data: { id: result.insertId, ...req.body }
     });
   } catch (error) {
+    console.error('=== ERROR CREATE MASTER DATA ===');
+    console.error('Error:', error);
+
+    // Provide more detailed error message
+    let errorMessage = 'Error menambahkan master data';
+    if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
+      errorMessage = 'Foreign key error: eselon1_id yang dipilih tidak valid atau tidak ditemukan di tabel master_eselon1';
+    } else if (error.code === 'ER_DUP_ENTRY') {
+      errorMessage = 'Data sudah ada (duplikat)';
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Error menambahkan master data',
-      error: error.message
+      message: errorMessage,
+      error: error.message,
+      sqlCode: error.code
     });
   }
 };
@@ -65,11 +175,31 @@ exports.createMasterData = async (req, res) => {
 // Update master data
 exports.updateMasterData = async (req, res) => {
   try {
-    const { kategori, nama, deskripsi, status } = req.body;
-    const [result] = await pool.query(
-      'UPDATE master_data SET kategori = ?, nama = ?, deskripsi = ?, status = ? WHERE id = ?',
-      [kategori, nama, deskripsi, status, req.params.id]
-    );
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+
+    // Build dynamic update query
+    const updates = [];
+    const values = [];
+
+    for (const col of config.columns) {
+      if (req.body[col] !== undefined) {
+        updates.push(`${col} = ?`);
+        values.push(req.body[col]);
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak ada field yang diberikan untuk update'
+      });
+    }
+
+    values.push(req.params.id);
+    const sql = `UPDATE ${config.tableName} SET ${updates.join(', ')} WHERE ${config.idField} = ?`;
+    const [result] = await pool.query(sql, values);
+
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
@@ -89,10 +219,50 @@ exports.updateMasterData = async (req, res) => {
   }
 };
 
+// Toggle status (Aktifkan/Nonaktifkan)
+exports.toggleStatus = async (req, res) => {
+  try {
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+    const { status_aktif } = req.body;
+
+    // Check if table has status_aktif column
+    if (!config.columns.includes('status_aktif')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tipe master data ini tidak mendukung toggle status'
+      });
+    }
+
+    const sql = `UPDATE ${config.tableName} SET status_aktif = ? WHERE ${config.idField} = ?`;
+    const [result] = await pool.query(sql, [status_aktif, req.params.id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Master data tidak ditemukan'
+      });
+    }
+    res.json({
+      success: true,
+      message: `Status berhasil diubah menjadi ${status_aktif ? 'Aktif' : 'Nonaktif'}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error mengubah status',
+      error: error.message
+    });
+  }
+};
+
 // Delete master data
 exports.deleteMasterData = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM master_data WHERE id = ?', [req.params.id]);
+    const type = req.query.type || 'eselon1';
+    const config = getConfig(type);
+
+    const [result] = await pool.query(`DELETE FROM ${config.tableName} WHERE ${config.idField} = ?`, [req.params.id]);
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
@@ -107,6 +277,28 @@ exports.deleteMasterData = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error menghapus master data',
+      error: error.message
+    });
+  }
+};
+
+// Get available types and their metadata
+exports.getTypes = async (req, res) => {
+  try {
+    const types = Object.keys(tableConfig).map(key => ({
+      value: key,
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      columns: tableConfig[key].columns,
+      displayColumns: tableConfig[key].displayColumns
+    }));
+    res.json({
+      success: true,
+      data: types
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error mengambil tipe master data',
       error: error.message
     });
   }
