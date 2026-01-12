@@ -23,8 +23,8 @@ const tableConfig = {
   status_aplikasi: {
     tableName: 'status_aplikasi',
     idField: 'status_aplikasi_id',
-    columns: ['nama_status'],
-    displayColumns: ['Nama Status']
+    columns: ['nama_status', 'status_aktif'],
+    displayColumns: ['Nama Status', 'Status']
   },
   environment: {
     tableName: 'environment',
@@ -119,6 +119,45 @@ exports.createMasterData = async (req, res) => {
     console.log('=== CREATE MASTER DATA ===');
     console.log('Type:', type);
     console.log('Body:', req.body);
+
+    // Validate eselon1_id exists for eselon2 type
+    if (type === 'eselon2' && req.body.eselon1_id) {
+      const [eselon1Check] = await pool.query(
+        'SELECT eselon1_id FROM master_eselon1 WHERE eselon1_id = ?',
+        [req.body.eselon1_id]
+      );
+      if (eselon1Check.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Eselon 1 dengan ID ${req.body.eselon1_id} tidak ditemukan di database`
+        });
+      }
+    }
+
+    // Check for duplicate names based on type
+    const nameField = {
+      eselon1: 'nama_eselon1',
+      eselon2: 'nama_eselon2',
+      frekuensi_pemakaian: 'nama_frekuensi',
+      status_aplikasi: 'nama_status',
+      environment: 'jenis_environment',
+      cara_akses: 'nama_cara_akses',
+      pdn: 'kode_pdn',
+      format_laporan: 'nama_format'
+    };
+
+    if (nameField[type] && req.body[nameField[type]]) {
+      const [duplicateCheck] = await pool.query(
+        `SELECT ${config.idField} FROM ${config.tableName} WHERE ${nameField[type]} = ?`,
+        [req.body[nameField[type]]]
+      );
+      if (duplicateCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`
+        });
+      }
+    }
 
     // Build dynamic insert query based on provided fields
     const fields = [];
