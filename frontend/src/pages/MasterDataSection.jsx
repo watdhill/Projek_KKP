@@ -32,6 +32,7 @@ const FORM_FIELDS = {
   ],
   status_aplikasi: [
     { name: 'nama_status', label: 'Nama Status', type: 'text', placeholder: 'Nama Status Aplikasi' },
+    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }] },
   ],
   environment: [
     { name: 'jenis_environment', label: 'Jenis Environment', type: 'text', placeholder: 'Jenis Environment' },
@@ -46,9 +47,8 @@ const FORM_FIELDS = {
     { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }] },
   ],
   format_laporan: [
-    { name: 'nama_aplikasi', label: 'Nama Aplikasi', type: 'text', placeholder: 'Nama Aplikasi' },
-    { name: 'nama_format', label: 'Nama Format', type: 'text', placeholder: 'Nama Format Laporan' },
-    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }] },
+    { name: 'nama_format', label: 'Nama Format', type: 'text', placeholder: 'Nama Format Laporan', required: true },
+    { name: 'status_aktif', label: 'Status Aktif', type: 'select', options: [{ value: 1, label: 'True' }, { value: 0, label: 'False' }] },
   ],
 };
 
@@ -57,7 +57,7 @@ const TABLE_COLUMNS = {
   eselon1: ['nama_eselon1', 'singkatan', 'status_aktif'],
   eselon2: ['nama_eselon2', 'status_aktif'],
   frekuensi_pemakaian: ['nama_frekuensi', 'status_aktif'],
-  status_aplikasi: ['nama_status'],
+  status_aplikasi: ['nama_status', 'status_aktif'],
   environment: ['jenis_environment', 'status_aktif'],
   cara_akses: ['nama_cara_akses', 'status_aktif'],
   pdn: ['kode_pdn', 'status_aktif'],
@@ -76,6 +76,46 @@ const ID_FIELDS = {
   format_laporan: 'format_laporan_id',
 };
 
+// Data field options for Format Laporan picker (from data_aplikasi table)
+const DATA_FIELD_OPTIONS = [
+  { value: 'nama_aplikasi', label: 'Nama Aplikasi' },
+  { value: 'eselon1_id', label: 'Eselon 1' },
+  { value: 'eselon2_id', label: 'Eselon 2' },
+  { value: 'cara_akses_id', label: 'Cara Akses' },
+  { value: 'frekuensi_update_id', label: 'Frekuensi Update' },
+  { value: 'status_aplikasi', label: 'Status Aplikasi' },
+  { value: 'pdn_id', label: 'PDN' },
+  { value: 'environtmen_id', label: 'Environment' },
+  { value: 'pic_internal_id', label: 'PIC Internal' },
+  { value: 'pic_eksternal_id', label: 'PIC Eksternal' },
+  { value: 'domain', label: 'Domain' },
+  { value: 'deskripsi_fungsi', label: 'Deskripsi Fungsi' },
+  { value: 'user_pengguna', label: 'User Pengguna' },
+  { value: 'data_digunakan', label: 'Data Digunakan' },
+  { value: 'luaran_output', label: 'Luaran/Output' },
+  { value: 'server_aplikasi', label: 'Server Aplikasi' },
+  { value: 'tipe_lisensi_bahasa', label: 'Tipe Lisensi Bahasa' },
+  { value: 'bahasa_pemrograman', label: 'Bahasa Pemrograman' },
+  { value: 'basis_data', label: 'Basis Data' },
+  { value: 'kerangka_pengembangan', label: 'Kerangka Pengembangan' },
+  { value: 'unit_pengembang', label: 'Unit Pengembang' },
+  { value: 'unit_operasional_teknologi', label: 'Unit Operasional Teknologi' },
+  { value: 'nilai_pengembangan_aplikasi', label: 'Nilai Pengembangan Aplikasi' },
+  { value: 'pusat_komputasi_utama', label: 'Pusat Komputasi Utama' },
+  { value: 'pusat_komputasi_backup', label: 'Pusat Komputasi Backup' },
+  { value: 'mandiri_komputasi_backup', label: 'Mandiri Komputasi Backup' },
+  { value: 'perangkat_lunak', label: 'Perangkat Lunak' },
+  { value: 'cloud', label: 'Cloud' },
+  { value: 'waf', label: 'WAF' },
+  { value: 'antivirus', label: 'Antivirus' },
+  { value: 'va_pt_status', label: 'VA/PT Status' },
+  { value: 'va_pt_waktu', label: 'VA/PT Waktu' },
+  { value: 'alamat_ip_publik', label: 'Alamat IP Publik' },
+  { value: 'keterangan', label: 'Keterangan' },
+  { value: 'status_bmn', label: 'Status BMN' },
+  { value: 'api_internal_status', label: 'API Internal Status' },
+];
+
 function MasterDataSection() {
   const [activeTab, setActiveTab] = useState('eselon1');
   const [data, setData] = useState([]);
@@ -86,6 +126,10 @@ function MasterDataSection() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [eselon1Options, setEselon1Options] = useState([]);
+
+  // State for Format Laporan data picker
+  const [selectedDataFields, setSelectedDataFields] = useState([]);
+  const [availableDataFields, setAvailableDataFields] = useState([...DATA_FIELD_OPTIONS]);
 
   // Fetch data when tab changes
   useEffect(() => {
@@ -115,7 +159,6 @@ function MasterDataSection() {
       const response = await fetch(`${API_BASE}?type=eselon1`);
       if (response.ok) {
         const result = await response.json();
-        // Only include active Eselon 1 (status_aktif = 1)
         setEselon1Options(
           result.data
             .filter(item => item.status_aktif === 1)
@@ -134,13 +177,22 @@ function MasterDataSection() {
     setEditingItem(null);
     const initialData = {};
     FORM_FIELDS[activeTab]?.forEach(field => {
-      if (field.type === 'select' && field.options.length > 0) {
+      if (field.name === 'eselon1_id') {
+        initialData[field.name] = eselon1Options.length > 0 ? eselon1Options[0].value : '';
+      } else if (field.type === 'select' && field.options.length > 0) {
         initialData[field.name] = field.options[0].value;
       } else {
         initialData[field.name] = '';
       }
     });
     setFormData(initialData);
+
+    // Reset picker state for Format Laporan
+    if (activeTab === 'format_laporan') {
+      setSelectedDataFields([]);
+      setAvailableDataFields([...DATA_FIELD_OPTIONS]);
+    }
+
     setShowModal(true);
   };
 
@@ -157,12 +209,24 @@ function MasterDataSection() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Validate required fields (non-empty)
+      const fields = FORM_FIELDS[activeTab] || [];
+      for (const field of fields) {
+        if (field.type !== 'select' && (!formData[field.name] || formData[field.name].toString().trim() === '')) {
+          throw new Error(`Field "${field.label}" tidak boleh kosong`);
+        }
+      }
+
+      // Additional validation for Format Laporan - must select at least one data field
+      if (activeTab === 'format_laporan' && selectedDataFields.length === 0) {
+        throw new Error('Silakan pilih minimal satu data untuk format laporan');
+      }
+
       const idField = ID_FIELDS[activeTab];
       const url = editingItem
         ? `${API_BASE}/${editingItem[idField]}?type=${activeTab}`
         : `${API_BASE}?type=${activeTab}`;
       const method = editingItem ? 'PUT' : 'POST';
-
 
       const processedData = { ...formData };
       if (processedData.eselon1_id !== undefined) {
@@ -170,6 +234,11 @@ function MasterDataSection() {
       }
       if (processedData.status_aktif !== undefined) {
         processedData.status_aktif = parseInt(processedData.status_aktif, 10);
+      }
+
+      // Add selected data fields for Format Laporan
+      if (activeTab === 'format_laporan') {
+        processedData.selected_fields = selectedDataFields.map(f => f.value);
       }
 
       const response = await fetch(url, {
@@ -212,6 +281,17 @@ function MasterDataSection() {
 
   const formatColumnHeader = (col) => {
     return col.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  // Picker functions for Format Laporan
+  const addDataField = (field) => {
+    setSelectedDataFields([...selectedDataFields, field]);
+    setAvailableDataFields(availableDataFields.filter(f => f.value !== field.value));
+  };
+
+  const removeDataField = (field) => {
+    setAvailableDataFields([...availableDataFields, field]);
+    setSelectedDataFields(selectedDataFields.filter(f => f.value !== field.value));
   };
 
   const filteredData = data.filter(item => {
@@ -450,62 +530,188 @@ function MasterDataSection() {
               {editingItem ? 'Edit Data' : 'Tambah Data'}
             </h2>
             <form onSubmit={handleSubmit}>
-              {FORM_FIELDS[activeTab]?.map(field => {
-                // For eselon2, use dynamic options for eselon1_id
-                let options = field.options;
-                if (field.name === 'eselon1_id') {
-                  options = eselon1Options;
-                }
 
-                return (
-                  <div key={field.name} style={{ marginBottom: '16px' }}>
-                    <label style={{
-                      display: 'block',
-                      marginBottom: '6px',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      color: '#374151'
-                    }}>
-                      {field.label}
+              {activeTab === 'format_laporan' ? (
+                // Special UI for Format Laporan
+                <div>
+                  {/* Nama Format Field */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                      Nama Format
                     </label>
-                    {field.type === 'select' ? (
-                      <select
-                        value={formData[field.name] ?? ''}
-                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          fontSize: '14px',
-                          outline: 'none',
-                          backgroundColor: '#ffffff'
-                        }}
-                      >
-                        {options.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        value={formData[field.name] ?? ''}
-                        onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
-                          fontSize: '14px',
-                          outline: 'none',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    )}
+                    <input
+                      type="text"
+                      placeholder="Nama Format Laporan"
+                      value={formData.nama_format ?? ''}
+                      onChange={(e) => setFormData({ ...formData, nama_format: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+                    />
                   </div>
-                );
-              })}
+
+                  {/* Picker Split View */}
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+                    {/* Left: Daftar Data (Available) */}
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                        Daftar Data
+                      </label>
+                      <div style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        height: '250px',
+                        overflowY: 'auto',
+                        backgroundColor: '#f8fafc',
+                        padding: '8px'
+                      }}>
+                        {availableDataFields.map((field) => (
+                          <div
+                            key={field.value}
+                            onClick={() => addDataField(field)}
+                            style={{
+                              padding: '8px 12px',
+                              marginBottom: '4px',
+                              backgroundColor: '#ffffff',
+                              borderRadius: '6px',
+                              border: '1px solid #e2e8f0',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              color: '#334155',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#4f46e5'}
+                            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                          >
+                            {field.label}
+                            <span style={{ color: '#4f46e5', fontWeight: 'bold' }}>+</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right: Data Dipilih (Selected) */}
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                        Data Dipilih
+                      </label>
+                      <div style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        height: '250px',
+                        overflowY: 'auto',
+                        backgroundColor: '#ffffff',
+                        padding: '8px'
+                      }}>
+                        {selectedDataFields.length === 0 ? (
+                          <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px', fontStyle: 'italic' }}>
+                            Tidak ada data yang dipilih
+                          </div>
+                        ) : (
+                          selectedDataFields.map((field) => (
+                            <div
+                              key={field.value}
+                              onClick={() => removeDataField(field)}
+                              style={{
+                                padding: '8px 12px',
+                                marginBottom: '4px',
+                                backgroundColor: '#f0f9ff',
+                                borderRadius: '6px',
+                                border: '1px solid #bae6fd',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                color: '#0369a1',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0f2fe'}
+                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f0f9ff'}
+                            >
+                              {field.label}
+                              <span style={{ color: '#ef4444', fontWeight: 'bold' }}>✕</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status Aktif */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
+                      Status Aktif
+                    </label>
+                    <select
+                      value={formData.status_aktif ?? 1}
+                      onChange={(e) => setFormData({ ...formData, status_aktif: e.target.value })}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px', outline: 'none', backgroundColor: '#ffffff' }}
+                    >
+                      <option value={1}>True</option>
+                      <option value={0}>False</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                // Standard Dynamic Form for other tabs
+                FORM_FIELDS[activeTab]?.map(field => {
+                  // For eselon2, use dynamic options for eselon1_id
+                  let options = field.options;
+                  if (field.name === 'eselon1_id') {
+                    options = eselon1Options;
+                  }
+
+                  return (
+                    <div key={field.name} style={{ marginBottom: '16px' }}>
+                      <label style={{
+                        display: 'block',
+                        marginBottom: '6px',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        color: '#374151'
+                      }}>
+                        {field.label}
+                      </label>
+                      {field.type === 'select' ? (
+                        <select
+                          value={formData[field.name] ?? ''}
+                          onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '14px',
+                            outline: 'none',
+                            backgroundColor: '#ffffff'
+                          }}
+                        >
+                          {options.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          value={formData[field.name] ?? ''}
+                          onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                          style={{
+                            width: '100%',
+                            padding: '10px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '14px',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              )}
+
               <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                 <button
                   type="submit"
