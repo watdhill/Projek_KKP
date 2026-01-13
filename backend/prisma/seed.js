@@ -41,6 +41,16 @@ async function main() {
     }
     console.log('✓ Roles seeded');
 
+    // Seed Admin User
+    console.log('📝 Seeding admin user...');
+    await connection.execute(
+      `INSERT INTO users (role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, password, status_aktif) 
+       VALUES (?, NULL, NULL, ?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE nama = VALUES(nama)`,
+      [1, 'Administrator', '0000000000', 'admin@kkp.com', 'Administrator Sistem', 'admin123', 1]
+    );
+    console.log('✓ Admin user seeded (email: admin@kkp.com, password: admin123)');
+
     console.log('✅ Database seeding completed successfully!');
   } catch (error) {
     console.error('❌ Error during seeding:', error);
