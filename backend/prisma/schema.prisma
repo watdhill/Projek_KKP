@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model cara_akses {
+  cara_akses_id   BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_cara_akses String          @db.VarChar(100)
+  status_aktif    Boolean?        @default(true)
+  data_aplikasi   data_aplikasi[]
+}
+
+model data_aplikasi {
+  nama_aplikasi                                                              String               @id @db.VarChar(200)
+  eselon1_id                                                                 BigInt?              @db.UnsignedBigInt
+  eselon2_id                                                                 BigInt?              @db.UnsignedBigInt
+  cara_akses_id                                                              BigInt?              @db.UnsignedBigInt
+  frekuensi_pemakaian                                                        BigInt?              @db.UnsignedBigInt
+  status_aplikasi                                                            BigInt?              @db.UnsignedBigInt
+  pdn_id                                                                     BigInt?              @db.UnsignedBigInt
+  environment_id                                                             BigInt?              @db.UnsignedBigInt
+  pic_internal_id                                                            BigInt?              @db.UnsignedBigInt
+  pic_eksternal_id                                                           BigInt?              @db.UnsignedBigInt
+  domain                                                                     String?              @db.VarChar(200)
+  deskripsi_fungsi                                                           String?              @db.Text
+  user_pengguna                                                              String?              @db.Text
+  data_digunakan                                                             String?              @db.Text
+  luaran_output                                                              String?              @db.Text
+  server_aplikasi                                                            String?              @db.VarChar(200)
+  tipe_lisensi_bahasa                                                        String?              @db.VarChar(200)
+  bahasa_pemrograman                                                         String?              @db.VarChar(200)
+  basis_data                                                                 String?              @db.VarChar(200)
+  kerangka_pengembangan                                                      String?              @db.VarChar(200)
+  unit_pengembang                                                            String?              @db.VarChar(200)
+  unit_operasional_teknologi                                                 String?              @db.VarChar(200)
+  nilai_pengembangan_aplikasi                                                String?              @db.VarChar(200)
+  pusat_komputasi_utama                                                      String?              @db.VarChar(200)
+  pusat_komputasi_backup                                                     String?              @db.VarChar(200)
+  mandiri_komputasi_backup                                                   String?              @db.VarChar(200)
+  perangkat_lunak                                                            String?              @db.Text
+  cloud                                                                      String?              @db.VarChar(200)
+  waf                                                                        String?              @db.VarChar(50)
+  antivirus                                                                  String?              @db.VarChar(50)
+  va_pt_status                                                               String?              @db.VarChar(50)
+  va_pt_waktu                                                                String?              @db.VarChar(100)
+  alamat_ip_publik                                                           String?              @db.VarChar(100)
+  keterangan                                                                 String?              @db.Text
+  status_bmn                                                                 String?              @db.VarChar(100)
+  api_internal_status                                                        String?              @db.VarChar(50)
+  master_eselon1                                                             master_eselon1?      @relation(fields: [eselon1_id], references: [eselon1_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_1")
+  master_eselon2                                                             master_eselon2?      @relation(fields: [eselon2_id], references: [eselon2_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_2")
+  cara_akses                                                                 cara_akses?          @relation(fields: [cara_akses_id], references: [cara_akses_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_3")
+  frekuensi_pemakaian_data_aplikasi_frekuensi_pemakaianTofrekuensi_pemakaian frekuensi_pemakaian? @relation("data_aplikasi_frekuensi_pemakaianTofrekuensi_pemakaian", fields: [frekuensi_pemakaian], references: [frekuensi_pemakaian], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_4")
+  status_aplikasi_data_aplikasi_status_aplikasiTostatus_aplikasi             status_aplikasi?     @relation("data_aplikasi_status_aplikasiTostatus_aplikasi", fields: [status_aplikasi], references: [status_aplikasi_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_5")
+  pdn                                                                        pdn?                 @relation(fields: [pdn_id], references: [pdn_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_6")
+  environment                                                                environment?         @relation(fields: [environment_id], references: [environment_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_7")
+  pic_internal                                                               pic_internal?        @relation(fields: [pic_internal_id], references: [pic_internal_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_8")
+  pic_eksternal                                                              pic_eksternal?       @relation(fields: [pic_eksternal_id], references: [pic_eksternal_id], onDelete: Restrict, onUpdate: Restrict, map: "data_aplikasi_ibfk_9")
+
+  @@index([cara_akses_id], map: "cara_akses_id")
+  @@index([environment_id], map: "environment_id")
+  @@index([eselon1_id], map: "eselon1_id")
+  @@index([eselon2_id], map: "eselon2_id")
+  @@index([frekuensi_pemakaian], map: "frekuensi_pemakaian")
+  @@index([pdn_id], map: "pdn_id")
+  @@index([pic_eksternal_id], map: "pic_eksternal_id")
+  @@index([pic_internal_id], map: "pic_internal_id")
+  @@index([status_aplikasi], map: "status_aplikasi")
+}
+
+model environment {
+  environment_id    BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  jenis_environment String?         @db.VarChar(100)
+  status_aktif      Boolean?        @default(true)
+  data_aplikasi     data_aplikasi[]
+}
+
+model format_laporan {
+  format_laporan_id Int     @id @default(autoincrement())
+  nama_format       String  @unique(map: "nama_format") @db.VarChar(50)
+  status_aktif      Boolean @default(true)
+  selected_fields   String  @db.LongText
+}
+
+model frekuensi_pemakaian {
+  frekuensi_pemakaian                                                  BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_frekuensi                                                       String          @db.VarChar(100)
+  status_aktif                                                         Boolean?        @default(true)
+  data_aplikasi_data_aplikasi_frekuensi_pemakaianTofrekuensi_pemakaian data_aplikasi[] @relation("data_aplikasi_frekuensi_pemakaianTofrekuensi_pemakaian")
+}
+
+model master_eselon1 {
+  eselon1_id     BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_eselon1   String           @db.VarChar(200)
+  singkatan      String?          @db.VarChar(50)
+  status_aktif   Boolean?         @default(true)
+  data_aplikasi  data_aplikasi[]
+  master_eselon2 master_eselon2[]
+  users          users[]
+}
+
+model master_eselon2 {
+  eselon2_id     BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  eselon1_id     BigInt          @db.UnsignedBigInt
+  nama_eselon2   String          @db.VarChar(200)
+  status_aktif   Boolean?        @default(true)
+  data_aplikasi  data_aplikasi[]
+  master_eselon1 master_eselon1  @relation(fields: [eselon1_id], references: [eselon1_id], onUpdate: Restrict, map: "master_eselon2_ibfk_1")
+  pic_eksternal  pic_eksternal[]
+  pic_internal   pic_internal[]
+  users          users[]
+
+  @@index([eselon1_id], map: "eselon1_id")
+}
+
+model pdn {
+  pdn_id        BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  kode_pdn      String?         @db.VarChar(100)
+  status_aktif  Boolean?        @default(true)
+  data_aplikasi data_aplikasi[]
+}
+
+model pic_eksternal {
+  pic_eksternal_id     BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  eselon2_id           BigInt?         @db.UnsignedBigInt
+  nama_pic_eksternal   String?         @db.VarChar(150)
+  kontak_pic_eksternal String?         @db.VarChar(150)
+  status_aktif         Boolean?        @default(true)
+  data_aplikasi        data_aplikasi[]
+  master_eselon2       master_eselon2? @relation(fields: [eselon2_id], references: [eselon2_id], onDelete: Restrict, onUpdate: Restrict, map: "pic_eksternal_ibfk_1")
+
+  @@index([eselon2_id], map: "eselon2_id")
+}
+
+model pic_internal {
+  pic_internal_id     BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  eselon2_id          BigInt?         @db.UnsignedBigInt
+  nama_pic_internal   String?         @db.VarChar(150)
+  kontak_pic_internal String?         @db.VarChar(150)
+  status_aktif        Boolean?        @default(true)
+  data_aplikasi       data_aplikasi[]
+  master_eselon2      master_eselon2? @relation(fields: [eselon2_id], references: [eselon2_id], onDelete: Restrict, onUpdate: Restrict, map: "pic_internal_ibfk_1")
+
+  @@index([eselon2_id], map: "eselon2_id")
+}
+
+model roles {
+  role_id   BigInt  @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_role String  @db.VarChar(100)
+  users     users[]
+}
+
+model status_aplikasi {
+  status_aplikasi_id                                           BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_status                                                  String          @db.VarChar(100)
+  status_aktif                                                 Boolean?        @default(true)
+  data_aplikasi_data_aplikasi_status_aplikasiTostatus_aplikasi data_aplikasi[] @relation("data_aplikasi_status_aplikasiTostatus_aplikasi")
+}
+
+model users {
+  user_id        BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  role_id        BigInt          @db.UnsignedBigInt
+  eselon1_id     BigInt?         @db.UnsignedBigInt
+  eselon2_id     BigInt?         @db.UnsignedBigInt
+  nama           String?         @db.VarChar(150)
+  nip            String?         @db.VarChar(50)
+  email          String?         @db.VarChar(150)
+  jabatan        String?         @db.VarChar(150)
+  password       String?         @db.VarChar(255)
+  status_aktif   Boolean?        @default(true)
+  roles          roles           @relation(fields: [role_id], references: [role_id], onUpdate: Restrict, map: "users_ibfk_1")
+  master_eselon1 master_eselon1? @relation(fields: [eselon1_id], references: [eselon1_id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_2")
+  master_eselon2 master_eselon2? @relation(fields: [eselon2_id], references: [eselon2_id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_3")
+
+  @@index([eselon1_id], map: "eselon1_id")
+  @@index([eselon2_id], map: "eselon2_id")
+  @@index([role_id], map: "role_id")
+}
