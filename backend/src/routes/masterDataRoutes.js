@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const masterDataController = require('../controllers/masterDataController');
+console.log('MasterDataController Keys:', Object.keys(masterDataController));
 
 // Get available types metadata
 router.get('/types', masterDataController.getTypes);

@@ -544,9 +544,9 @@ function MasterDataSection() {
                           <span style={{
                             display: 'inline-block',
                             padding: '4px 12px',
-                            borderRadius: '12px',
+                            borderRadius: '4px',
                             fontSize: '12px',
-                            fontWeight: 500,
+                            fontWeight: 600,
                             backgroundColor: statusColor.bg,
                             color: statusColor.text,
                           }}>
@@ -568,33 +568,22 @@ function MasterDataSection() {
                         onClick={() => handleEdit(item)}
                         style={{
                           padding: '6px 12px',
-                          backgroundColor: '#f1f5f9',
-                          color: '#475569',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
+                          backgroundColor: '#f59e0b',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '4px',
                           fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s'
                         }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#d97706'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#f59e0b'}
                       >
                         Edit
                       </button>
 
-                      {columns.includes('status_aktif') && (
-                        <button
-                          onClick={() => handleToggleStatus(item, item.status_aktif ? 0 : 1)}
-                          style={{
-                            padding: '6px 12px',
-                            backgroundColor: item.status_aktif ? '#fef3c7' : '#dcfce7',
-                            color: item.status_aktif ? '#92400e' : '#166534',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            fontSize: '12px',
-                          }}
-                        >
-                          {item.status_aktif ? 'Nonaktifkan' : 'Aktifkan'}
-                        </button>
-                      )}
+
                     </div>
                   </td>
                 </tr>
@@ -752,7 +741,7 @@ function MasterDataSection() {
                         width: '100%',
                         padding: '10px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
+                        border: 'none',
                         fontSize: '14px',
                         outline: 'none',
                         backgroundColor: '#ffffff',
