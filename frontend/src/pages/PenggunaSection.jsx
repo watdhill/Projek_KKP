@@ -16,12 +16,15 @@ function PenggunaSection() {
     password: '',
     role_id: '',
     eselon1_id: '',
-    eselon2_id: ''
+    eselon2_id: '',
+    status_aktif: 1
   });
   const [operatorType, setOperatorType] = useState('eselon1'); // Track operator selection
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // Fetch users
   useEffect(() => {
@@ -45,15 +48,15 @@ function PenggunaSection() {
   // Fetch master data (roles, eselon)
   const fetchMasterData = async () => {
     try {
-      const [rolesRes, eselon1Res, eselon2Res] = await Promise.all([
-        fetch('http://localhost:5000/api/master/roles'),
-        fetch('http://localhost:5000/api/master/eselon1'),
-        fetch('http://localhost:5000/api/master/eselon2')
-      ]);
-
-      if (rolesRes.ok) setRoles((await rolesRes.json()).data || []);
-      if (eselon1Res.ok) setEselon1List((await eselon1Res.json()).data || []);
-      if (eselon2Res.ok) setEselon2List((await eselon2Res.json()).data || []);
+      const response = await fetch('http://localhost:5000/api/master-data/dropdown');
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setRoles(result.data.roles || []);
+          setEselon1List(result.data.eselon1 || []);
+          setEselon2List(result.data.eselon2 || []);
+        }
+      }
     } catch (err) {
       console.log('Info: Master data tidak tersedia');
     }
@@ -61,7 +64,61 @@ function PenggunaSection() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Jika role berubah, reset eselon fields dan tentukan operator type
+    if (name === 'role_id') {
+      const selectedRole = roles.find(r => r.role_id === parseInt(value));
+      const roleName = selectedRole?.nama_role || '';
+      
+      // Tentukan operator type berdasarkan role
+      if (roleName.includes('Eselon 1')) {
+        setOperatorType('eselon1');
+        setFormData(prev => ({ ...prev, role_id: value, eselon1_id: '', eselon2_id: '' }));
+      } else if (roleName.includes('Eselon 2')) {
+        setOperatorType('eselon2');
+        setFormData(prev => ({ ...prev, role_id: value, eselon1_id: '', eselon2_id: '' }));
+      } else {
+        // Admin - no eselon needed
+        setOperatorType('none');
+        setFormData(prev => ({ ...prev, role_id: value, eselon1_id: '', eselon2_id: '' }));
+      }
+    } else if (name === 'eselon1_id') {
+      // Jika eselon1 berubah, reset eselon2
+      setFormData(prev => ({ ...prev, eselon1_id: value, eselon2_id: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleEdit = (user) => {
+    setSelectedUser(user);
+    setIsEditMode(true);
+    
+    // Set form data dengan data user yang dipilih
+    setFormData({
+      nama: user.nama || '',
+      nip: user.nip || '',
+      email: user.email || '',
+      jabatan: user.jabatan || '',
+      password: '', // Password kosong saat edit
+      role_id: user.role_id || '',
+      eselon1_id: user.eselon1_id || '',
+      eselon2_id: user.eselon2_id || '',
+      status_aktif: user.status_aktif !== undefined ? user.status_aktif : 1
+    });
+    
+    // Set operator type berdasarkan role
+    const selectedRole = roles.find(r => r.role_id === user.role_id);
+    const roleName = selectedRole?.nama_role || '';
+    if (roleName.includes('Eselon 1')) {
+      setOperatorType('eselon1');
+    } else if (roleName.includes('Eselon 2')) {
+      setOperatorType('eselon2');
+    } else {
+      setOperatorType('none');
+    }
+    
+    setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
@@ -71,28 +128,44 @@ function PenggunaSection() {
     setSubmitSuccess(false);
 
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
-        method: 'POST',
+      const url = isEditMode 
+        ? `http://localhost:5000/api/users/${selectedUser.user_id}`
+        : 'http://localhost:5000/api/users';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      // Jika edit dan password kosong, jangan kirim password
+      const payload = {
+        ...formData,
+        role_id: parseInt(formData.role_id),
+        eselon1_id: formData.eselon1_id ? parseInt(formData.eselon1_id) : null,
+        eselon2_id: formData.eselon2_id ? parseInt(formData.eselon2_id) : null,
+        status_aktif: parseInt(formData.status_aktif)
+      };
+      
+      if (isEditMode && !formData.password) {
+        delete payload.password; // Hapus password dari payload jika kosong saat edit
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          role_id: parseInt(formData.role_id),
-          eselon1_id: formData.eselon1_id ? parseInt(formData.eselon1_id) : null,
-          eselon2_id: formData.eselon2_id ? parseInt(formData.eselon2_id) : null
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Gagal menambah pengguna');
+        throw new Error(errorData.message || `Gagal ${isEditMode ? 'mengupdate' : 'menambah'} pengguna`);
       }
 
       setSubmitSuccess(true);
-      setFormData({ nama: '', nip: '', email: '', jabatan: '', password: '', role_id: '', eselon1_id: '', eselon2_id: '' });
+      setFormData({ nama: '', nip: '', email: '', jabatan: '', password: '', role_id: '', eselon1_id: '', eselon2_id: '', status_aktif: 1 });
       setOperatorType('eselon1');
       
       setTimeout(() => {
         setShowModal(false);
+        setIsEditMode(false);
+        setSelectedUser(null);
         fetchUsers();
       }, 1500);
     } catch (err) {
@@ -100,6 +173,16 @@ function PenggunaSection() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setIsEditMode(false);
+    setSelectedUser(null);
+    setFormData({ nama: '', nip: '', email: '', jabatan: '', password: '', role_id: '', eselon1_id: '', eselon2_id: '', status_aktif: 1 });
+    setOperatorType('eselon1');
+    setSubmitError(null);
+    setSubmitSuccess(false);
   };
 
   return (
@@ -233,6 +316,18 @@ function PenggunaSection() {
                   fontWeight: 600,
                   color: '#475569'
                 }}>Eselon</th>
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  color: '#475569'
+                }}>Status</th>
+                <th style={{
+                  padding: '12px 16px',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  color: '#475569'
+                }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -288,6 +383,45 @@ function PenggunaSection() {
                   }}>
                     {user.nama_eselon1 ? `${user.nama_eselon1} / ${user.nama_eselon2 || '-'}` : '-'}
                   </td>
+                  <td style={{
+                    padding: '12px 16px',
+                    textAlign: 'center'
+                  }}>
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      backgroundColor: user.status_aktif === 1 ? '#dcfce7' : '#fee2e2',
+                      color: user.status_aktif === 1 ? '#166534' : '#991b1b'
+                    }}>
+                      {user.status_aktif === 1 ? 'Aktif' : 'Nonaktif'}
+                    </span>
+                  </td>
+                  <td style={{
+                    padding: '12px 16px',
+                    textAlign: 'center'
+                  }}>
+                    <button
+                      onClick={() => handleEdit(user)}
+                      style={{
+                        padding: '6px 12px',
+                        backgroundColor: '#f59e0b',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#d97706'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#f59e0b'}
+                    >
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -331,7 +465,7 @@ function PenggunaSection() {
             padding: '32px'
           }}>
             <h2 style={{ margin: '0 0 24px 0', fontSize: '24px', fontWeight: 600, color: '#1e293b', textAlign: 'center' }}>
-              Tambah Akun Baru
+              {isEditMode ? 'Edit Akun Pengguna' : 'Tambah Akun Baru'}
             </h2>
 
             {submitSuccess && (
@@ -345,7 +479,7 @@ function PenggunaSection() {
                 fontSize: '14px',
                 textAlign: 'center'
               }}>
-                ✓ Pengguna berhasil ditambahkan!
+                ✓ Pengguna berhasil {isEditMode ? 'diupdate' : 'ditambahkan'}!
               </div>
             )}
 
@@ -364,7 +498,7 @@ function PenggunaSection() {
             )}
 
             <form onSubmit={handleSubmit}>
-              {/* Baris 1: Email dan Eselon 1 */}
+              {/* Baris 1: Email dan Role */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
@@ -391,114 +525,11 @@ function PenggunaSection() {
 
                 <div>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
-                    Eselon 1
+                    Role <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <select
-                    name="eselon1_id"
-                    value={formData.eselon1_id}
-                    onChange={handleInputChange}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                      fontFamily: 'inherit'
-                    }}
-                  >
-                    <option value="">-- Pilih Unit --</option>
-                    {eselon1List.length > 0 ? (
-                      eselon1List.map(e1 => (
-                        <option key={e1.eselon1_id} value={e1.eselon1_id}>
-                          {e1.nama_eselon1}
-                        </option>
-                      ))
-                    ) : null}
-                  </select>
-                </div>
-              </div>
-
-              {/* Baris 2: Operator (Radio) dan Eselon 2 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
-                    Operator
-                  </label>
-                  <div style={{ display: 'flex', gap: '24px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                      <input
-                        type="radio"
-                        name="operatorType"
-                        value="eselon1"
-                        checked={operatorType === 'eselon1'}
-                        onChange={() => {
-                          setOperatorType('eselon1');
-                          setFormData(prev => ({ ...prev, eselon2_id: '' }));
-                        }}
-                        style={{ marginRight: '8px', cursor: 'pointer' }}
-                      />
-                      Eselon 1
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '14px', color: '#475569' }}>
-                      <input
-                        type="radio"
-                        name="operatorType"
-                        value="eselon2"
-                        checked={operatorType === 'eselon2'}
-                        onChange={() => setOperatorType('eselon2')}
-                        style={{ marginRight: '8px', cursor: 'pointer' }}
-                      />
-                      Eselon 2
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
-                    Eselon 2
-                  </label>
-                  <select
-                    name="eselon2_id"
-                    value={formData.eselon2_id}
-                    onChange={handleInputChange}
-                    disabled={operatorType === 'eselon1'}
-                    style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '6px',
-                      fontSize: '14px',
-                      boxSizing: 'border-box',
-                      fontFamily: 'inherit',
-                      backgroundColor: operatorType === 'eselon1' ? '#f1f5f9' : '#ffffff',
-                      color: operatorType === 'eselon1' ? '#94a3b8' : '#1e293b',
-                      cursor: operatorType === 'eselon1' ? 'not-allowed' : 'pointer',
-                      opacity: operatorType === 'eselon1' ? 0.6 : 1
-                    }}
-                  >
-                    <option value="">-- Pilih Unit --</option>
-                    {eselon2List.length > 0 ? (
-                      eselon2List.map(e2 => (
-                        <option key={e2.eselon2_id} value={e2.eselon2_id}>
-                          {e2.nama_eselon2}
-                        </option>
-                      ))
-                    ) : null}
-                  </select>
-                </div>
-              </div>
-
-              {/* Baris 3: Password Sementara dan Nama Lengkap */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
-                    Password Sementara <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
+                    name="role_id"
+                    value={formData.role_id}
                     onChange={handleInputChange}
                     required
                     style={{
@@ -510,7 +541,107 @@ function PenggunaSection() {
                       boxSizing: 'border-box',
                       fontFamily: 'inherit'
                     }}
-                    placeholder="Masukkan password"
+                  >
+                    <option value="">-- Pilih Role --</option>
+                    {roles.map(role => (
+                      <option key={role.role_id} value={role.role_id}>
+                        {role.nama_role}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Baris 2: Eselon dropdown (conditional) */}
+              {(operatorType === 'eselon1' || operatorType === 'eselon2') && (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
+                    Unit Eselon 1 <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    name="eselon1_id"
+                    value={formData.eselon1_id}
+                    onChange={handleInputChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    <option value="">-- Pilih Unit Eselon 1 --</option>
+                    {eselon1List.map(e1 => (
+                      <option key={e1.eselon1_id} value={e1.eselon1_id}>
+                        {e1.nama_eselon1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {operatorType === 'eselon2' && (
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
+                    Unit Eselon 2 <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    name="eselon2_id"
+                    value={formData.eselon2_id}
+                    onChange={handleInputChange}
+                    required
+                    disabled={!formData.eselon1_id}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit',
+                      backgroundColor: !formData.eselon1_id ? '#f1f5f9' : '#ffffff',
+                      cursor: !formData.eselon1_id ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <option value="">
+                      {!formData.eselon1_id ? '-- Pilih Eselon 1 terlebih dahulu --' : '-- Pilih Unit Eselon 2 --'}
+                    </option>
+                    {eselon2List
+                      .filter(e2 => !formData.eselon1_id || e2.eselon1_id === parseInt(formData.eselon1_id))
+                      .map(e2 => (
+                        <option key={e2.eselon2_id} value={e2.eselon2_id}>
+                          {e2.nama_eselon2}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Baris 3: Password Sementara dan Nama Lengkap */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
+                    Password {isEditMode ? '(Kosongkan jika tidak ingin diubah)' : 'Sementara'} {!isEditMode && <span style={{ color: '#ef4444' }}>*</span>}
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    required={!isEditMode}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit'
+                    }}
+                    placeholder={isEditMode ? 'Kosongkan jika tidak diubah' : 'Masukkan password'}
                   />
                 </div>
 
@@ -585,17 +716,38 @@ function PenggunaSection() {
                 </div>
               </div>
 
+              {/* Baris 5: Status (hanya tampil di mode edit) */}
+              {isEditMode && (
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#1e293b', fontSize: '14px' }}>
+                    Status Pengguna <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    name="status_aktif"
+                    value={formData.status_aktif}
+                    onChange={handleInputChange}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #cbd5e1',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      fontFamily: 'inherit'
+                    }}
+                  >
+                    <option value={1}>Aktif</option>
+                    <option value={0}>Nonaktif</option>
+                  </select>
+                </div>
+              )}
+
               {/* Buttons */}
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setFormData({ nama: '', nip: '', email: '', jabatan: '', password: '', role_id: '', eselon1_id: '', eselon2_id: '' });
-                    setOperatorType('eselon1');
-                    setSubmitError(null);
-                    setSubmitSuccess(false);
-                  }}
+                  onClick={handleCloseModal}
                   disabled={submitting}
                   style={{
                     padding: '10px 24px',
@@ -632,7 +784,7 @@ function PenggunaSection() {
                   onMouseEnter={(e) => !submitting && (e.target.style.backgroundColor = '#1e40af')}
                   onMouseLeave={(e) => (e.target.style.backgroundColor = '#1e3a8a')}
                 >
-                  {submitting ? 'Menyimpan...' : 'Simpan'}
+                  {submitting ? 'Menyimpan...' : (isEditMode ? 'Update' : 'Simpan')}
                 </button>
               </div>
             </form>

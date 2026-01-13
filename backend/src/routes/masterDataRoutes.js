@@ -5,6 +5,9 @@ const masterDataController = require('../controllers/masterDataController');
 // Get available types metadata
 router.get('/types', masterDataController.getTypes);
 
+// Get dropdown data untuk form
+router.get('/dropdown', masterDataController.getDropdownData);
+
 // CRUD operations with ?type= query parameter
 router.get('/', masterDataController.getAllMasterData);
 router.get('/:id', masterDataController.getMasterDataById);
