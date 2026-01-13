@@ -104,10 +104,18 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, password, status_aktif } = req.body;
-    const [result] = await pool.query(
-      'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, password = ?, status_aktif = ? WHERE user_id = ?',
-      [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, password, status_aktif, req.params.id]
-    );
+    
+    // Jika password tidak dikirim (kosong), jangan update password
+    let query, params;
+    if (password) {
+      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, password = ?, status_aktif = ? WHERE user_id = ?';
+      params = [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, password, status_aktif, req.params.id];
+    } else {
+      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, status_aktif = ? WHERE user_id = ?';
+      params = [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, status_aktif, req.params.id];
+    }
+    
+    const [result] = await pool.query(query, params);
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
@@ -127,24 +135,40 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// Delete user
+// Deactivate user (soft delete)
 exports.deleteUser = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM users WHERE user_id = ?', [req.params.id]);
-    if (result.affectedRows === 0) {
+    // Cek apakah user yang akan dinonaktifkan adalah Admin
+    const [checkUser] = await pool.query(
+      'SELECT u.user_id, r.nama_role FROM users u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.user_id = ?',
+      [req.params.id]
+    );
+    
+    if (checkUser.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User tidak ditemukan'
       });
     }
+    
+    // Cegah menonaktifkan Admin
+    if (checkUser[0].nama_role === 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin tidak dapat dinonaktifkan'
+      });
+    }
+    
+    // Update status_aktif menjadi 0 (nonaktif)
+    const [result] = await pool.query('UPDATE users SET status_aktif = 0 WHERE user_id = ?', [req.params.id]);
     res.json({
       success: true,
-      message: 'User berhasil dihapus'
+      message: 'User berhasil dinonaktifkan'
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menghapus user',
+      message: 'Error menonaktifkan user',
       error: error.message
     });
   }

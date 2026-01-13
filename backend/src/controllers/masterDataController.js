@@ -350,3 +350,27 @@ exports.getTypes = async (req, res) => {
     });
   }
 };
+
+// Get dropdown data untuk form pengguna
+exports.getDropdownData = async (req, res) => {
+  try {
+    const [roles] = await pool.query('SELECT * FROM roles ORDER BY role_id');
+    const [eselon1] = await pool.query('SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1');
+    const [eselon2] = await pool.query('SELECT * FROM master_eselon2 WHERE status_aktif = 1 ORDER BY nama_eselon2');
+    
+    res.json({
+      success: true,
+      data: {
+        roles,
+        eselon1,
+        eselon2
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error mengambil data dropdown',
+      error: error.message
+    });
+  }
+};
