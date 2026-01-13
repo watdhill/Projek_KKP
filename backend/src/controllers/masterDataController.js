@@ -47,8 +47,8 @@ const tableConfig = {
   format_laporan: {
     tableName: 'format_laporan',
     idField: 'format_laporan_id',
-    columns: ['nama_aplikasi', 'nama_format', 'status_aktif'],
-    displayColumns: ['Nama Aplikasi', 'Nama Format', 'Status']
+    columns: ['nama_format', 'status_aktif', 'selected_fields'],
+    displayColumns: ['Nama Format', 'Status', 'Field Terpilih']
   }
 };
 
@@ -167,7 +167,11 @@ exports.createMasterData = async (req, res) => {
     for (const col of config.columns) {
       if (req.body[col] !== undefined) {
         fields.push(col);
-        values.push(req.body[col]);
+        let val = req.body[col];
+        if (typeof val === 'object' && val !== null) {
+          val = JSON.stringify(val);
+        }
+        values.push(val);
         placeholders.push('?');
       }
     }
@@ -224,7 +228,11 @@ exports.updateMasterData = async (req, res) => {
     for (const col of config.columns) {
       if (req.body[col] !== undefined) {
         updates.push(`${col} = ?`);
-        values.push(req.body[col]);
+        let val = req.body[col];
+        if (typeof val === 'object' && val !== null) {
+          val = JSON.stringify(val);
+        }
+        values.push(val);
       }
     }
 
