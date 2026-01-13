@@ -74,7 +74,7 @@
   text-decoration: none;
 }
 
-.nav-item:hover {
+.nav-item.hover {
   border-color: #3b82f6;
   background: #eff6ff;
   color: #1e293b;

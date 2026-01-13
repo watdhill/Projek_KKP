@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Outlet, Link, useLocation } from 'react-router-dom'
 
 function Layout({ navItems }) {
   const location = useLocation();
+  const [hoverItem, setHoverItem] = useState(null);
 
   return (
     <div className="app-shell">
@@ -15,16 +17,23 @@ function Layout({ navItems }) {
         </div>
 
         <nav className="nav">
-          {navItems.map((item) => (
-            <Link 
-              key={item.label} 
-              to={item.path}
-              className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              <span className="nav-label">{item.label}</span>
-              <span className="nav-arrow">›</span>
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const isHovered = hoverItem === item.label;
+            
+            return (
+              <Link 
+                key={item.label} 
+                to={item.path}
+                className={`nav-item ${active ? 'active' : ''} ${isHovered && !active ? 'hover' : ''}`}
+                onMouseEnter={() => setHoverItem(item.label)}
+                onMouseLeave={() => setHoverItem(null)}
+              >
+                <span className="nav-label">{item.label}</span>
+                <span className="nav-arrow">›</span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="sidebar-footer">

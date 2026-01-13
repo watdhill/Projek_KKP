@@ -1,5 +1,87 @@
 const pool = require('../config/database');
 
+// Login user
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email dan password harus diisi'
+      });
+    }
+
+    const query = `
+      SELECT 
+        u.user_id,
+        u.nama,
+        u.email,
+        u.password,
+        u.status_aktif,
+        u.role_id,
+        u.eselon1_id,
+        u.eselon2_id,
+        r.nama_role,
+        e1.nama_eselon1,
+        e2.nama_eselon2
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.role_id
+      LEFT JOIN master_eselon1 e1 ON u.eselon1_id = e1.eselon1_id
+      LEFT JOIN master_eselon2 e2 ON u.eselon2_id = e2.eselon2_id
+      WHERE u.email = ?
+    `;
+    const [rows] = await pool.query(query, [email]);
+
+    if (rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah'
+      });
+    }
+
+    const user = rows[0];
+
+    // Check status aktif
+    if (user.status_aktif === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akun Anda telah dinonaktifkan'
+      });
+    }
+
+    // Verifikasi password (untuk production, gunakan bcrypt)
+    if (user.password !== password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Login berhasil',
+      data: {
+        user_id: user.user_id,
+        nama: user.nama,
+        email: user.email,
+        role_id: user.role_id,
+        nama_role: user.nama_role,
+        eselon1_id: user.eselon1_id,
+        eselon2_id: user.eselon2_id,
+        nama_eselon1: user.nama_eselon1,
+        nama_eselon2: user.nama_eselon2
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error saat login',
+      error: error.message
+    });
+  }
+};
+
 // Get all users dengan JOIN tabel roles dan eselon
 exports.getAllUsers = async (req, res) => {
   try {
