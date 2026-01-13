@@ -49,8 +49,24 @@ const tableConfig = {
     idField: 'format_laporan_id',
     columns: ['nama_format', 'status_aktif', 'selected_fields'],
     displayColumns: ['Nama Format', 'Status', 'Field Terpilih']
+  },
+  pic_eksternal: {
+    tableName: 'pic_eksternal',
+    idField: 'pic_eksternal_id',
+    columns: ['eselon2_id', 'nama_pic_eksternal', 'keterangan', 'kontak_pic_eksternal', 'status_aktif'],
+    displayColumns: ['Nama PIC', 'Keterangan', 'Kontak', 'Status']
+  },
+  pic_internal: {
+    tableName: 'pic_internal',
+    idField: 'pic_internal_id',
+    columns: ['eselon2_id', 'nama_pic_internal', 'kontak_pic_internal', 'status_aktif'],
+    displayColumns: ['Eselon 2', 'Nama PIC', 'Kontak', 'Status']
   }
 };
+
+// ... (existing code)
+
+
 
 // Get table config by type
 const getConfig = (type) => {
@@ -67,7 +83,18 @@ exports.getAllMasterData = async (req, res) => {
     const type = req.query.type || 'eselon1';
     const config = getConfig(type);
 
-    const [rows] = await pool.query(`SELECT * FROM ${config.tableName} ORDER BY ${config.idField} DESC`);
+    let query = `SELECT * FROM ${config.tableName}`;
+    const params = [];
+
+    // Filter by eselon2_id for PIC types if provided (for Operator Eselon 2 visibility)
+    if ((type === 'pic_internal' || type === 'pic_eksternal') && req.query.eselon2_id) {
+      query += ` WHERE eselon2_id = ?`;
+      params.push(req.query.eselon2_id);
+    }
+
+    query += ` ORDER BY ${config.idField} DESC`;
+
+    const [rows] = await pool.query(query, params);
     res.json({
       success: true,
       type: type,
@@ -143,8 +170,24 @@ exports.createMasterData = async (req, res) => {
       environment: 'jenis_environment',
       cara_akses: 'nama_cara_akses',
       pdn: 'kode_pdn',
-      format_laporan: 'nama_format'
+      format_laporan: 'nama_format',
+      pic_eksternal: 'nama_pic_eksternal',
+      pic_internal: 'nama_pic_internal'
     };
+
+    // Validate eselon2_id exists for pic types
+    if (type === 'pic_internal' && req.body.eselon2_id) {
+      const [eselon2Check] = await pool.query(
+        'SELECT eselon2_id FROM master_eselon2 WHERE eselon2_id = ?',
+        [req.body.eselon2_id]
+      );
+      if (eselon2Check.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Eselon 2 dengan ID ${req.body.eselon2_id} tidak ditemukan di database`
+        });
+      }
+    }
 
     if (nameField[type] && req.body[nameField[type]]) {
       const [duplicateCheck] = await pool.query(
@@ -199,9 +242,9 @@ exports.createMasterData = async (req, res) => {
     console.error('Error:', error);
 
     // Provide more detailed error message
-    let errorMessage = 'Error menambahkan master data';
+    let errorMessage = 'Error memperbarui master data';
     if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
-      errorMessage = 'Foreign key error: eselon1_id yang dipilih tidak valid atau tidak ditemukan di tabel master_eselon1';
+      errorMessage = 'Data yang dipilih tidak valid atau tidak ditemukan di tabel referensi (Foreign Key Error)';
     } else if (error.code === 'ER_DUP_ENTRY') {
       errorMessage = 'Data sudah ada (duplikat)';
     }
@@ -354,9 +397,25 @@ exports.getTypes = async (req, res) => {
 // Get dropdown data untuk form pengguna
 exports.getDropdownData = async (req, res) => {
   try {
+    const { eselon1_id } = req.query;
+    console.log('=== GET DROPDOWN DATA ===');
+    console.log('Query Params:', req.query);
+    console.log('Eselon 1 ID requested:', eselon1_id);
+
     const [roles] = await pool.query('SELECT * FROM roles ORDER BY role_id');
     const [eselon1] = await pool.query('SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1');
-    const [eselon2] = await pool.query('SELECT * FROM master_eselon2 WHERE status_aktif = 1 ORDER BY nama_eselon2');
+
+    let eselon2Query = 'SELECT * FROM master_eselon2 WHERE status_aktif = 1';
+    const eselon2Params = [];
+
+    if (eselon1_id) {
+      eselon2Query += ' AND eselon1_id = ?';
+      eselon2Params.push(eselon1_id);
+    }
+
+    eselon2Query += ' ORDER BY nama_eselon2';
+
+    const [eselon2] = await pool.query(eselon2Query, eselon2Params);
 
     res.json({
       success: true,
@@ -375,26 +434,3 @@ exports.getDropdownData = async (req, res) => {
   }
 };
 
-// Get dropdown data untuk form pengguna
-exports.getDropdownData = async (req, res) => {
-  try {
-    const [roles] = await pool.query('SELECT * FROM roles ORDER BY role_id');
-    const [eselon1] = await pool.query('SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1');
-    const [eselon2] = await pool.query('SELECT * FROM master_eselon2 WHERE status_aktif = 1 ORDER BY nama_eselon2');
-
-    res.json({
-      success: true,
-      data: {
-        roles,
-        eselon1,
-        eselon2
-      }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error mengambil data dropdown',
-      error: error.message
-    });
-  }
-};

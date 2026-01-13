@@ -28,7 +28,7 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    
+
     if (!email || !password) {
       setError('Email dan password wajib diisi')
       return
@@ -65,6 +65,8 @@ function LoginPage() {
       localStorage.setItem('userEmail', result.data.email)
       localStorage.setItem('userId', result.data.user_id)
       localStorage.setItem('userName', result.data.nama)
+      localStorage.setItem('eselon1_id', result.data.eselon1_id || '')
+      localStorage.setItem('eselon2_id', result.data.eselon2_id || '')
       localStorage.setItem('namaEselon1', result.data.nama_eselon1 || '')
       localStorage.setItem('namaEselon2', result.data.nama_eselon2 || '')
 
@@ -78,36 +80,36 @@ function LoginPage() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
       background: 'linear-gradient(135deg, #0f5d8c 0%, #1a7fa0 100%)',
       padding: '16px',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     }}>
-      <div style={{ 
+      <div style={{
         width: '100%',
         maxWidth: '420px',
-        backgroundColor: '#ffffff', 
-        borderRadius: '12px', 
+        backgroundColor: '#ffffff',
+        borderRadius: '12px',
         padding: '48px 40px',
         boxShadow: '0 10px 40px rgba(0, 0, 0, 0.12)',
       }}>
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ 
-            fontSize: '28px', 
-            fontWeight: '700', 
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '700',
             color: '#0f5d8c',
             margin: '0 0 8px 0',
             letterSpacing: '-0.5px'
           }}>
             Portal KKP
           </h1>
-          <p style={{ 
-            color: '#64748b', 
+          <p style={{
+            color: '#64748b',
             fontSize: '14px',
             margin: '0',
             fontWeight: '400'
@@ -117,13 +119,13 @@ function LoginPage() {
         </div>
 
         {error && (
-          <div style={{ 
-            marginBottom: '20px', 
-            padding: '12px 14px', 
-            backgroundColor: '#fef2f2', 
-            border: '1px solid #fecaca', 
-            borderRadius: '8px', 
-            color: '#b91c1c', 
+          <div style={{
+            marginBottom: '20px',
+            padding: '12px 14px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            color: '#b91c1c',
             fontSize: '13px',
             fontWeight: '500'
           }}>
@@ -135,11 +137,11 @@ function LoginPage() {
         <form onSubmit={handleSubmit}>
           {/* Email Input */}
           <div style={{ marginBottom: '18px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
-              fontSize: '13px', 
-              fontWeight: '600', 
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
+              fontSize: '13px',
+              fontWeight: '600',
               color: '#1e293b'
             }}>
               Email
@@ -149,7 +151,7 @@ function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              style={{ 
+              style={{
                 width: '100%',
                 padding: '11px 13px',
                 border: '1px solid #d1d5db',
@@ -174,11 +176,11 @@ function LoginPage() {
 
           {/* Password Input */}
           <div style={{ marginBottom: '24px' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '6px', 
-              fontSize: '13px', 
-              fontWeight: '600', 
+            <label style={{
+              display: 'block',
+              marginBottom: '6px',
+              fontSize: '13px',
+              fontWeight: '600',
               color: '#1e293b'
             }}>
               Password
@@ -189,7 +191,7 @@ function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
-                style={{ 
+                style={{
                   width: '100%',
                   padding: '11px 13px',
                   paddingRight: '40px',
@@ -238,15 +240,15 @@ function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            style={{ 
-              width: '100%', 
-              padding: '12px 14px', 
+            style={{
+              width: '100%',
+              padding: '12px 14px',
               background: loading ? '#cbd5e1' : '#0f5d8c',
-              color: '#fff', 
-              border: 'none', 
-              borderRadius: '8px', 
-              fontWeight: '600', 
-              cursor: loading ? 'not-allowed' : 'pointer', 
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
               fontSize: '14px',
               transition: 'background-color 0.2s ease',
               letterSpacing: '0.3px'
