@@ -417,12 +417,28 @@ exports.getDropdownData = async (req, res) => {
 
     const [eselon2] = await pool.query(eselon2Query, eselon2Params);
 
+    // Fetch all master data needed for form dropdowns
+    const [cara_akses] = await pool.query('SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY nama_cara_akses');
+    const [frekuensi_pemakaian] = await pool.query('SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY nama_frekuensi');
+    const [status_aplikasi] = await pool.query('SELECT * FROM status_aplikasi ORDER BY nama_status');
+    const [pdn] = await pool.query('SELECT * FROM pdn WHERE status_aktif = 1 ORDER BY kode_pdn');
+    const [environment] = await pool.query('SELECT * FROM environment WHERE status_aktif = 1 ORDER BY jenis_environment');
+    const [pic_internal] = await pool.query('SELECT * FROM pic_internal WHERE status_aktif = 1 ORDER BY nama_pic_internal');
+    const [pic_eksternal] = await pool.query('SELECT * FROM pic_eksternal WHERE status_aktif = 1 ORDER BY nama_pic_eksternal');
+
     res.json({
       success: true,
       data: {
         roles,
         eselon1,
-        eselon2
+        eselon2,
+        cara_akses,
+        frekuensi_pemakaian,
+        status_aplikasi,
+        pdn,
+        environment,
+        pic_internal,
+        pic_eksternal
       }
     });
   } catch (error) {
