@@ -12,9 +12,11 @@ import OperatorEselon2Page from './pages/operatorEselon2/OperatorEselon2Page'
 import OperatorEselon1Dashboard from './pages/operatorEselon1/OperatorEselon1Dashboard'
 import OperatorEselon1MasterData from './pages/operatorEselon1/OperatorEselon1MasterData'
 import OperatorEselon1DataAplikasi from './pages/operatorEselon1/OperatorEselon1DataAplikasi'
+import OperatorEselon1Profile from './pages/operatorEselon1/OperatorEselon1Profile'
 import OperatorEselon2Dashboard from './pages/operatorEselon2/OperatorEselon2Dashboard'
 import OperatorEselon2MasterData from './pages/operatorEselon2/OperatorEselon2MasterData'
 import OperatorEselon2DataAplikasi from './pages/operatorEselon2/OperatorEselon2DataAplikasi'
+import OperatorEselon2Profile from './pages/operatorEselon2/OperatorEselon2Profile'
 import LoginPage from './pages/LoginPage'
 
 const adminNav = [
@@ -73,17 +75,23 @@ function App() {
 
         {/* Operator Eselon 1 area */}
         <Route path="/operator-eselon1" element={<RequireAuth allowedRoles={['operatorEselon1']}><Layout navItems={operatorEselon1Nav} /></RequireAuth>}>
-          <Route index element={<OperatorEselon1Dashboard />} />
-          <Route path="master-data" element={<OperatorEselon1MasterData />} />
-          <Route path="data-aplikasi" element={<OperatorEselon1DataAplikasi />} />
+          <Route element={<OperatorEselon1Page />}>
+            <Route index element={<OperatorEselon1Dashboard />} />
+            <Route path="master-data" element={<OperatorEselon1MasterData />} />
+            <Route path="data-aplikasi" element={<OperatorEselon1DataAplikasi />} />
+            <Route path="profile" element={<OperatorEselon1Profile />} />
+          </Route>
           <Route path="*" element={<Navigate to="/operator-eselon1" replace />} />
         </Route>
 
         {/* Operator Eselon 2 area */}
         <Route path="/operator-eselon2" element={<RequireAuth allowedRoles={['operatorEselon2']}><Layout navItems={operatorEselon2Nav} /></RequireAuth>}>
-          <Route index element={<OperatorEselon2Dashboard />} />
-          <Route path="master-data" element={<OperatorEselon2MasterData />} />
-          <Route path="data-aplikasi" element={<OperatorEselon2DataAplikasi />} />
+          <Route element={<OperatorEselon2Page />}>
+            <Route index element={<OperatorEselon2Dashboard />} />
+            <Route path="master-data" element={<OperatorEselon2MasterData />} />
+            <Route path="data-aplikasi" element={<OperatorEselon2DataAplikasi />} />
+            <Route path="profile" element={<OperatorEselon2Profile />} />
+          </Route>
           <Route path="*" element={<Navigate to="/operator-eselon2" replace />} />
         </Route>
 

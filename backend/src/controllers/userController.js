@@ -255,3 +255,123 @@ exports.deleteUser = async (req, res) => {
     });
   }
 };
+
+// Update profile (untuk operator mengupdate data sendiri)
+exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { nama, nip, email, jabatan } = req.body;
+    
+    // Validasi: pastikan field penting tidak kosong
+    if (!nama || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nama dan email harus diisi'
+      });
+    }
+    
+    // Update data profile tanpa mengubah role, eselon, dan password
+    const query = 'UPDATE users SET nama = ?, nip = ?, email = ?, jabatan = ? WHERE user_id = ?';
+    const params = [nama, nip, email, jabatan, userId];
+    
+    const [result] = await pool.query(query, params);
+    
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+    
+    // Ambil data user yang sudah diupdate
+    const [updatedUser] = await pool.query(`
+      SELECT 
+        u.user_id,
+        u.nama,
+        u.nip,
+        u.email,
+        u.jabatan,
+        u.role_id,
+        u.eselon1_id,
+        u.eselon2_id,
+        r.nama_role,
+        e1.nama_eselon1,
+        e2.nama_eselon2
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.role_id
+      LEFT JOIN master_eselon1 e1 ON u.eselon1_id = e1.eselon1_id
+      LEFT JOIN master_eselon2 e2 ON u.eselon2_id = e2.eselon2_id
+      WHERE u.user_id = ?
+    `, [userId]);
+    
+    res.json({
+      success: true,
+      message: 'Profile berhasil diupdate',
+      data: updatedUser[0]
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error mengupdate profile',
+      error: error.message
+    });
+  }
+};
+
+// Change password (untuk operator mengubah password sendiri)
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { oldPassword, newPassword } = req.body;
+    
+    // Validasi input
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password lama dan password baru harus diisi'
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password baru minimal 6 karakter'
+      });
+    }
+    
+    // Cek password lama
+    const [user] = await pool.query('SELECT password FROM users WHERE user_id = ?', [userId]);
+    
+    if (user.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+    
+    // Verifikasi password lama
+    if (user[0].password !== oldPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Password lama tidak sesuai'
+      });
+    }
+    
+    // Update password
+    const [result] = await pool.query(
+      'UPDATE users SET password = ? WHERE user_id = ?',
+      [newPassword, userId]
+    );
+    
+    res.json({
+      success: true,
+      message: 'Password berhasil diubah'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error mengubah password',
+      error: error.message
+    });
+  }
+};
