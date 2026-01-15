@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require("../config/database");
 
 // Get all aplikasi dengan JOIN ke tabel master
 exports.getAllAplikasi = async (req, res) => {
@@ -14,6 +14,8 @@ exports.getAllAplikasi = async (req, res) => {
         da.pic_internal AS nama_pic_internal,
         da.pic_eksternal AS nama_pic_eksternal,
         da.va_pt_waktu,
+        da.eselon1_id,
+        da.eselon2_id,
         e1.nama_eselon1,
         e2.nama_eselon2,
         ca.nama_cara_akses,
@@ -34,13 +36,13 @@ exports.getAllAplikasi = async (req, res) => {
     const [rows] = await pool.query(query);
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data aplikasi',
-      error: error.message
+      message: "Error mengambil data aplikasi",
+      error: error.message,
     });
   }
 };
@@ -72,18 +74,18 @@ exports.getAplikasiById = async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Aplikasi tidak ditemukan'
+        message: "Aplikasi tidak ditemukan",
       });
     }
     res.json({
       success: true,
-      data: rows[0]
+      data: rows[0],
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data aplikasi',
-      error: error.message
+      message: "Error mengambil data aplikasi",
+      error: error.message,
     });
   }
 };
@@ -91,18 +93,46 @@ exports.getAplikasiById = async (req, res) => {
 // Create aplikasi
 exports.createAplikasi = async (req, res) => {
   try {
-    const { 
-      nama_aplikasi, eselon1_id, eselon2_id, cara_akses_id, frekuensi_pemakaian, 
-      status_aplikasi, pdn_id, environment_id, pic_internal, pic_eksternal, 
-      domain, deskripsi_fungsi, user_pengguna, data_digunakan, luaran_output,
-      server_aplikasi, tipe_lisensi_bahasa, bahasa_pemrograman, basis_data, 
-      kerangka_pengembangan, unit_pengembang, unit_operasional_teknologi, 
-      nilai_pengembangan_aplikasi, pusat_komputasi_utama, pusat_komputasi_backup, 
-      mandiri_komputasi_backup, perangkat_lunak, cloud, ssl, waf, antivirus, 
-      va_pt_status, va_pt_waktu, alamat_ip_publik, keterangan, status_bmn, 
-      api_internal_status 
+    const {
+      nama_aplikasi,
+      eselon1_id,
+      eselon2_id,
+      cara_akses_id,
+      frekuensi_pemakaian,
+      status_aplikasi,
+      pdn_id,
+      environment_id,
+      pic_internal,
+      pic_eksternal,
+      domain,
+      deskripsi_fungsi,
+      user_pengguna,
+      data_digunakan,
+      luaran_output,
+      server_aplikasi,
+      tipe_lisensi_bahasa,
+      bahasa_pemrograman,
+      basis_data,
+      kerangka_pengembangan,
+      unit_pengembang,
+      unit_operasional_teknologi,
+      nilai_pengembangan_aplikasi,
+      pusat_komputasi_utama,
+      pusat_komputasi_backup,
+      mandiri_komputasi_backup,
+      perangkat_lunak,
+      cloud,
+      ssl,
+      waf,
+      antivirus,
+      va_pt_status,
+      va_pt_waktu,
+      alamat_ip_publik,
+      keterangan,
+      status_bmn,
+      api_internal_status,
     } = req.body;
-    
+
     const [result] = await pool.query(
       `INSERT INTO data_aplikasi 
        (\`nama_aplikasi\`, \`eselon1_id\`, \`eselon2_id\`, \`cara_akses_id\`, \`frekuensi_pemakaian\`, 
@@ -115,26 +145,56 @@ exports.createAplikasi = async (req, res) => {
         \`va_pt_status\`, \`va_pt_waktu\`, \`alamat_ip_publik\`, \`keterangan\`, \`status_bmn\`, 
         \`api_internal_status\`) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nama_aplikasi, eselon1_id, eselon2_id, cara_akses_id, frekuensi_pemakaian, 
-       status_aplikasi, pdn_id, environment_id, pic_internal, pic_eksternal, 
-       domain, deskripsi_fungsi, user_pengguna, data_digunakan, luaran_output,
-       server_aplikasi, tipe_lisensi_bahasa, bahasa_pemrograman, basis_data, 
-       kerangka_pengembangan, unit_pengembang, unit_operasional_teknologi, 
-       nilai_pengembangan_aplikasi, pusat_komputasi_utama, pusat_komputasi_backup, 
-       mandiri_komputasi_backup, perangkat_lunak, cloud, ssl, waf, antivirus, 
-       va_pt_status, va_pt_waktu, alamat_ip_publik, keterangan, status_bmn, 
-       api_internal_status]
+      [
+        nama_aplikasi,
+        eselon1_id,
+        eselon2_id,
+        cara_akses_id,
+        frekuensi_pemakaian,
+        status_aplikasi,
+        pdn_id,
+        environment_id,
+        pic_internal,
+        pic_eksternal,
+        domain,
+        deskripsi_fungsi,
+        user_pengguna,
+        data_digunakan,
+        luaran_output,
+        server_aplikasi,
+        tipe_lisensi_bahasa,
+        bahasa_pemrograman,
+        basis_data,
+        kerangka_pengembangan,
+        unit_pengembang,
+        unit_operasional_teknologi,
+        nilai_pengembangan_aplikasi,
+        pusat_komputasi_utama,
+        pusat_komputasi_backup,
+        mandiri_komputasi_backup,
+        perangkat_lunak,
+        cloud,
+        ssl,
+        waf,
+        antivirus,
+        va_pt_status,
+        va_pt_waktu,
+        alamat_ip_publik,
+        keterangan,
+        status_bmn,
+        api_internal_status,
+      ]
     );
     res.status(201).json({
       success: true,
-      message: 'Aplikasi berhasil ditambahkan',
-      data: { nama_aplikasi, domain }
+      message: "Aplikasi berhasil ditambahkan",
+      data: { nama_aplikasi, domain },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menambahkan aplikasi',
-      error: error.message
+      message: "Error menambahkan aplikasi",
+      error: error.message,
     });
   }
 };
@@ -142,18 +202,45 @@ exports.createAplikasi = async (req, res) => {
 // Update aplikasi
 exports.updateAplikasi = async (req, res) => {
   try {
-    const { 
-      eselon1_id, eselon2_id, cara_akses_id, frekuensi_pemakaian, 
-      status_aplikasi, pdn_id, environment_id, pic_internal, pic_eksternal, 
-      domain, deskripsi_fungsi, user_pengguna, data_digunakan, luaran_output,
-      server_aplikasi, tipe_lisensi_bahasa, bahasa_pemrograman, basis_data, 
-      kerangka_pengembangan, unit_pengembang, unit_operasional_teknologi, 
-      nilai_pengembangan_aplikasi, pusat_komputasi_utama, pusat_komputasi_backup, 
-      mandiri_komputasi_backup, perangkat_lunak, cloud, ssl, waf, antivirus, 
-      va_pt_status, va_pt_waktu, alamat_ip_publik, keterangan, status_bmn, 
-      api_internal_status 
+    const {
+      eselon1_id,
+      eselon2_id,
+      cara_akses_id,
+      frekuensi_pemakaian,
+      status_aplikasi,
+      pdn_id,
+      environment_id,
+      pic_internal,
+      pic_eksternal,
+      domain,
+      deskripsi_fungsi,
+      user_pengguna,
+      data_digunakan,
+      luaran_output,
+      server_aplikasi,
+      tipe_lisensi_bahasa,
+      bahasa_pemrograman,
+      basis_data,
+      kerangka_pengembangan,
+      unit_pengembang,
+      unit_operasional_teknologi,
+      nilai_pengembangan_aplikasi,
+      pusat_komputasi_utama,
+      pusat_komputasi_backup,
+      mandiri_komputasi_backup,
+      perangkat_lunak,
+      cloud,
+      ssl,
+      waf,
+      antivirus,
+      va_pt_status,
+      va_pt_waktu,
+      alamat_ip_publik,
+      keterangan,
+      status_bmn,
+      api_internal_status,
     } = req.body;
-    
+
     const [result] = await pool.query(
       `UPDATE data_aplikasi SET 
        \`eselon1_id\` = ?, \`eselon2_id\` = ?, \`cara_akses_id\` = ?, \`frekuensi_pemakaian\` = ?, 
@@ -167,31 +254,61 @@ exports.updateAplikasi = async (req, res) => {
        \`va_pt_waktu\` = ?, \`alamat_ip_publik\` = ?, \`keterangan\` = ?, \`status_bmn\` = ?, 
        \`api_internal_status\` = ? 
        WHERE \`nama_aplikasi\` = ?`,
-      [eselon1_id, eselon2_id, cara_akses_id, frekuensi_pemakaian, 
-       status_aplikasi, pdn_id, environment_id, pic_internal, pic_eksternal, 
-       domain, deskripsi_fungsi, user_pengguna, data_digunakan, luaran_output,
-       server_aplikasi, tipe_lisensi_bahasa, bahasa_pemrograman, basis_data, 
-       kerangka_pengembangan, unit_pengembang, unit_operasional_teknologi, 
-       nilai_pengembangan_aplikasi, pusat_komputasi_utama, pusat_komputasi_backup, 
-       mandiri_komputasi_backup, perangkat_lunak, cloud, ssl, waf, antivirus, 
-       va_pt_status, va_pt_waktu, alamat_ip_publik, keterangan, status_bmn, 
-       api_internal_status, req.params.id]
+      [
+        eselon1_id,
+        eselon2_id,
+        cara_akses_id,
+        frekuensi_pemakaian,
+        status_aplikasi,
+        pdn_id,
+        environment_id,
+        pic_internal,
+        pic_eksternal,
+        domain,
+        deskripsi_fungsi,
+        user_pengguna,
+        data_digunakan,
+        luaran_output,
+        server_aplikasi,
+        tipe_lisensi_bahasa,
+        bahasa_pemrograman,
+        basis_data,
+        kerangka_pengembangan,
+        unit_pengembang,
+        unit_operasional_teknologi,
+        nilai_pengembangan_aplikasi,
+        pusat_komputasi_utama,
+        pusat_komputasi_backup,
+        mandiri_komputasi_backup,
+        perangkat_lunak,
+        cloud,
+        ssl,
+        waf,
+        antivirus,
+        va_pt_status,
+        va_pt_waktu,
+        alamat_ip_publik,
+        keterangan,
+        status_bmn,
+        api_internal_status,
+        req.params.id,
+      ]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Aplikasi tidak ditemukan'
+        message: "Aplikasi tidak ditemukan",
       });
     }
     res.json({
       success: true,
-      message: 'Aplikasi berhasil diupdate'
+      message: "Aplikasi berhasil diupdate",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengupdate aplikasi',
-      error: error.message
+      message: "Error mengupdate aplikasi",
+      error: error.message,
     });
   }
 };
@@ -199,22 +316,25 @@ exports.updateAplikasi = async (req, res) => {
 // Delete aplikasi
 exports.deleteAplikasi = async (req, res) => {
   try {
-    const [result] = await pool.query('DELETE FROM data_aplikasi WHERE nama_aplikasi = ?', [req.params.id]);
+    const [result] = await pool.query(
+      "DELETE FROM data_aplikasi WHERE nama_aplikasi = ?",
+      [req.params.id]
+    );
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Aplikasi tidak ditemukan'
+        message: "Aplikasi tidak ditemukan",
       });
     }
     res.json({
       success: true,
-      message: 'Aplikasi berhasil dihapus'
+      message: "Aplikasi berhasil dihapus",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menghapus aplikasi',
-      error: error.message
+      message: "Error menghapus aplikasi",
+      error: error.message,
     });
   }
 };
