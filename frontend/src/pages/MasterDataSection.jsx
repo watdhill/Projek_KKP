@@ -625,13 +625,14 @@ function MasterDataSection() {
                   {/* Nama Format */}
                   <div style={{ marginBottom: '16px' }}>
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                      Nama Format
+                      Nama Format <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input
                       type="text"
                       placeholder="Nama Format Laporan"
                       value={formData.nama_format ?? ''}
                       onChange={(e) => setFormData({ ...formData, nama_format: e.target.value })}
+                      required
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -649,7 +650,7 @@ function MasterDataSection() {
                     {/* Available */}
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                        Daftar Data
+                        Daftar Data <span style={{ color: '#64748b', fontWeight: 400 }}>(Klik untuk memilih)</span>
                       </label>
                       <div style={{
                         border: '1px solid #e2e8f0',
@@ -687,7 +688,7 @@ function MasterDataSection() {
                     {/* Selected */}
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                        Data Dipilih
+                        Data Dipilih <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{
                         border: '1px solid #e2e8f0',
@@ -732,11 +733,12 @@ function MasterDataSection() {
                   {/* Status Aktif */}
                   <div style={{ marginBottom: '24px' }}>
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                      Status Aktif
+                      Status Aktif <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <select
                       value={formData.status_aktif ?? 1}
                       onChange={(e) => setFormData({ ...formData, status_aktif: e.target.value })}
+                      required
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -767,13 +769,14 @@ function MasterDataSection() {
                         fontWeight: 500,
                         color: '#374151',
                       }}>
-                        {field.label}
+                        {field.label} <span style={{ color: '#ef4444' }}>*</span>
                       </label>
 
                       {field.type === 'select' ? (
                         <select
                           value={formData[field.name] ?? ''}
                           onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                          required
                           style={{
                             width: '100%',
                             padding: '10px 12px',
@@ -798,6 +801,7 @@ function MasterDataSection() {
                           placeholder={field.placeholder}
                           value={formData[field.name] ?? ''}
                           onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                          required
                           style={{
                             width: '100%',
                             padding: '10px 12px',

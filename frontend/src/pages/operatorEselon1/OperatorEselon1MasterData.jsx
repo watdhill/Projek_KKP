@@ -21,16 +21,16 @@ const TABLE_COLUMNS = {
 
 const FORM_FIELDS = {
   pic_internal: [
-    { name: 'eselon2_id', label: 'Unit Eselon 2', type: 'select', options: [] }, // Options diisi dynamic
-    { name: 'nama_pic_internal', label: 'Nama PIC Internal', type: 'text', placeholder: 'Nama PIC Internal' },
-    { name: 'kontak_pic_internal', label: 'Kontak', type: 'text', placeholder: 'Email / No. HP' },
-    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }] },
+    { name: 'eselon2_id', label: 'Unit Eselon 2', type: 'select', options: [], required: true }, // Options diisi dynamic
+    { name: 'nama_pic_internal', label: 'Nama PIC Internal', type: 'text', placeholder: 'Nama PIC Internal', required: true },
+    { name: 'kontak_pic_internal', label: 'Kontak', type: 'text', placeholder: 'Email / No. HP', required: true },
+    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }], required: true },
   ],
   pic_eksternal: [
-    { name: 'nama_pic_eksternal', label: 'Nama PIC Eksternal', type: 'text', placeholder: 'Nama PIC Eksternal' },
-    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Keterangan' },
-    { name: 'kontak_pic_eksternal', label: 'Kontak', type: 'text', placeholder: 'Email / No. HP' },
-    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }] },
+    { name: 'nama_pic_eksternal', label: 'Nama PIC Eksternal', type: 'text', placeholder: 'Nama PIC Eksternal', required: true },
+    { name: 'keterangan', label: 'Keterangan', type: 'text', placeholder: 'Keterangan', required: true },
+    { name: 'kontak_pic_eksternal', label: 'Kontak', type: 'text', placeholder: 'Email / No. HP', required: true },
+    { name: 'status_aktif', label: 'Status', type: 'select', options: [{ value: 1, label: 'Aktif' }, { value: 0, label: 'Nonaktif' }], required: true },
   ],
 };
 
@@ -148,6 +148,17 @@ function OperatorEselon1MasterData() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Client-side validation
+      const fields = FORM_FIELDS[activeTab] || [];
+      for (const field of fields) {
+        if (field.required) {
+          const val = formData[field.name];
+          if (val === undefined || val === null || val.toString().trim() === '') {
+            throw new Error(`Field "${field.label}" wajib diisi`);
+          }
+        }
+      }
+
       const idField = ID_FIELDS[activeTab];
       const editId = editingItem?.[idField] ?? editingItem?.id;
       const url = editingItem
@@ -368,12 +379,13 @@ function OperatorEselon1MasterData() {
                 return (
                   <div key={field.name} style={{ marginBottom: '16px' }}>
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                      {field.label}
+                      {field.label} <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     {field.type === 'select' ? (
                       <select
                         value={formData[field.name] ?? ''}
                         onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                        required
                         style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px' }}
                       >
                         {options.length === 0 ? <option value="">-- Kosong --</option> :
@@ -385,6 +397,7 @@ function OperatorEselon1MasterData() {
                         placeholder={field.placeholder}
                         value={formData[field.name] ?? ''}
                         onChange={(e) => setFormData({ ...formData, [field.name]: e.target.value })}
+                        required
                         style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '14px' }}
                       />
                     )}

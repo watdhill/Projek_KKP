@@ -17,27 +17,28 @@ import OperatorEselon2Dashboard from './pages/operatorEselon2/OperatorEselon2Das
 import OperatorEselon2MasterData from './pages/operatorEselon2/OperatorEselon2MasterData'
 import OperatorEselon2DataAplikasi from './pages/operatorEselon2/OperatorEselon2DataAplikasi'
 import OperatorEselon2Profile from './pages/operatorEselon2/OperatorEselon2Profile'
+import AdminProfile from './pages/AdminProfile'
 import LoginPage from './pages/LoginPage'
 
 const adminNav = [
-  { label: 'Dashboard', path: '/admin' },
-  { label: 'Master Data', path: '/admin/master-data' },
-  { label: 'Data Aplikasi', path: '/admin/data-aplikasi' },
-  { label: 'Laporan', path: '/admin/laporan' },
-  { label: 'Pengguna', path: '/admin/pengguna' },
-  { label: 'Audit Log', path: '/admin/audit-log' },
+  { label: 'Dashboard', path: '/admin', icon: 'dashboard' },
+  { label: 'Master Data', path: '/admin/master-data', icon: 'master' },
+  { label: 'Pengguna', path: '/admin/pengguna', icon: 'pengguna' },
+  { label: 'Data Aplikasi', path: '/admin/data-aplikasi', icon: 'aplikasi' },
+  { label: 'Laporan', path: '/admin/laporan', icon: 'laporan' },
+  { label: 'Audit Log', path: '/admin/audit-log', icon: 'audit' },
 ]
 
 const operatorEselon1Nav = [
-  { label: 'Dashboard', path: '/operator-eselon1' },
-  { label: 'Master Data', path: '/operator-eselon1/master-data' },
-  { label: 'Data Aplikasi', path: '/operator-eselon1/data-aplikasi' },
+  { label: 'Dashboard', path: '/operator-eselon1', icon: 'dashboard' },
+  { label: 'Master Data', path: '/operator-eselon1/master-data', icon: 'master' },
+  { label: 'Data Aplikasi', path: '/operator-eselon1/data-aplikasi', icon: 'aplikasi' },
 ]
 
 const operatorEselon2Nav = [
-  { label: 'Dashboard', path: '/operator-eselon2' },
-  { label: 'Master Data', path: '/operator-eselon2/master-data' },
-  { label: 'Data Aplikasi', path: '/operator-eselon2/data-aplikasi' },
+  { label: 'Dashboard', path: '/operator-eselon2', icon: 'dashboard' },
+  { label: 'Master Data', path: '/operator-eselon2/master-data', icon: 'master' },
+  { label: 'Data Aplikasi', path: '/operator-eselon2/data-aplikasi', icon: 'aplikasi' },
 ]
 
 const roleHome = {
@@ -70,6 +71,7 @@ function App() {
           <Route path="data-aplikasi" element={<DataAplikasiSection />} />
           <Route path="laporan" element={<LaporanSection />} />
           <Route path="audit-log" element={<AuditLogSection />} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
 
