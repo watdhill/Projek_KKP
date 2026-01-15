@@ -124,7 +124,7 @@ function DataAplikasiSection() {
       if (!res.ok) throw new Error('Gagal mengambil detail aplikasi');
       const result = await res.json();
       const app = result.data;
-      
+
       // Pre-fill form with existing data
       setFormData({
         nama_aplikasi: app.nama_aplikasi || '',
@@ -167,7 +167,7 @@ function DataAplikasiSection() {
         va_pt_waktu: app.va_pt_waktu || '',
         antivirus: app.antivirus || ''
       });
-      
+
       setEditMode(true);
       setOriginalAppName(appName);
       setShowModal(true);
@@ -273,11 +273,11 @@ function DataAplikasiSection() {
         va_pt_waktu: formData.va_pt_status === 'ya' ? formData.va_pt_waktu : null
       };
 
-      const url = editMode 
+      const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(originalAppName)}`
         : 'http://localhost:5000/api/aplikasi';
       const method = editMode ? 'PUT' : 'POST';
-      
+
       const res = await fetch(url, {
         method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
       });
@@ -350,7 +350,7 @@ function DataAplikasiSection() {
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Unit</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>PIC</th>
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 700 }}>Status</th>
-                
+
                 <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 700 }}>Aksi</th>
               </tr>
             </thead>
@@ -372,7 +372,7 @@ function DataAplikasiSection() {
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ display: 'inline-block', padding: '6px 12px', borderRadius: '12px', backgroundColor: badge.bg, color: badge.color, fontWeight: 700, fontSize: '13px' }}>{badge.label}</span>
                     </td>
-                    
+
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                         <button onClick={() => openEditModal(app.nama_aplikasi)} title="Edit" style={{ padding: '6px 8px', background: '#fef3c7', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>✏️</button>

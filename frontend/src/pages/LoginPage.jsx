@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import kkpLogo from '../kkp.png'
 
 const roleHome = {
   admin: '/admin',
@@ -85,188 +86,204 @@ function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f5d8c 0%, #1a7fa0 100%)',
-      padding: '16px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      backgroundColor: '#f8fafc',
+      padding: '20px',
+      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '420px',
+        maxWidth: '900px',
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
-        padding: '48px 40px',
-        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.12)',
+        borderRadius: '24px',
+        display: 'flex',
+        flexDirection: 'row',
+        overflow: 'hidden',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.1)',
+        minHeight: '540px'
       }}>
-        {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{
-            fontSize: '28px',
-            fontWeight: '700',
-            color: '#0f5d8c',
-            margin: '0 0 8px 0',
-            letterSpacing: '-0.5px'
-          }}>
-            Portal KKP
-          </h1>
-          <p style={{
-            color: '#64748b',
-            fontSize: '14px',
-            margin: '0',
-            fontWeight: '400'
-          }}>
-            Sistem Informasi Manajemen Aplikasi
-          </p>
+        {/* Left Side: Logo */}
+        <div style={{
+          flex: '1',
+          backgroundColor: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px',
+          borderRight: '1px solid #f1f5f9'
+        }}>
+          <img
+            src={kkpLogo}
+            alt="KKP Logo"
+            style={{
+              width: '100%',
+              maxWidth: '320px',
+              height: 'auto',
+              objectFit: 'contain'
+            }}
+          />
         </div>
 
-        {error && (
-          <div style={{
-            marginBottom: '20px',
-            padding: '12px 14px',
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            color: '#b91c1c',
-            fontSize: '13px',
-            fontWeight: '500'
-          }}>
-            {error}
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Email Input */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '13px',
-              fontWeight: '600',
-              color: '#1e293b'
+        {/* Right Side: Form */}
+        <div style={{
+          flex: '1',
+          padding: '60px 50px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}>
+          <div style={{ marginBottom: '40px' }}>
+            <h1 style={{
+              fontSize: '22px',
+              fontWeight: '700',
+              color: '#1e293b',
+              margin: '0',
+              textAlign: 'center',
+              lineHeight: '1.4'
             }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              Sistem Informasi Manajemen Aplikasi
+            </h1>
+          </div>
+
+          {error && (
+            <div style={{
+              marginBottom: '24px',
+              padding: '12px 16px',
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fee2e2',
+              borderRadius: '12px',
+              color: '#b91c1c',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {/* Email Input */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#64748b'
+              }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                placeholder="nama @kkp.com"
+                style={{
+                  width: '100%',
+                  padding: '14px 18px',
+                  backgroundColor: '#cbd5e180',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '15px',
+                  color: '#1e293b',
+                  boxSizing: 'border-box',
+                  transition: 'all 0.2s ease'
+                }}
+              />
+            </div>
+
+            {/* Password Input */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#64748b'
+              }}>
+                Password
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  placeholder="Masukkan password"
+                  style={{
+                    width: '100%',
+                    padding: '14px 18px',
+                    paddingRight: '46px',
+                    backgroundColor: '#cbd5e180',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    color: '#1e293b',
+                    boxSizing: 'border-box',
+                    transition: 'all 0.2s ease'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
+                  style={{
+                    position: 'absolute',
+                    right: '14px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    fontSize: '18px',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    padding: '4px',
+                    color: '#64748b',
+                    opacity: loading ? 0.5 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div style={{ marginBottom: '32px', textAlign: 'left' }}>
+              <a href="#" style={{
+                color: '#00a8e8',
+                fontSize: '14px',
+                textDecoration: 'none',
+                fontWeight: '500'
+              }}>
+                Lupa Password?
+              </a>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
               disabled={loading}
               style={{
                 width: '100%',
-                padding: '11px 13px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                boxSizing: 'border-box',
-                backgroundColor: loading ? '#f9fafb' : '#ffffff',
-                transition: 'border-color 0.2s, box-shadow 0.2s'
+                padding: '14px',
+                backgroundColor: loading ? '#94a3b8' : '#00a8e8',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 6px -1px rgba(0, 168, 232, 0.2)'
               }}
-              onFocus={(e) => {
-                e.target.style.borderColor = '#0f5d8c'
-                e.target.style.boxShadow = '0 0 0 3px rgba(15, 93, 140, 0.08)'
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = '#d1d5db'
-                e.target.style.boxShadow = 'none'
-              }}
-              placeholder="nama@example.com"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '6px',
-              fontSize: '13px',
-              fontWeight: '600',
-              color: '#1e293b'
-            }}>
-              Password
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '11px 13px',
-                  paddingRight: '40px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  fontFamily: 'inherit',
-                  boxSizing: 'border-box',
-                  backgroundColor: loading ? '#f9fafb' : '#ffffff',
-                  transition: 'border-color 0.2s, box-shadow 0.2s'
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#0f5d8c'
-                  e.target.style.boxShadow = '0 0 0 3px rgba(15, 93, 140, 0.08)'
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#d1d5db'
-                  e.target.style.boxShadow = 'none'
-                }}
-                placeholder="Masukkan password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                disabled={loading}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  fontSize: '16px',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  padding: '4px',
-                  color: '#64748b',
-                  opacity: loading ? 0.5 : 1
-                }}
-              >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px 14px',
-              background: loading ? '#cbd5e1' : '#0f5d8c',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: '600',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '14px',
-              transition: 'background-color 0.2s ease',
-              letterSpacing: '0.3px'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.target.style.backgroundColor = '#0d4a6d'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.target.style.backgroundColor = '#0f5d8c'
-              }
-            }}
-          >
-            {loading ? 'Sedang login...' : 'Masuk'}
-          </button>
-        </form>
+              onMouseEnter={(e) => !loading && (e.target.style.backgroundColor = '#0096d1')}
+              onMouseLeave={(e) => !loading && (e.target.style.backgroundColor = '#00a8e8')}
+            >
+              {loading ? 'Sedang login...' : 'Login'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )

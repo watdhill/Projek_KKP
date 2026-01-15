@@ -9,7 +9,7 @@ function OperatorEselon1Profile() {
     nama_role: '',
     nama_eselon1: ''
   });
-  
+
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [passwordData, setPasswordData] = useState({
@@ -30,7 +30,7 @@ function OperatorEselon1Profile() {
       const userId = localStorage.getItem('userId');
       const response = await fetch(`http://localhost:5000/api/users/${userId}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setUserData(result.data);
         setFormData(result.data);
@@ -89,10 +89,10 @@ function OperatorEselon1Profile() {
         setUserData(result.data);
         setEditMode(false);
         setMessage({ type: 'success', text: 'Profile berhasil diupdate' });
-        
+
         // Update localStorage jika ada
         localStorage.setItem('userName', result.data.nama);
-        
+
         setTimeout(() => setMessage({ type: '', text: '' }), 3000);
       } else {
         setMessage({ type: 'error', text: result.message || 'Gagal mengupdate profile' });
@@ -288,13 +288,14 @@ function OperatorEselon1Profile() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#0f172a', marginBottom: '6px' }}>
-                  NIP
+                  NIP <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
                   type="text"
                   name="nip"
                   value={formData.nip || ''}
                   onChange={handleInputChange}
+                  required
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -327,13 +328,14 @@ function OperatorEselon1Profile() {
 
               <div>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 500, color: '#0f172a', marginBottom: '6px' }}>
-                  Jabatan
+                  Jabatan <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
                   type="text"
                   name="jabatan"
                   value={formData.jabatan || ''}
                   onChange={handleInputChange}
+                  required
                   style={{
                     width: '100%',
                     padding: '10px 12px',
