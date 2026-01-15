@@ -4,8 +4,10 @@ import kkpLogo from '../kkp.png'
 
 function Layout({ navItems }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [hoverItem, setHoverItem] = useState(null);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const userRole = localStorage.getItem('userRole');
   const userName = localStorage.getItem('userName') || 'User';
@@ -93,20 +95,46 @@ function Layout({ navItems }) {
   };
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className="app-shell" style={{ gridTemplateColumns: isCollapsed ? '80px 1fr' : '280px 1fr' }}>
+      <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`} style={{ display: 'flex', flexDirection: 'column' }}>
         <div className="brand">
-          <div className="brand-logo-container">
-            <img src={kkpLogo} alt="KKP Logo" className="sidebar-logo" />
-          </div>
-          <div className="brand-badge">
-            <span className="brand-badge-text">Nama Aplikasi</span>
-          </div>
+          {!isCollapsed ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+              <div className="brand-logo-container">
+                <img src={kkpLogo} alt="KKP Logo" className="sidebar-logo" />
+              </div>
+              <div className="brand-badge">
+                <span className="brand-badge-text">Nama Aplikasi</span>
+              </div>
+            </div>
+          ) : null}
+
+          <button 
+            className="sidebar-toggle"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? 'Expand' : 'Collapse'}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {isCollapsed ? (
+                <>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </>
+              )}
+            </svg>
+          </button>
         </div>
 
         <nav className="nav">
           {navItems.map((item) => {
-            const active = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            const active = location.pathname === item.path;
             const isHovered = hoverItem === item.label;
 
             return (
@@ -116,9 +144,10 @@ function Layout({ navItems }) {
                 className={`nav-item ${active ? 'active' : ''} ${isHovered && !active ? 'hover' : ''}`}
                 onMouseEnter={() => setHoverItem(item.label)}
                 onMouseLeave={() => setHoverItem(null)}
+                title={isCollapsed ? item.label : ''}
               >
                 <div className="nav-icon">{getIcon(item.icon)}</div>
-                <span className="nav-label">{item.label}</span>
+                {!isCollapsed && <span className="nav-label">{item.label}</span>}
               </Link>
             );
           })}
@@ -128,39 +157,41 @@ function Layout({ navItems }) {
             onClick={() => setShowLogoutConfirm(true)}
             onMouseEnter={() => setHoverItem('Logout')}
             onMouseLeave={() => setHoverItem(null)}
+            title={isCollapsed ? 'Logout' : ''}
           >
             <div className="nav-icon">{getIcon('logout')}</div>
-            <span className="nav-label">Logout</span>
+            {!isCollapsed && <span className="nav-label">Logout</span>}
           </button>
         </nav>
 
-        <div style={{
-          marginTop: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          borderTop: '1px solid #e2e8f0',
-          paddingTop: '12px'
-        }}>
-          <Link
-            to={getProfilePath()}
-            className="sidebar-profile-card"
-          >
-            <div className="sidebar-avatar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <div className="sidebar-info">
-              <div className="sidebar-user-name">{userName}</div>
-              <div className="sidebar-user-eselon">
-                {userRole === 'admin' ? 'Administrator' : (eselonName || 'Unit KKP')}
+        {!isCollapsed && (
+          <div style={{
+            marginTop: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            paddingTop: '12px'
+          }}>
+            <Link
+              to={getProfilePath()}
+              className="sidebar-profile-card"
+            >
+              <div className="sidebar-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
               </div>
-            </div>
-          </Link>
-
-        </div>
+              <div className="sidebar-info">
+                <div className="sidebar-user-name">{userName}</div>
+                <div className="sidebar-user-eselon">
+                  {userRole === 'admin' ? 'Administrator' : (eselonName || 'Unit KKP')}
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
       </aside>
 
       {showLogoutConfirm && (
