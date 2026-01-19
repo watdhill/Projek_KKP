@@ -37,6 +37,8 @@ function DataAplikasiSection() {
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
   const [master, setMaster] = useState({});
+  const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -46,7 +48,7 @@ function DataAplikasiSection() {
     luaran_output: "",
     eselon1_id: "",
     eselon2_id: "",
-    cara_akses_id: "",
+    cara_akses_id: [],
     frekuensi_pemakaian: "",
     status_aplikasi: "",
     pdn_id: "",
@@ -80,6 +82,11 @@ function DataAplikasiSection() {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const errorBorderColor = "#ef4444";
+  const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
+  const errorBoxShadow = errorRing;
 
   // fetch apps function (reusable)
   const fetchApps = async () => {
@@ -151,6 +158,7 @@ function DataAplikasiSection() {
     fetchMasterDropdowns();
     setEditMode(false);
     setOriginalAppName("");
+    setFieldErrors({});
     setFormData({
       nama_aplikasi: "",
       domain: "",
@@ -160,7 +168,7 @@ function DataAplikasiSection() {
       luaran_output: "",
       eselon1_id: "",
       eselon2_id: "",
-      cara_akses_id: "",
+      cara_akses_id: [],
       frekuensi_pemakaian: "",
       status_aplikasi: "",
       pdn_id: "",
@@ -199,6 +207,7 @@ function DataAplikasiSection() {
   const openEditModal = async (appName) => {
     try {
       fetchMasterDropdowns();
+      setFieldErrors({});
       const res = await fetch(
         `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`
       );
@@ -216,7 +225,19 @@ function DataAplikasiSection() {
         luaran_output: app.luaran_output || "",
         eselon1_id: app.eselon1_id ? String(app.eselon1_id) : "",
         eselon2_id: app.eselon2_id ? String(app.eselon2_id) : "",
-        cara_akses_id: app.cara_akses_id ? String(app.cara_akses_id) : "",
+        cara_akses_id: (() => {
+          try {
+            // Try to parse from cara_akses_multiple first (new column)
+            if (app.cara_akses_multiple) {
+              return JSON.parse(app.cara_akses_multiple);
+            }
+            // Fallback to single cara_akses_id
+            return app.cara_akses_id ? [String(app.cara_akses_id)] : [];
+          } catch {
+            // If parsing fails, use cara_akses_id as single item
+            return app.cara_akses_id ? [String(app.cara_akses_id)] : [];
+          }
+        })(),
         frekuensi_pemakaian: app.frekuensi_pemakaian
           ? String(app.frekuensi_pemakaian)
           : "",
@@ -259,16 +280,87 @@ function DataAplikasiSection() {
     }
   };
 
-  const handleFormChange = (k, v) =>
+  const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+    setFieldErrors((prev) => {
+      if (!prev || Object.keys(prev).length === 0) return prev;
+
+      const next = { ...prev };
+
+      const hasKeyError = Object.prototype.hasOwnProperty.call(next, k);
+      const shouldAlsoClear =
+        (k === "waf" &&
+          Object.prototype.hasOwnProperty.call(next, "waf_lainnya")) ||
+        (k === "va_pt_status" &&
+          Object.prototype.hasOwnProperty.call(next, "va_pt_waktu"));
+
+      if (!hasKeyError && !shouldAlsoClear) return prev;
+
+      const isEmptyValue = (() => {
+        if (k === "cara_akses_id") return !Array.isArray(v) || v.length === 0;
+        if (v === null || v === undefined) return true;
+        if (typeof v === "string") return v.trim() === "";
+        return false;
+      })();
+
+      if (!isEmptyValue) {
+        delete next[k];
+      }
+
+      if (k === "waf" && v !== "lainnya") {
+        delete next.waf_lainnya;
+      }
+      if (k === "va_pt_status" && v !== "ya") {
+        delete next.va_pt_waktu;
+      }
+
+      return next;
+    });
+  };
+
+  // Handler khusus untuk IP Address dengan auto-formatting
+  const handleIpChange = (value) => {
+    // Hanya izinkan angka, titik, dan karakter IPv6 (huruf a-f, A-F, titik dua)
+    const cleanValue = value.replace(/[^0-9a-fA-F:.]/g, "");
+    handleFormChange("alamat_ip_publik", cleanValue);
+  };
 
   const handleSubmitForm = async (e) => {
     e.preventDefault();
-    if (!formData.nama_aplikasi || formData.nama_aplikasi.trim() === "") {
-      alert("Nama Aplikasi wajib diisi");
+    // Lakukan validasi terlebih dahulu
+    if (!validateForm()) {
       return;
     }
 
+    // Tampilkan modal konfirmasi
+    setShowConfirmModal(true);
+  };
+
+  const focusFirstInvalidField = (missingErrors, fieldOrder) => {
+    const firstKey = (fieldOrder || []).find((k) => missingErrors?.[k]);
+    if (!firstKey) return;
+
+    setTimeout(() => {
+      const target = document.querySelector(`[data-field="${firstKey}"]`);
+      if (!target) return;
+
+      try {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {
+        // ignore
+      }
+
+      if (typeof target.focus === "function") {
+        try {
+          target.focus({ preventScroll: true });
+        } catch {
+          target.focus();
+        }
+      }
+    }, 0);
+  };
+
+  const validateForm = () => {
     try {
       // Require all fields to be filled
       const fieldLabels = {
@@ -284,7 +376,6 @@ function DataAplikasiSection() {
         frekuensi_pemakaian: "Frekuensi Pemakaian",
         status_aplikasi: "Status Aplikasi",
         pdn_id: "PDN Utama",
-        pdn_backup: "PDN Backup",
         environment_id: "Environment",
         pic_internal: "PIC Internal",
         pic_eksternal: "PIC Eksternal",
@@ -313,49 +404,83 @@ function DataAplikasiSection() {
         antivirus: "Antivirus",
       };
 
+      const fieldOrder = Object.keys(fieldLabels);
+
       const missing = [];
+      const missingErrors = {};
       for (const key of Object.keys(fieldLabels)) {
         const val = formData[key];
         // waf_lainnya only required when waf === 'lainnya'
         if (key === "waf_lainnya") continue;
         // va_pt_waktu only required when va_pt_status === 'ya'
         if (key === "va_pt_waktu") continue;
+
+        // Special check for cara_akses_id (array)
+        if (key === "cara_akses_id") {
+          if (!Array.isArray(val) || val.length === 0) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+          }
+          continue;
+        }
+
         if (
           val === null ||
           val === undefined ||
           (typeof val === "string" && val.trim() === "")
         ) {
           missing.push(fieldLabels[key]);
+          missingErrors[key] = true;
         }
       }
 
       // Conditional checks
       if (formData.waf === "lainnya") {
-        if (!formData.waf_lainnya || formData.waf_lainnya.trim() === "")
+        if (!formData.waf_lainnya || formData.waf_lainnya.trim() === "") {
           missing.push(fieldLabels["waf_lainnya"]);
+          missingErrors.waf_lainnya = true;
+        }
       }
       if (formData.va_pt_status === "ya") {
-        if (!formData.va_pt_waktu || formData.va_pt_waktu.trim() === "")
+        if (!formData.va_pt_waktu || formData.va_pt_waktu.trim() === "") {
           missing.push(fieldLabels["va_pt_waktu"]);
+          missingErrors.va_pt_waktu = true;
+        }
       }
 
       if (missing.length > 0) {
+        setFieldErrors(missingErrors);
+        focusFirstInvalidField(missingErrors, fieldOrder);
         alert("Field berikut wajib diisi:\n- " + missing.join("\n- "));
-        return;
+        return false;
       }
+
+      // clear any previous validation errors
+      if (Object.keys(fieldErrors || {}).length > 0) setFieldErrors({});
 
       // Additional client-side validation
       if (
         formData.alamat_ip_publik &&
         formData.alamat_ip_publik.trim() !== ""
       ) {
-        const ipRegex =
-          /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
-        if (!ipRegex.test(formData.alamat_ip_publik.trim())) {
+        const ipValue = formData.alamat_ip_publik.trim();
+
+        // Validasi IPv4
+        const ipv4Regex =
+          /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+        // Validasi IPv6 (format standar dan compressed)
+        const ipv6Regex =
+          /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+
+        const isValidIpv4 = ipv4Regex.test(ipValue);
+        const isValidIpv6 = ipv6Regex.test(ipValue);
+
+        if (!isValidIpv4 && !isValidIpv6) {
           alert(
-            "Alamat IP Publik tidak valid. Gunakan format IPv4 seperti 192.168.0.1"
+            "Alamat IP Publik tidak valid.\n\nFormat yang didukung:\n- IPv4: 192.168.1.1\n- IPv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334"
           );
-          return;
+          return false;
         }
       }
       if (
@@ -364,10 +489,21 @@ function DataAplikasiSection() {
       ) {
         if (isNaN(Number(formData.nilai_pengembangan_aplikasi))) {
           alert("Nilai Pengembangan Aplikasi harus berupa angka");
-          return;
+          return false;
         }
       }
 
+      return true;
+    } catch (err) {
+      console.error("Validation error:", err);
+      return false;
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    setShowConfirmModal(false);
+
+    try {
       setSubmitting(true);
 
       const payload = {
@@ -379,7 +515,14 @@ function DataAplikasiSection() {
         luaran_output: formData.luaran_output || null,
         eselon1_id: formData.eselon1_id || null,
         eselon2_id: formData.eselon2_id || null,
-        cara_akses_id: formData.cara_akses_id || null,
+        cara_akses_id:
+          formData.cara_akses_id && formData.cara_akses_id.length > 0
+            ? formData.cara_akses_id[0]
+            : null,
+        cara_akses_multiple:
+          formData.cara_akses_id && formData.cara_akses_id.length > 0
+            ? JSON.stringify(formData.cara_akses_id)
+            : null,
         frekuensi_pemakaian: formData.frekuensi_pemakaian || null,
         status_aplikasi: formData.status_aplikasi || null,
         pdn_id: formData.pdn_id || null,
@@ -428,8 +571,17 @@ function DataAplikasiSection() {
         body: JSON.stringify(payload),
       });
       const result = await res.json();
-      if (!res.ok)
-        throw new Error(result.message || "Gagal menyimpan aplikasi");
+      if (!res.ok) {
+        const serverMessage = result?.message;
+        const serverError = result?.error;
+        const combinedMessage = [serverMessage, serverError]
+          .filter(Boolean)
+          .join(" | ");
+        const err = new Error(combinedMessage || "Gagal menyimpan aplikasi");
+        err.status = res.status;
+        err.payload = result;
+        throw err;
+      }
       // refresh list
       await fetchApps();
       setShowModal(false);
@@ -439,7 +591,16 @@ function DataAplikasiSection() {
           : "Aplikasi berhasil ditambahkan"
       );
     } catch (err) {
-      alert("Error: " + (err.message || err));
+      const status = err?.status;
+      const payload = err?.payload;
+      if (status === 409 || payload?.code === "DUPLICATE_NAMA_APLIKASI") {
+        alert(
+          "Nama aplikasi sudah ada di database!\n\n" +
+            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada."
+        );
+      } else {
+        alert("Error: " + (err?.message || err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -459,10 +620,10 @@ function DataAplikasiSection() {
       <div
         style={{
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "center",
           justifyContent: "space-between",
           marginBottom: "20px",
-          padding: "20px 24px",
+          padding: "18px 22px",
           background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
           borderRadius: "14px",
           boxShadow:
@@ -470,47 +631,107 @@ function DataAplikasiSection() {
           border: "1px solid #e2e8f0",
         }}
       >
-        <div>
-          <h1
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div
             style={{
-              margin: 0,
-              marginBottom: "6px",
-              fontSize: "24px",
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
+              width: "48px",
+              height: "48px",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              borderRadius: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
             }}
           >
-            Data Aplikasi
-          </h1>
-          <p
-            style={{
-              margin: 0,
-              color: "#64748b",
-              fontSize: "13px",
-              fontWeight: 500,
-              lineHeight: 1.4,
-            }}
-          >
-            Kelola seluruh data aplikasi dan sistem informasi secara terpusat
-          </p>
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ color: "#fff" }}
+            >
+              <rect
+                x="3"
+                y="3"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="14"
+                y="3"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="3"
+                y="14"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <rect
+                x="14"
+                y="14"
+                width="7"
+                height="7"
+                rx="1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                marginBottom: "3px",
+                fontSize: "20px",
+                fontWeight: 700,
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+              }}
+            >
+              Data Aplikasi
+            </h1>
+            <p
+              style={{
+                margin: 0,
+                color: "#64748b",
+                fontSize: "12.5px",
+                fontWeight: 500,
+                lineHeight: 1.3,
+              }}
+            >
+              Kelola seluruh data aplikasi dan sistem informasi
+            </p>
+          </div>
         </div>
         <div>
           <button
             onClick={openModal}
             style={{
-              background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
               color: "#fff",
-              padding: "9px 18px",
+              padding: "8px 16px",
               borderRadius: "10px",
               border: "none",
               cursor: "pointer",
               fontWeight: 600,
-              fontSize: "13px",
-              boxShadow: "0 2px 8px rgba(14, 165, 233, 0.3)",
+              fontSize: "12.5px",
+              boxShadow: "0 2px 8px rgba(79, 70, 229, 0.3)",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               display: "flex",
               alignItems: "center",
@@ -519,17 +740,17 @@ function DataAplikasiSection() {
             onMouseOver={(e) => {
               e.currentTarget.style.transform = "translateY(-2px)";
               e.currentTarget.style.boxShadow =
-                "0 8px 20px rgba(14, 165, 233, 0.4)";
+                "0 4px 14px rgba(79, 70, 229, 0.4)";
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow =
-                "0 4px 14px rgba(14, 165, 233, 0.3)";
+                "0 2px 8px rgba(79, 70, 229, 0.3)";
             }}
           >
             <svg
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 16 16"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -576,13 +797,13 @@ function DataAplikasiSection() {
             <svg
               style={{
                 position: "absolute",
-                left: "16px",
+                left: "14px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#94a3b8",
               }}
-              width="18"
-              height="18"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -604,13 +825,13 @@ function DataAplikasiSection() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari berdasarkan nama aplikasi, PIC, atau unit..."
+              placeholder="Cari aplikasi, PIC, atau unit..."
               style={{
                 width: "100%",
-                padding: "10px 14px 10px 40px",
+                padding: "9px 14px 9px 38px",
                 borderRadius: "10px",
                 border: "1.5px solid #e2e8f0",
-                fontSize: "13px",
+                fontSize: "12.5px",
                 fontWeight: 500,
                 color: "#1e293b",
                 backgroundColor: "#fafbfc",
@@ -618,10 +839,10 @@ function DataAplikasiSection() {
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#0ea5e9";
+                e.currentTarget.style.borderColor = "#4f46e5";
                 e.currentTarget.style.backgroundColor = "#fff";
                 e.currentTarget.style.boxShadow =
-                  "0 0 0 4px rgba(14, 165, 233, 0.1)";
+                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = "#e2e8f0";
@@ -635,10 +856,10 @@ function DataAplikasiSection() {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
-              padding: "10px 36px 10px 14px",
+              padding: "9px 34px 9px 12px",
               borderRadius: "10px",
               border: "1.5px solid #e2e8f0",
-              fontSize: "13px",
+              fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
               backgroundColor: "#fafbfc",
@@ -647,17 +868,17 @@ function DataAplikasiSection() {
               appearance: "none",
               backgroundImage:
                 "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-              backgroundPosition: "right 10px center",
+              backgroundPosition: "right 8px center",
               backgroundRepeat: "no-repeat",
-              backgroundSize: "20px",
+              backgroundSize: "18px",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onFocus={(e) => {
-              e.currentTarget.style.borderColor = "#0ea5e9";
+              e.currentTarget.style.borderColor = "#4f46e5";
               e.currentTarget.style.backgroundColor = "#fff";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#f1f5f9";
+              e.currentTarget.style.borderColor = "#e2e8f0";
               e.currentTarget.style.backgroundColor = "#fafbfc";
             }}
           >
@@ -675,42 +896,30 @@ function DataAplikasiSection() {
           {(search || statusFilter !== "all") && (
             <div
               style={{
-                padding: "8px 14px",
-                background: "linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)",
+                padding: "7px 12px",
+                background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
                 borderRadius: "10px",
-                fontSize: "12px",
-                color: "#0369a1",
+                fontSize: "11px",
+                color: "#4f46e5",
                 fontWeight: 700,
-                border: "1.5px solid #93c5fd",
+                border: "1.5px solid #c7d2fe",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
+                textTransform: "uppercase",
+                letterSpacing: "0.02em",
               }}
             >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
               <span
                 style={{
-                  color: "#0369a1",
-                  fontWeight: 700,
-                  fontSize: "12px",
-                  letterSpacing: "-0.01em",
+                  width: "5px",
+                  height: "5px",
+                  borderRadius: "50%",
+                  backgroundColor: "#4f46e5",
+                  display: "inline-block",
                 }}
-              >
-                {filtered.length} Aplikasi Ditemukan
-              </span>
+              />
+              <span>{filtered.length} Aplikasi</span>
             </div>
           )}
         </div>
@@ -857,26 +1066,26 @@ function DataAplikasiSection() {
               onClick={openModal}
               style={{
                 marginTop: "18px",
-                background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 color: "#fff",
-                padding: "9px 18px",
+                padding: "8px 16px",
                 borderRadius: "10px",
                 border: "none",
                 cursor: "pointer",
                 fontWeight: 600,
-                fontSize: "13px",
-                boxShadow: "0 2px 8px rgba(14, 165, 233, 0.3)",
+                fontSize: "12.5px",
+                boxShadow: "0 2px 8px rgba(79, 70, 229, 0.3)",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.transform = "translateY(-2px)";
                 e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(14, 165, 233, 0.4)";
+                  "0 4px 12px rgba(79, 70, 229, 0.4)";
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
                 e.currentTarget.style.boxShadow =
-                  "0 2px 8px rgba(14, 165, 233, 0.3)";
+                  "0 2px 8px rgba(79, 70, 229, 0.3)";
               }}
             >
               + Tambah Aplikasi
@@ -912,7 +1121,7 @@ function DataAplikasiSection() {
                 >
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -925,7 +1134,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -938,7 +1147,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -951,7 +1160,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -964,7 +1173,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -977,7 +1186,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
-                      padding: "12px 16px",
+                      padding: "10px 14px",
                       textAlign: "center",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -1002,6 +1211,7 @@ function DataAplikasiSection() {
                       style={{
                         borderBottom: "1px solid #e2e8f0",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        height: "80px",
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.backgroundColor = "#f8fafc";
@@ -1014,15 +1224,21 @@ function DataAplikasiSection() {
                     >
                       <td
                         style={{
-                          padding: "14px 16px",
+                          padding: "10px 14px",
                           fontWeight: 600,
                           color: "#94a3b8",
                           fontSize: "13px",
+                          verticalAlign: "middle",
                         }}
                       >
                         {i + 1}
                       </td>
-                      <td style={{ padding: "14px 16px" }}>
+                      <td
+                        style={{
+                          padding: "10px 14px",
+                          verticalAlign: "middle",
+                        }}
+                      >
                         <div
                           style={{
                             fontWeight: 700,
@@ -1088,74 +1304,100 @@ function DataAplikasiSection() {
                       </td>
                       <td
                         style={{
-                          padding: "14px 16px",
+                          padding: "10px 14px",
                           color: "#475569",
                           fontSize: "13px",
                           fontWeight: 500,
+                          verticalAlign: "middle",
                         }}
                       >
                         {unit}
                       </td>
                       <td
                         style={{
-                          padding: "14px 16px",
+                          padding: "10px 14px",
                           color: "#475569",
                           fontSize: "13px",
                           fontWeight: 500,
+                          verticalAlign: "middle",
                         }}
                       >
                         {pic}
                       </td>
-                      <td style={{ padding: "14px 16px" }}>
+                      <td
+                        style={{
+                          padding: "10px 14px",
+                          verticalAlign: "middle",
+                        }}
+                      >
                         <span
                           style={{
-                            display: "inline-block",
-                            padding: "5px 12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "4px 10px",
                             borderRadius: "12px",
                             backgroundColor: badge.bg,
                             color: badge.color,
                             fontWeight: 700,
                             fontSize: "11px",
                             letterSpacing: "0.01em",
-                            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+                            textTransform: "uppercase",
                           }}
                         >
+                          <span
+                            style={{
+                              width: "5px",
+                              height: "5px",
+                              borderRadius: "50%",
+                              backgroundColor: badge.color,
+                              display: "inline-block",
+                            }}
+                          />
                           {badge.label}
                         </span>
                       </td>
-                      <td style={{ padding: "14px 16px", textAlign: "center" }}>
+                      <td
+                        style={{
+                          padding: "10px 14px",
+                          textAlign: "center",
+                          verticalAlign: "middle",
+                        }}
+                      >
                         <button
                           onClick={() => openEditModal(app.nama_aplikasi)}
                           title="Edit Aplikasi"
                           style={{
                             padding: "6px 12px",
                             background:
-                              "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                            border: "1px solid #fbbf24",
-                            borderRadius: "7px",
+                              "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+                            border: "none",
+                            borderRadius: "8px",
                             cursor: "pointer",
                             fontSize: "12px",
                             fontWeight: 600,
-                            color: "#92400e",
+                            color: "#fff",
                             transition: "all 0.2s ease",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "6px",
+                            gap: "5px",
+                            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
                           }}
                           onMouseOver={(e) => {
                             e.currentTarget.style.transform =
                               "translateY(-2px)";
                             e.currentTarget.style.boxShadow =
-                              "0 4px 12px rgba(251, 191, 36, 0.3)";
+                              "0 4px 12px rgba(245, 158, 11, 0.35)";
                           }}
                           onMouseOut={(e) => {
                             e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "none";
+                            e.currentTarget.style.boxShadow =
+                              "0 2px 6px rgba(245, 158, 11, 0.25)";
                           }}
                         >
                           <svg
-                            width="14"
-                            height="14"
+                            width="12"
+                            height="12"
                             viewBox="0 0 24 24"
                             fill="none"
                             xmlns="http://www.w3.org/2000/svg"
@@ -1228,8 +1470,8 @@ function DataAplikasiSection() {
             </svg>
             <span>
               Menampilkan{" "}
-              <strong style={{ color: "#0ea5e9" }}>{filtered.length}</strong>{" "}
-              dari <strong style={{ color: "#0ea5e9" }}>{apps.length}</strong>{" "}
+              <strong style={{ color: "#4f46e5" }}>{filtered.length}</strong>{" "}
+              dari <strong style={{ color: "#4f46e5" }}>{apps.length}</strong>{" "}
               aplikasi
             </span>
           </div>
@@ -1254,8 +1496,8 @@ function DataAplikasiSection() {
                 gap: "6px",
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.borderColor = "#0ea5e9";
-                e.currentTarget.style.color = "#0ea5e9";
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.color = "#4f46e5";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseOut={(e) => {
@@ -1319,7 +1561,7 @@ function DataAplikasiSection() {
           >
             <div
               style={{
-                background: "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 padding: "16px 20px",
                 borderTopLeftRadius: "14px",
                 borderTopRightRadius: "14px",
@@ -1330,17 +1572,104 @@ function DataAplikasiSection() {
                 boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
               }}
             >
-              <h2
-                style={{
-                  margin: 0,
-                  color: "#fff",
-                  fontSize: "17px",
-                  fontWeight: 700,
-                  letterSpacing: "-0.01em",
-                }}
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "12px" }}
               >
-                {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
-              </h2>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    background: "rgba(255, 255, 255, 0.2)",
+                    borderRadius: "9px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {editMode ? (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
+                    >
+                      <path
+                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M18.5 2.5C18.8978 2.1022 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1022 21.5 2.5C21.8978 2.8978 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.1022 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
+                    >
+                      <rect
+                        x="3"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <rect
+                        x="14"
+                        y="3"
+                        width="7"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <rect
+                        x="3"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <rect
+                        x="14"
+                        y="14"
+                        width="7"
+                        height="7"
+                        rx="1.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    color: "#fff",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
+                </h2>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
                 style={{
@@ -1433,6 +1762,7 @@ function DataAplikasiSection() {
                       Nama Aplikasi
                     </label>
                     <input
+                      data-field="nama_aplikasi"
                       value={formData.nama_aplikasi}
                       onChange={(e) =>
                         handleFormChange("nama_aplikasi", e.target.value)
@@ -1443,10 +1773,16 @@ function DataAplikasiSection() {
                         padding: "10px 14px",
                         borderRadius: "8px",
                         border: "1px solid #e2e8f0",
+                        borderColor: fieldErrors.nama_aplikasi
+                          ? errorBorderColor
+                          : "#e2e8f0",
                         fontSize: "13px",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         outline: "none",
                         backgroundColor: "#fafbfc",
+                        boxShadow: fieldErrors.nama_aplikasi
+                          ? errorRing
+                          : "none",
                       }}
                       onFocus={(e) => {
                         e.currentTarget.style.borderColor = "#0ea5e9";
@@ -1454,8 +1790,12 @@ function DataAplikasiSection() {
                           "0 0 0 3px rgba(14, 165, 233, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#e2e8f0";
-                        e.currentTarget.style.boxShadow = "none";
+                        e.currentTarget.style.borderColor =
+                          fieldErrors.nama_aplikasi
+                            ? errorBorderColor
+                            : "#e2e8f0";
+                        e.currentTarget.style.boxShadow =
+                          fieldErrors.nama_aplikasi ? errorRing : "none";
                       }}
                     />
                   </div>
@@ -1475,6 +1815,7 @@ function DataAplikasiSection() {
                       Deskripsi dan Fungsi
                     </label>
                     <textarea
+                      data-field="deskripsi_fungsi"
                       value={formData.deskripsi_fungsi}
                       onChange={(e) =>
                         handleFormChange("deskripsi_fungsi", e.target.value)
@@ -1486,6 +1827,9 @@ function DataAplikasiSection() {
                         padding: "10px 14px",
                         borderRadius: "8px",
                         border: "1px solid #e2e8f0",
+                        borderColor: fieldErrors.deskripsi_fungsi
+                          ? errorBorderColor
+                          : "#e2e8f0",
                         fontSize: "13px",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         outline: "none",
@@ -1493,6 +1837,9 @@ function DataAplikasiSection() {
                         resize: "vertical",
                         backgroundColor: "#fafbfc",
                         lineHeight: "1.6",
+                        boxShadow: fieldErrors.deskripsi_fungsi
+                          ? errorRing
+                          : "none",
                       }}
                       onFocus={(e) => {
                         e.currentTarget.style.borderColor = "#0ea5e9";
@@ -1500,9 +1847,13 @@ function DataAplikasiSection() {
                           "0 0 0 3px rgba(14, 165, 233, 0.1)";
                       }}
                       onBlur={(e) => {
-                        e.currentTarget.style.borderColor = "#e2e8f0";
+                        e.currentTarget.style.borderColor =
+                          fieldErrors.deskripsi_fungsi
+                            ? errorBorderColor
+                            : "#e2e8f0";
                         e.currentTarget.style.backgroundColor = "#fafbfc";
-                        e.currentTarget.style.boxShadow = "none";
+                        e.currentTarget.style.boxShadow =
+                          fieldErrors.deskripsi_fungsi ? errorRing : "none";
                       }}
                     />
                   </div>
@@ -1563,6 +1914,7 @@ function DataAplikasiSection() {
                         Eselon 1
                       </label>
                       <select
+                        data-field="eselon1_id"
                         value={formData.eselon1_id}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1574,11 +1926,17 @@ function DataAplikasiSection() {
                           padding: "10px 14px",
                           borderRadius: "8px",
                           border: "1px solid #e2e8f0",
+                          borderColor: fieldErrors.eselon1_id
+                            ? errorBorderColor
+                            : "#e2e8f0",
                           fontSize: "13px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
                           backgroundColor: "#fafbfc",
+                          boxShadow: fieldErrors.eselon1_id
+                            ? errorRing
+                            : "none",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#0ea5e9";
@@ -1587,9 +1945,13 @@ function DataAplikasiSection() {
                             "0 0 0 3px rgba(14, 165, 233, 0.08)";
                         }}
                         onBlur={(e) => {
-                          e.currentTarget.style.borderColor = "#e2e8f0";
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.eselon1_id
+                              ? errorBorderColor
+                              : "#e2e8f0";
                           e.currentTarget.style.backgroundColor = "#fafbfc";
-                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.boxShadow =
+                            fieldErrors.eselon1_id ? errorRing : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1621,6 +1983,7 @@ function DataAplikasiSection() {
                         Eselon 2
                       </label>
                       <select
+                        data-field="eselon2_id"
                         value={formData.eselon2_id}
                         onChange={(e) =>
                           handleFormChange("eselon2_id", e.target.value)
@@ -1630,11 +1993,17 @@ function DataAplikasiSection() {
                           padding: "10px 14px",
                           borderRadius: "8px",
                           border: "1px solid #e2e8f0",
+                          borderColor: fieldErrors.eselon2_id
+                            ? errorBorderColor
+                            : "#e2e8f0",
                           fontSize: "13px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
                           backgroundColor: "#fafbfc",
+                          boxShadow: fieldErrors.eselon2_id
+                            ? errorRing
+                            : "none",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#0ea5e9";
@@ -1643,9 +2012,13 @@ function DataAplikasiSection() {
                             "0 0 0 3px rgba(14, 165, 233, 0.08)";
                         }}
                         onBlur={(e) => {
-                          e.currentTarget.style.borderColor = "#e2e8f0";
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.eselon2_id
+                              ? errorBorderColor
+                              : "#e2e8f0";
                           e.currentTarget.style.backgroundColor = "#fafbfc";
-                          e.currentTarget.style.boxShadow = "none";
+                          e.currentTarget.style.boxShadow =
+                            fieldErrors.eselon2_id ? errorRing : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1666,7 +2039,7 @@ function DataAplikasiSection() {
                       </select>
                     </div>
 
-                    <div>
+                    <div style={{ position: "relative" }}>
                       <label
                         style={{
                           display: "block",
@@ -1678,13 +2051,21 @@ function DataAplikasiSection() {
                           letterSpacing: "0.05em",
                         }}
                       >
-                        Cara Akses
+                        Cara Akses Aplikasi
                       </label>
-                      <select
-                        value={formData.cara_akses_id}
-                        onChange={(e) =>
-                          handleFormChange("cara_akses_id", e.target.value)
+                      <div
+                        data-field="cara_akses_id"
+                        tabIndex={0}
+                        role="button"
+                        onClick={() =>
+                          setShowCaraAksesDropdown(!showCaraAksesDropdown)
                         }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setShowCaraAksesDropdown(!showCaraAksesDropdown);
+                          }
+                        }}
                         style={{
                           width: "100%",
                           padding: "10px 14px",
@@ -1694,35 +2075,191 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fafbfc",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
-                          e.currentTarget.style.backgroundColor = "#fff";
-                          e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
-                          e.currentTarget.style.boxShadow = "none";
+                          color: "#0f172a",
+                          backgroundColor: showCaraAksesDropdown
+                            ? "#fff"
+                            : "#fafbfc",
+                          borderColor: fieldErrors.cara_akses_id
+                            ? errorBorderColor
+                            : showCaraAksesDropdown
+                            ? "#0ea5e9"
+                            : "#e2e8f0",
+                          boxShadow: fieldErrors.cara_akses_id
+                            ? errorRing
+                            : showCaraAksesDropdown
+                            ? "0 0 0 3px rgba(14, 165, 233, 0.08)"
+                            : "none",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          minHeight: "41px",
                         }}
                       >
-                        <option value="">-Pilih-</option>
-                        {(master.cara_akses || [])
-                          .filter(
-                            (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
-                          )
-                          .map((x) => (
-                            <option
-                              key={x.cara_akses_id}
-                              value={x.cara_akses_id}
+                        <span
+                          style={{
+                            color:
+                              (formData.cara_akses_id || []).length > 0
+                                ? "#0f172a"
+                                : "#0f172a",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            flex: 1,
+                          }}
+                        >
+                          {(formData.cara_akses_id || []).length > 0
+                            ? `${
+                                (formData.cara_akses_id || []).length
+                              } cara akses dipilih`
+                            : "-Pilih-"}
+                        </span>
+                        <svg
+                          style={{
+                            width: "16px",
+                            height: "16px",
+                            transform: showCaraAksesDropdown
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                            transition: "transform 0.2s",
+                            flexShrink: 0,
+                          }}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+
+                      {showCaraAksesDropdown && (
+                        <>
+                          <div
+                            onClick={() => setShowCaraAksesDropdown(false)}
+                            style={{
+                              position: "fixed",
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              zIndex: 998,
+                            }}
+                          />
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              left: 0,
+                              right: 0,
+                              marginTop: "4px",
+                              border: "1px solid #e2e8f0",
+                              borderRadius: "8px",
+                              backgroundColor: "#fff",
+                              boxShadow:
+                                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                              maxHeight: "240px",
+                              overflowY: "auto",
+                              zIndex: 999,
+                              padding: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "1fr 1fr",
+                                gap: "4px",
+                              }}
                             >
-                              {x.nama_cara_akses}
-                            </option>
-                          ))}
-                      </select>
+                              {(master.cara_akses || [])
+                                .filter(
+                                  (x) =>
+                                    x.status_aktif === 1 ||
+                                    x.status_aktif === true
+                                )
+                                .map((x) => (
+                                  <label
+                                    key={x.cara_akses_id}
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      padding: "6px 8px",
+                                      cursor: "pointer",
+                                      borderRadius: "6px",
+                                      transition: "background-color 0.15s",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor =
+                                        "#f1f5f9";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor =
+                                        "transparent";
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={(
+                                        formData.cara_akses_id || []
+                                      ).includes(String(x.cara_akses_id))}
+                                      onChange={(e) => {
+                                        const id = String(x.cara_akses_id);
+                                        const current =
+                                          formData.cara_akses_id || [];
+                                        const updated = e.target.checked
+                                          ? [...current, id]
+                                          : current.filter(
+                                              (item) => item !== id
+                                            );
+                                        handleFormChange(
+                                          "cara_akses_id",
+                                          updated
+                                        );
+                                      }}
+                                      style={{
+                                        width: "14px",
+                                        height: "14px",
+                                        marginRight: "8px",
+                                        cursor: "pointer",
+                                        accentColor: "#0ea5e9",
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <span
+                                      style={{
+                                        fontSize: "12.5px",
+                                        color: "#334155",
+                                        lineHeight: "1.3",
+                                      }}
+                                    >
+                                      {x.nama_cara_akses}
+                                    </span>
+                                  </label>
+                                ))}
+                            </div>
+                            {(!master.cara_akses ||
+                              master.cara_akses.filter(
+                                (x) =>
+                                  x.status_aktif === 1 ||
+                                  x.status_aktif === true
+                              ).length === 0) && (
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#94a3b8",
+                                  textAlign: "center",
+                                  padding: "12px",
+                                }}
+                              >
+                                Tidak ada data Cara Akses
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1782,6 +2319,7 @@ function DataAplikasiSection() {
                         Frekuensi Pemakaian
                       </label>
                       <select
+                        data-field="frekuensi_pemakaian"
                         value={formData.frekuensi_pemakaian}
                         onChange={(e) =>
                           handleFormChange(
@@ -1794,6 +2332,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.frekuensi_pemakaian
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1824,6 +2365,7 @@ function DataAplikasiSection() {
                         Status Aplikasi
                       </label>
                       <select
+                        data-field="status_aplikasi"
                         value={formData.status_aplikasi}
                         onChange={(e) =>
                           handleFormChange("status_aplikasi", e.target.value)
@@ -1833,6 +2375,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.status_aplikasi
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1863,6 +2408,7 @@ function DataAplikasiSection() {
                         Environment
                       </label>
                       <select
+                        data-field="environment_id"
                         value={formData.environment_id}
                         onChange={(e) =>
                           handleFormChange("environment_id", e.target.value)
@@ -1872,6 +2418,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.environment_id
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1911,6 +2460,7 @@ function DataAplikasiSection() {
                         PDN Utama
                       </label>
                       <select
+                        data-field="pdn_id"
                         value={formData.pdn_id}
                         onChange={(e) => {
                           const id = e.target.value;
@@ -1931,6 +2481,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.pdn_id
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -1992,6 +2545,7 @@ function DataAplikasiSection() {
                         PIC Internal
                       </label>
                       <input
+                        data-field="pic_internal"
                         value={formData.pic_internal}
                         onChange={(e) =>
                           handleFormChange("pic_internal", e.target.value)
@@ -2002,6 +2556,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.pic_internal
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2017,6 +2574,7 @@ function DataAplikasiSection() {
                         PIC Eksternal
                       </label>
                       <input
+                        data-field="pic_eksternal"
                         value={formData.pic_eksternal}
                         onChange={(e) =>
                           handleFormChange("pic_eksternal", e.target.value)
@@ -2027,6 +2585,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.pic_eksternal
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2043,6 +2604,7 @@ function DataAplikasiSection() {
                       Domain
                     </label>
                     <input
+                      data-field="domain"
                       value={formData.domain}
                       onChange={(e) =>
                         handleFormChange("domain", e.target.value)
@@ -2053,6 +2615,9 @@ function DataAplikasiSection() {
                         padding: "10px",
                         borderRadius: "8px",
                         border: "1px solid #e6eef6",
+                        borderColor: fieldErrors.domain
+                          ? errorBorderColor
+                          : "#e6eef6",
                       }}
                     />
                   </div>
@@ -2068,6 +2633,7 @@ function DataAplikasiSection() {
                       User / Pengguna
                     </label>
                     <textarea
+                      data-field="user_pengguna"
                       value={formData.user_pengguna}
                       onChange={(e) =>
                         handleFormChange("user_pengguna", e.target.value)
@@ -2079,6 +2645,9 @@ function DataAplikasiSection() {
                         padding: "10px",
                         borderRadius: "8px",
                         border: "1px solid #e6eef6",
+                        borderColor: fieldErrors.user_pengguna
+                          ? errorBorderColor
+                          : "#e6eef6",
                       }}
                     />
                   </div>
@@ -2094,6 +2663,7 @@ function DataAplikasiSection() {
                       Data Yang Digunakan
                     </label>
                     <textarea
+                      data-field="data_digunakan"
                       value={formData.data_digunakan}
                       onChange={(e) =>
                         handleFormChange("data_digunakan", e.target.value)
@@ -2105,6 +2675,9 @@ function DataAplikasiSection() {
                         padding: "10px",
                         borderRadius: "8px",
                         border: "1px solid #e6eef6",
+                        borderColor: fieldErrors.data_digunakan
+                          ? errorBorderColor
+                          : "#e6eef6",
                       }}
                     />
                   </div>
@@ -2120,6 +2693,7 @@ function DataAplikasiSection() {
                       Luaran/Output
                     </label>
                     <textarea
+                      data-field="luaran_output"
                       value={formData.luaran_output}
                       onChange={(e) =>
                         handleFormChange("luaran_output", e.target.value)
@@ -2131,6 +2705,9 @@ function DataAplikasiSection() {
                         padding: "10px",
                         borderRadius: "8px",
                         border: "1px solid #e6eef6",
+                        borderColor: fieldErrors.luaran_output
+                          ? errorBorderColor
+                          : "#e6eef6",
                       }}
                     />
                   </div>
@@ -2154,6 +2731,7 @@ function DataAplikasiSection() {
                         Bahasa Pemrograman
                       </label>
                       <input
+                        data-field="bahasa_pemrograman"
                         value={formData.bahasa_pemrograman}
                         onChange={(e) =>
                           handleFormChange("bahasa_pemrograman", e.target.value)
@@ -2164,6 +2742,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.bahasa_pemrograman
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2178,6 +2759,7 @@ function DataAplikasiSection() {
                         Basis Data
                       </label>
                       <input
+                        data-field="basis_data"
                         value={formData.basis_data}
                         onChange={(e) =>
                           handleFormChange("basis_data", e.target.value)
@@ -2188,6 +2770,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.basis_data
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2212,6 +2797,7 @@ function DataAplikasiSection() {
                         Kerangka Pengembangan / Framework
                       </label>
                       <input
+                        data-field="kerangka_pengembangan"
                         value={formData.kerangka_pengembangan}
                         onChange={(e) =>
                           handleFormChange(
@@ -2225,6 +2811,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.kerangka_pengembangan
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2239,6 +2828,7 @@ function DataAplikasiSection() {
                         Unit Pengembang
                       </label>
                       <input
+                        data-field="unit_pengembang"
                         value={formData.unit_pengembang}
                         onChange={(e) =>
                           handleFormChange("unit_pengembang", e.target.value)
@@ -2249,6 +2839,9 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.unit_pengembang
+                            ? errorBorderColor
+                            : "#e6eef6",
                         }}
                       />
                     </div>
@@ -2273,6 +2866,7 @@ function DataAplikasiSection() {
                         Unit Operasional Teknologi
                       </label>
                       <input
+                        data-field="unit_operasional_teknologi"
                         value={formData.unit_operasional_teknologi}
                         onChange={(e) =>
                           handleFormChange(
@@ -2286,6 +2880,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.unit_operasional_teknologi
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.unit_operasional_teknologi
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2300,6 +2900,7 @@ function DataAplikasiSection() {
                         Nilai Pengembangan Aplikasi
                       </label>
                       <input
+                        data-field="nilai_pengembangan_aplikasi"
                         value={formData.nilai_pengembangan_aplikasi}
                         onChange={(e) =>
                           handleFormChange(
@@ -2313,6 +2914,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.nilai_pengembangan_aplikasi
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.nilai_pengembangan_aplikasi
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2337,6 +2944,7 @@ function DataAplikasiSection() {
                         Pusat Komputasi Utama
                       </label>
                       <input
+                        data-field="pusat_komputasi_utama"
                         value={formData.pusat_komputasi_utama}
                         onChange={(e) =>
                           handleFormChange(
@@ -2350,6 +2958,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.pusat_komputasi_utama
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.pusat_komputasi_utama
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2364,6 +2978,7 @@ function DataAplikasiSection() {
                         Pusat Komputasi Backup
                       </label>
                       <input
+                        data-field="pusat_komputasi_backup"
                         value={formData.pusat_komputasi_backup}
                         onChange={(e) =>
                           handleFormChange(
@@ -2377,6 +2992,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.pusat_komputasi_backup
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.pusat_komputasi_backup
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2391,6 +3012,7 @@ function DataAplikasiSection() {
                         Mandiri Komputasi Backup
                       </label>
                       <input
+                        data-field="mandiri_komputasi_backup"
                         value={formData.mandiri_komputasi_backup}
                         onChange={(e) =>
                           handleFormChange(
@@ -2404,6 +3026,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.mandiri_komputasi_backup
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.mandiri_komputasi_backup
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2428,6 +3056,7 @@ function DataAplikasiSection() {
                         Perangkat Lunak
                       </label>
                       <input
+                        data-field="perangkat_lunak"
                         value={formData.perangkat_lunak}
                         onChange={(e) =>
                           handleFormChange("perangkat_lunak", e.target.value)
@@ -2438,6 +3067,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.perangkat_lunak
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.perangkat_lunak
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2452,6 +3087,7 @@ function DataAplikasiSection() {
                         Cloud
                       </label>
                       <input
+                        data-field="cloud"
                         value={formData.cloud}
                         onChange={(e) =>
                           handleFormChange("cloud", e.target.value)
@@ -2462,6 +3098,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.cloud
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.cloud
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2486,6 +3128,7 @@ function DataAplikasiSection() {
                         SSL
                       </label>
                       <input
+                        data-field="ssl"
                         value={formData.ssl}
                         onChange={(e) =>
                           handleFormChange("ssl", e.target.value)
@@ -2496,6 +3139,10 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.ssl
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                         }}
                       />
                     </div>
@@ -2510,6 +3157,7 @@ function DataAplikasiSection() {
                         Antivirus
                       </label>
                       <input
+                        data-field="antivirus"
                         value={formData.antivirus}
                         onChange={(e) =>
                           handleFormChange("antivirus", e.target.value)
@@ -2520,6 +3168,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.antivirus
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.antivirus
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2544,18 +3198,34 @@ function DataAplikasiSection() {
                         Alamat IP Publik
                       </label>
                       <input
+                        data-field="alamat_ip_publik"
                         value={formData.alamat_ip_publik}
-                        onChange={(e) =>
-                          handleFormChange("alamat_ip_publik", e.target.value)
-                        }
-                        placeholder="Contoh: 192.168.1.100"
+                        onChange={(e) => handleIpChange(e.target.value)}
+                        placeholder="IPv4: 192.168.1.1 atau IPv6: 2001:0db8:85a3::8a2e:0370:7334"
                         style={{
                           width: "100%",
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.alamat_ip_publik
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.alamat_ip_publik
+                            ? errorBoxShadow
+                            : "none",
+                          fontFamily: "monospace",
                         }}
                       />
+                      <small
+                        style={{
+                          display: "block",
+                          marginTop: "4px",
+                          fontSize: "12px",
+                          color: "#64748b",
+                        }}
+                      >
+                        Format: IPv4 (xxx.xxx.xxx.xxx) atau IPv6
+                      </small>
                     </div>
                     <div>
                       <label
@@ -2568,6 +3238,7 @@ function DataAplikasiSection() {
                         Keterangan
                       </label>
                       <input
+                        data-field="keterangan"
                         value={formData.keterangan}
                         onChange={(e) =>
                           handleFormChange("keterangan", e.target.value)
@@ -2578,6 +3249,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.keterangan
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.keterangan
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       />
                     </div>
@@ -2602,6 +3279,7 @@ function DataAplikasiSection() {
                         Status BMN
                       </label>
                       <select
+                        data-field="status_bmn"
                         value={formData.status_bmn}
                         onChange={(e) =>
                           handleFormChange("status_bmn", e.target.value)
@@ -2611,6 +3289,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.status_bmn
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.status_bmn
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -2629,6 +3313,7 @@ function DataAplikasiSection() {
                         Server Aplikasi
                       </label>
                       <select
+                        data-field="server_aplikasi"
                         value={formData.server_aplikasi}
                         onChange={(e) =>
                           handleFormChange("server_aplikasi", e.target.value)
@@ -2638,6 +3323,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.server_aplikasi
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.server_aplikasi
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -2668,6 +3359,7 @@ function DataAplikasiSection() {
                         Tipe Lisensi Bahasa Pemrograman
                       </label>
                       <select
+                        data-field="tipe_lisensi_bahasa"
                         value={formData.tipe_lisensi_bahasa}
                         onChange={(e) =>
                           handleFormChange(
@@ -2680,6 +3372,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.tipe_lisensi_bahasa
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.tipe_lisensi_bahasa
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -2698,6 +3396,7 @@ function DataAplikasiSection() {
                         API Internal Sistem Integrasi
                       </label>
                       <select
+                        data-field="api_internal_status"
                         value={formData.api_internal_status}
                         onChange={(e) =>
                           handleFormChange(
@@ -2710,6 +3409,12 @@ function DataAplikasiSection() {
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.api_internal_status
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.api_internal_status
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -2739,6 +3444,7 @@ function DataAplikasiSection() {
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
+                          data-field="waf"
                           value={formData.waf}
                           onChange={(e) =>
                             handleFormChange("waf", e.target.value)
@@ -2748,6 +3454,12 @@ function DataAplikasiSection() {
                             padding: "10px",
                             borderRadius: "8px",
                             border: "1px solid #e6eef6",
+                            borderColor: fieldErrors.waf
+                              ? errorBorderColor
+                              : "#e6eef6",
+                            boxShadow: fieldErrors.waf
+                              ? errorBoxShadow
+                              : "none",
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -2757,6 +3469,7 @@ function DataAplikasiSection() {
                         </select>
                         {formData.waf === "lainnya" && (
                           <input
+                            data-field="waf_lainnya"
                             value={formData.waf_lainnya}
                             onChange={(e) =>
                               handleFormChange("waf_lainnya", e.target.value)
@@ -2767,6 +3480,12 @@ function DataAplikasiSection() {
                               padding: "10px",
                               borderRadius: "8px",
                               border: "1px solid #e6eef6",
+                              borderColor: fieldErrors.waf_lainnya
+                                ? errorBorderColor
+                                : "#e6eef6",
+                              boxShadow: fieldErrors.waf_lainnya
+                                ? errorBoxShadow
+                                : "none",
                             }}
                           />
                         )}
@@ -2784,6 +3503,7 @@ function DataAplikasiSection() {
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
+                          data-field="va_pt_status"
                           value={formData.va_pt_status}
                           onChange={(e) =>
                             handleFormChange("va_pt_status", e.target.value)
@@ -2793,6 +3513,12 @@ function DataAplikasiSection() {
                             padding: "10px",
                             borderRadius: "8px",
                             border: "1px solid #e6eef6",
+                            borderColor: fieldErrors.va_pt_status
+                              ? errorBorderColor
+                              : "#e6eef6",
+                            boxShadow: fieldErrors.va_pt_status
+                              ? errorBoxShadow
+                              : "none",
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -2802,6 +3528,7 @@ function DataAplikasiSection() {
                         {formData.va_pt_status === "ya" && (
                           <input
                             type="date"
+                            data-field="va_pt_waktu"
                             value={formData.va_pt_waktu}
                             onChange={(e) =>
                               handleFormChange("va_pt_waktu", e.target.value)
@@ -2811,6 +3538,12 @@ function DataAplikasiSection() {
                               padding: "10px",
                               borderRadius: "8px",
                               border: "1px solid #e6eef6",
+                              borderColor: fieldErrors.va_pt_waktu
+                                ? errorBorderColor
+                                : "#e6eef6",
+                              boxShadow: fieldErrors.va_pt_waktu
+                                ? errorBoxShadow
+                                : "none",
                             }}
                           />
                         )}
@@ -2833,11 +3566,11 @@ function DataAplikasiSection() {
                     type="button"
                     onClick={() => setShowModal(false)}
                     style={{
-                      padding: "9px 20px",
+                      padding: "8px 18px",
                       borderRadius: "8px",
                       border: "1.5px solid #e2e8f0",
                       background: "#fff",
-                      fontSize: "13px",
+                      fontSize: "12.5px",
                       fontWeight: 600,
                       color: "#64748b",
                       cursor: "pointer",
@@ -2858,44 +3591,44 @@ function DataAplikasiSection() {
                     type="submit"
                     disabled={submitting}
                     style={{
-                      padding: "9px 24px",
+                      padding: "8px 22px",
                       borderRadius: "8px",
                       border: "none",
                       background: submitting
-                        ? "linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)"
-                        : "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                        ? "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)"
+                        : "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                       color: "#fff",
-                      fontSize: "13px",
+                      fontSize: "12.5px",
                       fontWeight: 600,
                       cursor: submitting ? "not-allowed" : "pointer",
                       transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                       boxShadow: submitting
                         ? "none"
-                        : "0 4px 12px rgba(14, 165, 233, 0.3)",
+                        : "0 2px 8px rgba(79, 70, 229, 0.3)",
                       display: "flex",
                       alignItems: "center",
-                      gap: "8px",
+                      gap: "7px",
                     }}
                     onMouseOver={(e) => {
                       if (!submitting) {
                         e.currentTarget.style.transform = "translateY(-2px)";
                         e.currentTarget.style.boxShadow =
-                          "0 6px 16px rgba(14, 165, 233, 0.4)";
+                          "0 4px 14px rgba(79, 70, 229, 0.4)";
                       }
                     }}
                     onMouseOut={(e) => {
                       if (!submitting) {
                         e.currentTarget.style.transform = "translateY(0)";
                         e.currentTarget.style.boxShadow =
-                          "0 4px 12px rgba(14, 165, 233, 0.3)";
+                          "0 2px 8px rgba(79, 70, 229, 0.3)";
                       }
                     }}
                   >
                     {submitting ? (
                       <>
                         <svg
-                          width="16"
-                          height="16"
+                          width="14"
+                          height="14"
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
@@ -2915,8 +3648,8 @@ function DataAplikasiSection() {
                     ) : (
                       <>
                         <svg
-                          width="16"
-                          height="16"
+                          width="14"
+                          height="14"
                           viewBox="0 0 24 24"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
@@ -2935,6 +3668,156 @@ function DataAplikasiSection() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi */}
+      {showConfirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 70,
+            animation: "fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: "16px",
+              boxShadow:
+                "0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1)",
+              maxWidth: "480px",
+              width: "90%",
+              animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          >
+            <div
+              style={{
+                padding: "24px",
+                borderBottom: "1px solid #f1f5f9",
+                textAlign: "center",
+              }}
+            >
+              <div
+                style={{
+                  width: "56px",
+                  height: "56px",
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                  boxShadow: "0 4px 12px rgba(251, 191, 36, 0.3)",
+                }}
+              >
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h3
+                style={{
+                  margin: "0 0 8px",
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#0f172a",
+                }}
+              >
+                Konfirmasi Penyimpanan
+              </h3>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "14px",
+                  color: "#64748b",
+                  lineHeight: 1.6,
+                }}
+              >
+                Apakah Anda yakin semua data aplikasi yang diinput sudah benar
+                dan siap untuk disimpan?
+              </p>
+            </div>
+            <div
+              style={{
+                padding: "20px 24px",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  padding: "8px 18px",
+                  borderRadius: "8px",
+                  border: "1.5px solid #e2e8f0",
+                  background: "#fff",
+                  color: "#64748b",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.borderColor = "#cbd5e1";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "#fff";
+                  e.currentTarget.style.borderColor = "#e2e8f0";
+                }}
+              >
+                Periksa Kembali
+              </button>
+              <button
+                onClick={handleConfirmSave}
+                style={{
+                  padding: "8px 22px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background:
+                    "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  color: "#fff",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 14px rgba(16, 185, 129, 0.4)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(16, 185, 129, 0.3)";
+                }}
+              >
+                Ya, Simpan Data
+              </button>
             </div>
           </div>
         </div>
