@@ -124,9 +124,21 @@ exports.getMasterDataById = async (req, res) => {
         message: 'Master data tidak ditemukan'
       });
     }
+
+    const data = rows[0];
+
+    // If type is format_laporan, fetch detail field IDs
+    if (type === 'format_laporan') {
+      const [details] = await pool.query(
+        'SELECT field_id FROM format_laporan_detail WHERE format_laporan_id = ?',
+        [req.params.id]
+      );
+      data.field_ids = details.map(d => d.field_id);
+    }
+
     res.json({
       success: true,
-      data: rows[0]
+      data: data
     });
   } catch (error) {
     res.status(500).json({
@@ -231,11 +243,32 @@ exports.createMasterData = async (req, res) => {
     console.log('Values:', values);
 
     const [result] = await pool.query(sql, values);
+    const newId = result.insertId;
+
+    // Handle format_laporan_detail if type is format_laporan
+    if (type === 'format_laporan' && req.body.field_ids) {
+      let fieldIds = req.body.field_ids;
+      if (typeof fieldIds === 'string') {
+        try {
+          fieldIds = JSON.parse(fieldIds);
+        } catch (e) {
+          fieldIds = fieldIds.split(',').map(id => id.trim());
+        }
+      }
+
+      if (Array.isArray(fieldIds) && fieldIds.length > 0) {
+        const detailValues = fieldIds.map(fid => [newId, fid]);
+        await pool.query(
+          'INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?',
+          [detailValues]
+        );
+      }
+    }
 
     res.status(201).json({
       success: true,
       message: 'Master data berhasil ditambahkan',
-      data: { id: result.insertId, ...req.body }
+      data: { id: newId, ...req.body }
     });
   } catch (error) {
     console.error('=== ERROR CREATE MASTER DATA ===');
@@ -296,6 +329,30 @@ exports.updateMasterData = async (req, res) => {
         message: 'Master data tidak ditemukan'
       });
     }
+
+    // Handle format_laporan_detail if type is format_laporan
+    if (type === 'format_laporan' && req.body.field_ids !== undefined) {
+      // Clear existing details
+      await pool.query('DELETE FROM format_laporan_detail WHERE format_laporan_id = ?', [req.params.id]);
+
+      let fieldIds = req.body.field_ids;
+      if (typeof fieldIds === 'string') {
+        try {
+          fieldIds = JSON.parse(fieldIds);
+        } catch (e) {
+          fieldIds = fieldIds.split(',').map(id => id.trim());
+        }
+      }
+
+      if (Array.isArray(fieldIds) && fieldIds.length > 0) {
+        const detailValues = fieldIds.map(fid => [req.params.id, fid]);
+        await pool.query(
+          'INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?',
+          [detailValues]
+        );
+      }
+    }
+
     res.json({
       success: true,
       message: 'Master data berhasil diupdate'
