@@ -253,6 +253,200 @@ const DATA_FIELD_OPTIONS = [
   { value: "api_internal_status", label: "API Internal Status" },
 ];
 
+
+function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
+  const [isOpen, setIsOpen] = useState(node.level === 1); // Expand Level 1 by default
+
+  useEffect(() => {
+    if (searchTerm) setIsOpen(true);
+  }, [searchTerm]);
+
+  const hasChildren = node.children && node.children.length > 0;
+
+  // Filter children based on search term
+  const filteredChildren = node.children?.filter((child) => {
+    if (!searchTerm) return true;
+    const matchesSelf = child.nama_field
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const hasMatchingDescendant = (n) => {
+      if (!n.children) return false;
+      return n.children.some(
+        (c) =>
+          c.nama_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          hasMatchingDescendant(c)
+      );
+    };
+    return matchesSelf || hasMatchingDescendant(child);
+  });
+
+  // Get all leaf (Level 3) descendant IDs
+  const getLeafDescendants = (n) => {
+    if (!n.children || n.children.length === 0) return [n.field_id];
+    let ids = [];
+    n.children.forEach((child) => {
+      ids = [...ids, ...getLeafDescendants(child)];
+    });
+    return ids;
+  };
+
+  const leafDescendants = getLeafDescendants(node);
+  const isFullySelected = leafDescendants.every((id) =>
+    selectedIds.includes(id)
+  );
+  const isPartiallySelected =
+    !isFullySelected && leafDescendants.some((id) => selectedIds.includes(id));
+
+  // Determine text color based on level
+  let textColor = "#475569"; // default (Level 3)
+  if (node.level === 1) textColor = "#ef4444"; // Red
+  else if (node.level === 2) textColor = "#3b82f6"; // Blue
+
+  // If searching and this node doesn't match and has no matching children, hide it
+  const isMatch = node.nama_field
+    .toLowerCase()
+    .includes(searchTerm.toLowerCase());
+  const hasMatchingDescendant = (n) => {
+    if (!n.children) return false;
+    return n.children.some(
+      (c) =>
+        c.nama_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        hasMatchingDescendant(c)
+    );
+  };
+
+  if (searchTerm && !isMatch && !hasMatchingDescendant(node)) {
+    return null;
+  }
+
+  return (
+    <div style={{ marginLeft: node.level === 1 ? 0 : "18px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "4px 6px",
+          borderRadius: "6px",
+          cursor: "pointer",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "transparent")
+        }
+      >
+        {hasChildren ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              color: "#64748b",
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              style={{
+                transform: isOpen ? "rotate(90deg)" : "none",
+                transition: "transform 0.2s",
+              }}
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        ) : (
+          <div
+            style={{
+              width: "14px",
+              display: "flex",
+              justifyContent: "center",
+              fontSize: "10px",
+              color: "#94a3b8",
+            }}
+          >
+            o
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            flex: 1,
+          }}
+          onClick={() => onToggle(node)}
+        >
+          <input
+            type="checkbox"
+            checked={isFullySelected}
+            ref={(el) => el && (el.indeterminate = isPartiallySelected)}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggle(node);
+            }}
+            style={{
+              cursor: "pointer",
+              width: "15px",
+              height: "15px",
+              accentColor:
+                node.level === 1
+                  ? "#ef4444"
+                  : node.level === 2
+                    ? "#3b82f6"
+                    : "#4f46e5",
+            }}
+          />
+          <span
+            style={{
+              fontSize: "13px",
+              fontWeight: hasChildren ? 700 : 500,
+              color: textColor,
+              userSelect: "none",
+            }}
+          >
+            {node.nama_field}
+          </span>
+        </div>
+      </div>
+
+      {hasChildren && isOpen && (
+        <div
+          style={{
+            borderLeft: "1px dashed #e2e8f0",
+            marginLeft: "6px",
+            paddingLeft: "4px",
+          }}
+        >
+          {filteredChildren.map((child) => (
+            <TreeNode
+              key={child.field_id}
+              node={child}
+              selectedIds={selectedIds}
+              onToggle={onToggle}
+              searchTerm={searchTerm}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MasterDataSection() {
   const [activeTab, setActiveTab] = useState("eselon1");
   const [data, setData] = useState([]);
@@ -269,6 +463,9 @@ function MasterDataSection() {
   const [availableDataFields, setAvailableDataFields] = useState([
     ...DATA_FIELD_OPTIONS,
   ]);
+  const [hierarchicalFields, setHierarchicalFields] = useState([]);
+  const [selectedFieldIds, setSelectedFieldIds] = useState([]);
+  const [hierSearchTerm, setHierSearchTerm] = useState("");
 
   // ---------- Helpers ----------
   const formatColumnHeader = (col) =>
@@ -327,6 +524,8 @@ function MasterDataSection() {
     setEditingItem(null);
     setFormData({});
     setupFormatPicker([]);
+    setSelectedFieldIds([]);
+    setHierSearchTerm("");
   };
 
   // ---------- Fetch ----------
@@ -334,7 +533,10 @@ function MasterDataSection() {
     fetchData();
     if (activeTab === "eselon2") fetchEselon1Options();
     // reset picker ketika pindah tab format_laporan
-    if (activeTab === "format_laporan") setupFormatPicker([]);
+    if (activeTab === "format_laporan") {
+      setupFormatPicker([]);
+      fetchHierarchicalFields();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
@@ -369,6 +571,17 @@ function MasterDataSection() {
     }
   };
 
+  const fetchHierarchicalFields = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/laporan-fields`);
+      if (!response.ok) return;
+      const result = await response.json();
+      setHierarchicalFields(result.data || []);
+    } catch (err) {
+      console.error("Failed to fetch hierarchical fields:", err);
+    }
+  };
+
   // ---------- Actions ----------
   const handleAdd = () => {
     setEditingItem(null);
@@ -393,6 +606,7 @@ function MasterDataSection() {
 
     if (activeTab === "format_laporan") {
       setupFormatPicker([]);
+      setSelectedFieldIds([]);
     }
 
     setShowModal(true);
@@ -436,6 +650,17 @@ function MasterDataSection() {
         (opt) => !selectedValues.includes(opt.value)
       );
       setAvailableDataFields(availableItems);
+
+      // Handle hierarchical fields from extra API data if available
+      // Fetch details for the specific item
+      fetch(`${API_BASE}/${getRowId(item)}?type=format_laporan`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.success && result.data.field_ids) {
+            setSelectedFieldIds(result.data.field_ids);
+          }
+        })
+        .catch((err) => console.error("Error fetching format details:", err));
     }
 
     setShowModal(true);
@@ -454,6 +679,58 @@ function MasterDataSection() {
       prev.filter((f) => f.value !== field.value)
     );
     setAvailableDataFields((prev) => [...prev, field]);
+  };
+
+  const toggleHierarchicalField = (node) => {
+    const getTargetLeafIds = (n) => {
+      if (!n.children || n.children.length === 0) return [n.field_id];
+      let ids = [];
+      n.children.forEach((child) => {
+        ids = [...ids, ...getTargetLeafIds(child)];
+      });
+      return ids;
+    };
+
+    const targetIds = getTargetLeafIds(node);
+    const allSelected = targetIds.every((id) => selectedFieldIds.includes(id));
+
+    if (allSelected) {
+      // Unselect all leaf descendants
+      setSelectedFieldIds((prev) =>
+        prev.filter((id) => !targetIds.includes(id))
+      );
+    } else {
+      // Select all leaf descendants
+      setSelectedFieldIds((prev) => {
+        const newIds = [...prev];
+        targetIds.forEach((id) => {
+          if (!newIds.includes(id)) newIds.push(id);
+        });
+        return newIds;
+      });
+    }
+  };
+
+  const findFieldNameById = (id, nodes) => {
+    for (const node of nodes) {
+      if (node.field_id === id) return node.nama_field;
+      if (node.children) {
+        const found = findFieldNameById(id, node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const findNodeById = (id, nodes) => {
+    for (const node of nodes) {
+      if (node.field_id === id) return node;
+      if (node.children) {
+        const found = findNodeById(id, node.children);
+        if (found) return found;
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -479,7 +756,11 @@ function MasterDataSection() {
       }
 
       // Format Laporan must select at least one
-      if (activeTab === "format_laporan" && selectedDataFields.length === 0) {
+      if (
+        activeTab === "format_laporan" &&
+        selectedDataFields.length === 0 &&
+        selectedFieldIds.length === 0
+      ) {
         throw new Error("Silakan pilih minimal satu data untuk format laporan");
       }
 
@@ -512,6 +793,7 @@ function MasterDataSection() {
       if (activeTab === "format_laporan") {
         const keys = selectedDataFields.map((f) => f.value);
         processedData.selected_fields = JSON.stringify(keys);
+        processedData.field_ids = selectedFieldIds;
       }
 
       const response = await fetch(url, {
@@ -1148,7 +1430,7 @@ function MasterDataSection() {
               borderRadius: "16px",
               padding: "28px",
               width: "100%",
-              maxWidth: "480px",
+              maxWidth: activeTab === "format_laporan" ? "1200px" : "480px",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
               animation: "slideUp 0.3s ease",
             }}
@@ -1265,83 +1547,85 @@ function MasterDataSection() {
                   <div
                     style={{
                       display: "flex",
-                      gap: "16px",
+                      gap: "20px",
                       marginBottom: "20px",
                     }}
                   >
-                    {/* Available */}
-                    <div style={{ flex: 1 }}>
-                      <label
+                    {/* Column 1: Daftar Data */}
+                    <div style={{ flex: 1.2 }}>
+                      <div
                         style={{
-                          display: "block",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
                           marginBottom: "8px",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: "#374151",
                         }}
                       >
-                        Daftar Data
-                      </label>
+                        <label
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#374151",
+                          }}
+                        >
+                          Daftar Data
+                        </label>
+                      </div>
+                      <div style={{ marginBottom: "10px" }}>
+                        <input
+                          type="text"
+                          placeholder="Cari struktur..."
+                          value={hierSearchTerm}
+                          onChange={(e) => setHierSearchTerm(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            border: "1px solid #e2e8f0",
+                            fontSize: "13px",
+                            outline: "none",
+                            transition: "all 0.2s",
+                          }}
+                          onFocus={(e) => (e.target.style.borderColor = "#4f46e5")}
+                          onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                        />
+                      </div>
                       <div
                         style={{
                           border: "1px solid #e2e8f0",
-                          borderRadius: "10px",
-                          height: "260px",
+                          borderRadius: "12px",
+                          height: "350px", // Adjusted for search input
                           overflowY: "auto",
                           backgroundColor: "#f8fafc",
-                          padding: "10px",
+                          padding: "12px",
                         }}
                       >
-                        {availableDataFields.map((field) => (
+                        {hierarchicalFields.length > 0 ? (
+                          hierarchicalFields.map((node) => (
+                            <TreeNode
+                              key={node.field_id}
+                              node={node}
+                              selectedIds={selectedFieldIds}
+                              onToggle={toggleHierarchicalField}
+                              searchTerm={hierSearchTerm}
+                            />
+                          ))
+                        ) : (
                           <div
-                            key={field.value}
-                            onClick={() => addDataField(field)}
                             style={{
-                              padding: "10px 12px",
-                              marginBottom: "6px",
-                              backgroundColor: "#ffffff",
-                              borderRadius: "8px",
-                              border: "1px solid #e2e8f0",
-                              cursor: "pointer",
-                              fontSize: "13px",
-                              color: "#334155",
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              transition: "all 0.2s",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = "#f0f9ff";
-                              e.target.style.borderColor = "#4f46e5";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.backgroundColor = "#ffffff";
-                              e.target.style.borderColor = "#e2e8f0";
+                              padding: "20px",
+                              textAlign: "center",
+                              color: "#94a3b8",
                             }}
                           >
-                            <span style={{ fontWeight: 500 }}>
-                              {field.label}
-                            </span>
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#4f46e5"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <line x1="12" y1="5" x2="12" y2="19"></line>
-                              <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
+                            Memuat field struktur...
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
 
-                    {/* Selected */}
-                    <div style={{ flex: 1 }}>
+                    {/* Column 2: Selected */}
+                    <div style={{ flex: 1.2 }}>
                       <label
                         style={{
                           display: "block",
@@ -1356,14 +1640,14 @@ function MasterDataSection() {
                       <div
                         style={{
                           border: "1px solid #e2e8f0",
-                          borderRadius: "10px",
-                          height: "260px",
+                          borderRadius: "12px",
+                          height: "400px",
                           overflowY: "auto",
                           backgroundColor: "#ffffff",
                           padding: "10px",
                         }}
                       >
-                        {selectedDataFields.length === 0 ? (
+                        {selectedFieldIds.length === 0 ? (
                           <div
                             style={{
                               padding: "40px 20px",
@@ -1388,53 +1672,72 @@ function MasterDataSection() {
                             Pilih data dari daftar
                           </div>
                         ) : (
-                          selectedDataFields.map((field) => (
-                            <div
-                              key={field.value}
-                              onClick={() => removeDataField(field)}
-                              style={{
-                                padding: "10px 12px",
-                                marginBottom: "6px",
-                                background:
-                                  "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
-                                borderRadius: "8px",
-                                border: "1px solid #93c5fd",
-                                cursor: "pointer",
-                                fontSize: "13px",
-                                color: "#1e40af",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                transition: "all 0.2s",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.target.style.backgroundColor = "#fee2e2";
-                                e.target.style.borderColor = "#fca5a5";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.target.style.background =
-                                  "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)";
-                                e.target.style.borderColor = "#93c5fd";
-                              }}
-                            >
-                              <span style={{ fontWeight: 500 }}>
-                                {field.label}
-                              </span>
-                              <svg
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#ef4444"
-                                strokeWidth="2.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                            </div>
-                          ))
+                          <>
+                            {/* Render Hierarchical Fields */}
+                            {selectedFieldIds.map((id) => {
+                              const nodeName = findFieldNameById(
+                                id,
+                                hierarchicalFields
+                              );
+                              if (!nodeName) return null;
+                              return (
+                                <div
+                                  key={`hier-${id}`}
+                                  onClick={() => {
+                                    const node = findNodeById(
+                                      id,
+                                      hierarchicalFields
+                                    );
+                                    if (node) toggleHierarchicalField(node);
+                                  }}
+                                  style={{
+                                    padding: "10px 12px",
+                                    marginBottom: "6px",
+                                    background:
+                                      "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                                    borderRadius: "8px",
+                                    border: "1px solid #86efac",
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    color: "#166534",
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    transition: "all 0.2s",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fee2e2";
+                                    e.currentTarget.style.borderColor =
+                                      "#fca5a5";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background =
+                                      "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
+                                    e.currentTarget.style.borderColor =
+                                      "#86efac";
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 500 }}>
+                                    {nodeName}
+                                  </span>
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                  </svg>
+                                </div>
+                              );
+                            })}
+                          </>
                         )}
                       </div>
                     </div>
@@ -1645,10 +1948,11 @@ function MasterDataSection() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-    </section>
+          </div >
+        </div >
+      )
+      }
+    </section >
   );
 }
 
