@@ -1,5 +1,8 @@
 const pool = require("../config/database");
 
+const isDuplicateKeyError = (error) =>
+  error && (error.code === "ER_DUP_ENTRY" || error.errno === 1062);
+
 // Get all aplikasi dengan JOIN ke tabel master
 exports.getAllAplikasi = async (req, res) => {
   try {
@@ -98,6 +101,7 @@ exports.createAplikasi = async (req, res) => {
       eselon1_id,
       eselon2_id,
       cara_akses_id,
+      cara_akses_multiple,
       frekuensi_pemakaian,
       status_aplikasi,
       pdn_id,
@@ -133,9 +137,19 @@ exports.createAplikasi = async (req, res) => {
       api_internal_status,
     } = req.body;
 
+    const normalizedNamaAplikasi =
+      typeof nama_aplikasi === "string" ? nama_aplikasi.trim() : nama_aplikasi;
+
+    if (!normalizedNamaAplikasi) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama aplikasi wajib diisi",
+      });
+    }
+
     const [result] = await pool.query(
       `INSERT INTO data_aplikasi 
-       (\`nama_aplikasi\`, \`eselon1_id\`, \`eselon2_id\`, \`cara_akses_id\`, \`frekuensi_pemakaian\`, 
+       (\`nama_aplikasi\`, \`eselon1_id\`, \`eselon2_id\`, \`cara_akses_id\`, \`cara_akses_multiple\`, \`frekuensi_pemakaian\`, 
         \`status_aplikasi\`, \`pdn_id\`, \`environment_id\`, \`pic_internal\`, \`pic_eksternal\`, 
         \`domain\`, \`deskripsi_fungsi\`, \`user_pengguna\`, \`data_digunakan\`, \`luaran_output\`,
         \`server_aplikasi\`, \`tipe_lisensi_bahasa\`, \`bahasa_pemrograman\`, \`basis_data\`, 
@@ -144,12 +158,13 @@ exports.createAplikasi = async (req, res) => {
         \`mandiri_komputasi_backup\`, \`perangkat_lunak\`, \`cloud\`, \`ssl\`, \`waf\`, \`antivirus\`, 
         \`va_pt_status\`, \`va_pt_waktu\`, \`alamat_ip_publik\`, \`keterangan\`, \`status_bmn\`, 
         \`api_internal_status\`) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        nama_aplikasi,
+        normalizedNamaAplikasi,
         eselon1_id,
         eselon2_id,
         cara_akses_id,
+        cara_akses_multiple,
         frekuensi_pemakaian,
         status_aplikasi,
         pdn_id,
@@ -188,9 +203,17 @@ exports.createAplikasi = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Aplikasi berhasil ditambahkan",
-      data: { nama_aplikasi, domain },
+      data: { nama_aplikasi: normalizedNamaAplikasi, domain },
     });
   } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      return res.status(409).json({
+        success: false,
+        code: "DUPLICATE_NAMA_APLIKASI",
+        message: "Nama aplikasi sudah terdaftar",
+        error: error.message,
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Error menambahkan aplikasi",
@@ -203,12 +226,15 @@ exports.createAplikasi = async (req, res) => {
 exports.updateAplikasi = async (req, res) => {
   try {
     const {
+      nama_aplikasi,
       eselon1_id,
       eselon2_id,
       cara_akses_id,
+      cara_akses_multiple,
       frekuensi_pemakaian,
       status_aplikasi,
       pdn_id,
+      pdn_backup,
       environment_id,
       pic_internal,
       pic_eksternal,
@@ -241,9 +267,19 @@ exports.updateAplikasi = async (req, res) => {
       api_internal_status,
     } = req.body;
 
+    const normalizedNamaAplikasi =
+      typeof nama_aplikasi === "string" ? nama_aplikasi.trim() : nama_aplikasi;
+
+    if (!normalizedNamaAplikasi) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama aplikasi wajib diisi",
+      });
+    }
+
     const [result] = await pool.query(
       `UPDATE data_aplikasi SET 
-       \`eselon1_id\` = ?, \`eselon2_id\` = ?, \`cara_akses_id\` = ?, \`frekuensi_pemakaian\` = ?, 
+       \`nama_aplikasi\` = ?, \`eselon1_id\` = ?, \`eselon2_id\` = ?, \`cara_akses_id\` = ?, \`cara_akses_multiple\` = ?, \`frekuensi_pemakaian\` = ?, 
        \`status_aplikasi\` = ?, \`pdn_id\` = ?, \`environment_id\` = ?, \`pic_internal\` = ?, 
        \`pic_eksternal\` = ?, \`domain\` = ?, \`deskripsi_fungsi\` = ?, \`user_pengguna\` = ?, 
        \`data_digunakan\` = ?, \`luaran_output\` = ?, \`server_aplikasi\` = ?, \`tipe_lisensi_bahasa\` = ?, 
@@ -255,9 +291,11 @@ exports.updateAplikasi = async (req, res) => {
        \`api_internal_status\` = ? 
        WHERE \`nama_aplikasi\` = ?`,
       [
+        normalizedNamaAplikasi,
         eselon1_id,
         eselon2_id,
         cara_akses_id,
+        cara_akses_multiple,
         frekuensi_pemakaian,
         status_aplikasi,
         pdn_id,
@@ -305,6 +343,14 @@ exports.updateAplikasi = async (req, res) => {
       message: "Aplikasi berhasil diupdate",
     });
   } catch (error) {
+    if (isDuplicateKeyError(error)) {
+      return res.status(409).json({
+        success: false,
+        code: "DUPLICATE_NAMA_APLIKASI",
+        message: "Nama aplikasi sudah terdaftar",
+        error: error.message,
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Error mengupdate aplikasi",

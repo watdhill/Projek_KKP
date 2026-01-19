@@ -27,18 +27,18 @@
 }
 
 .brand {
-  padding: 20px 24px;
+  padding: 24px 20px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: padding 0.3s ease, justify-content 0.3s ease;
   justify-content: space-between;
 }
 
 .sidebar.collapsed .brand {
-  padding: 20px 12px;
+  padding: 24px 16px;
   justify-content: center;
 }
 
@@ -63,12 +63,12 @@
 }
 
 .brand-badge {
-  background: rgba(59, 130, 246, 0.2);
-  padding: 8px 16px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 10px 16px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   flex: 1;
@@ -78,79 +78,77 @@
 
 .brand-badge-text {
   color: #ffffff;
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  gap: 4px;
-  padding: 12px 0;
+  gap: 2px;
+  padding: 16px 0;
   transition: padding 0.3s ease;
 }
 
 .sidebar.collapsed .nav {
   align-items: center;
-  padding: 12px 8px;
+  padding: 16px 8px;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 24px;
-  color: rgba(255, 255, 255, 0.7);
+  gap: 14px;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.65);
   text-decoration: none;
   font-weight: 500;
-  font-size: 15px;
-  transition: all 0.3s ease;
+  font-size: 14px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   background: transparent;
-  width: calc(100% - 48px);
+  width: calc(100% - 32px);
   cursor: pointer;
   text-align: left;
-  margin: 4px 12px;
-  border-radius: 8px;
+  margin: 2px 16px;
+  border-radius: 10px;
   position: relative;
-  border-left: 3px solid transparent;
 }
 
 .sidebar.collapsed .nav-item {
-  width: 48px;
-  height: 48px;
-  padding: 12px;
-  margin: 4px auto;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  margin: 2px auto;
   justify-content: center;
   gap: 0;
 }
 
 .nav-item:hover:not(.active) {
-  border-left-color: rgba(59, 130, 246, 0.5);
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
+  transform: translateX(2px);
 }
 
 .sidebar.collapsed .nav-item:hover:not(.active) {
-  background: rgba(59, 130, 246, 0.2);
-  border-left-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.05);
 }
 
 .nav-item.active {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  border-left: 3px solid #3b82f6;
-  padding-left: 21px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar.collapsed .nav-item.active {
-  background: rgba(59, 130, 246, 0.4);
-  border-left: 3px solid transparent;
-  padding-left: 12px;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .nav-item.active:hover {
-  background: rgba(59, 130, 246, 0.4);
+  background: rgba(255, 255, 255, 0.15);
   color: #ffffff;
 }
 
@@ -158,26 +156,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .nav-item.active .nav-icon svg {
-  stroke: #3b82f6;
   stroke-width: 2.5;
 }
 
 .sidebar-toggle {
   display: flex;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border: none;
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
@@ -185,7 +183,9 @@
 }
 
 .sidebar-toggle:hover {
-  background: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: scale(1.05);
 }
 
 .app-shell {
@@ -194,45 +194,56 @@
 
 .sign-out {
   margin-top: auto;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .sign-out:hover:not(.active) {
-  background: rgba(239, 68, 68, 0.1) !important;
-  color: #ff6b6b !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #fca5a5 !important;
+  transform: translateX(2px) !important;
+}
+
+.sidebar.collapsed .sign-out:hover:not(.active) {
+  transform: scale(1.05) !important;
 }
 
 .sidebar-profile-card {
-  margin: 16px 20px 24px;
+  margin: 12px 16px 20px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
 }
 
 .sidebar-profile-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
 }
 
 .sidebar-avatar {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  background: linear-gradient(135deg, #ffb703 0%, #ff9f1c 100%);
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
   padding: 8px;
-  box-shadow: 0 4px 12px rgba(255, 183, 3, 0.3);
+  transition: all 0.25s ease;
+}
+
+.sidebar-profile-card:hover .sidebar-avatar {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .sidebar-info {
@@ -242,12 +253,13 @@
 }
 
 .sidebar-user-name {
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13.5px;
   color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .sidebar-user-eselon {
