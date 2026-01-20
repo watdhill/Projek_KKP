@@ -1253,6 +1253,7 @@ function DataAplikasiSection() {
                         {app.domain && (
                           <div style={{ fontSize: "12px", marginTop: "6px" }}>
                             <a
+                              className="allow-lowercase"
                               href={
                                 app.domain.startsWith("http")
                                   ? app.domain
@@ -1266,6 +1267,7 @@ function DataAplikasiSection() {
                                 display: "inline-flex",
                                 alignItems: "center",
                                 gap: "4px",
+                                textTransform: "none",
                               }}
                               onMouseOver={(e) =>
                                 (e.currentTarget.style.textDecoration =
@@ -1297,7 +1299,7 @@ function DataAplikasiSection() {
                                   strokeLinejoin="round"
                                 />
                               </svg>
-                              <span>{app.domain}</span>
+                              <span className="allow-lowercase" style={{ textTransform: "none" }}>{app.domain}</span>
                             </a>
                           </div>
                         )}

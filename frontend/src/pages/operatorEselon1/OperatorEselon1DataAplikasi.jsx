@@ -1233,6 +1233,7 @@ function OperatorEselon1DataAplikasi() {
                         </div>
                         {app.domain && (
                           <a
+                            className="allow-lowercase"
                             href={
                               app.domain.startsWith("http")
                                 ? app.domain
@@ -1248,6 +1249,7 @@ function OperatorEselon1DataAplikasi() {
                               alignItems: "center",
                               gap: "4px",
                               marginTop: "4px",
+                              textTransform: "none",
                             }}
                           >
                             <svg
@@ -1272,7 +1274,7 @@ function OperatorEselon1DataAplikasi() {
                                 strokeLinejoin="round"
                               />
                             </svg>
-                            <span>{app.domain}</span>
+                            <span className="allow-lowercase" style={{ textTransform: "none" }}>{app.domain}</span>
                           </a>
                         )}
                       </td>
