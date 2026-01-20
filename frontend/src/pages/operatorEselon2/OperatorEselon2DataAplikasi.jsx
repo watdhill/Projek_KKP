@@ -660,8 +660,8 @@ function OperatorEselon2DataAplikasi() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName
-          )}`
+          originalAppName
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -717,13 +717,13 @@ function OperatorEselon2DataAplikasi() {
       ) {
         alert(
           "Nama aplikasi sudah ada di database!\n\n" +
-            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada."
+          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada."
         );
       } else {
         alert(
           "Error: " +
-            errorMsg +
-            "\n\nSilakan cek browser console (F12) untuk detail lengkap"
+          errorMsg +
+          "\n\nSilakan cek browser console (F12) untuk detail lengkap"
         );
       }
     } finally {
@@ -1946,7 +1946,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id))
+                                String(formData.eselon1_id))
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -2003,9 +2003,9 @@ function OperatorEselon2DataAplikasi() {
                             : "none",
                           ...(fieldErrors.cara_akses_id
                             ? {
-                                borderColor: errorBorderColor,
-                                boxShadow: errorBoxShadow,
-                              }
+                              borderColor: errorBorderColor,
+                              boxShadow: errorBoxShadow,
+                            }
                             : null),
                           display: "flex",
                           justifyContent: "space-between",
@@ -2026,9 +2026,8 @@ function OperatorEselon2DataAplikasi() {
                           }}
                         >
                           {(formData.cara_akses_id || []).length > 0
-                            ? `${
-                                (formData.cara_akses_id || []).length
-                              } cara akses dipilih`
+                            ? `${(formData.cara_akses_id || []).length
+                            } cara akses dipilih`
                             : "-Pilih-"}
                         </span>
                         <svg
@@ -2130,8 +2129,8 @@ function OperatorEselon2DataAplikasi() {
                                         const updated = e.target.checked
                                           ? [...current, id]
                                           : current.filter(
-                                              (item) => item !== id
-                                            );
+                                            (item) => item !== id
+                                          );
                                         handleFormChange(
                                           "cara_akses_id",
                                           updated
@@ -2164,17 +2163,17 @@ function OperatorEselon2DataAplikasi() {
                                   x.status_aktif === 1 ||
                                   x.status_aktif === true
                               ).length === 0) && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                  textAlign: "center",
-                                  padding: "12px",
-                                }}
-                              >
-                                Tidak ada data Cara Akses
-                              </div>
-                            )}
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#94a3b8",
+                                    textAlign: "center",
+                                    padding: "12px",
+                                  }}
+                                >
+                                  Tidak ada data Cara Akses
+                                </div>
+                              )}
                           </div>
                         </>
                       )}
@@ -3656,8 +3655,8 @@ function OperatorEselon2DataAplikasi() {
                     {submitting
                       ? "Menyimpan..."
                       : editMode
-                      ? "Simpan Perubahan"
-                      : "Tambah Aplikasi"}
+                        ? "Simpan Perubahan"
+                        : "Tambah Aplikasi"}
                   </button>
                 </div>
               </form>
@@ -3731,24 +3730,25 @@ function OperatorEselon2DataAplikasi() {
               </div>
               <h3
                 style={{
-                  margin: "0 0 8px",
+                  margin: "0 0 12px",
                   fontSize: "18px",
                   fontWeight: 700,
-                  color: "#0f172a",
+                  color: "#1e293b",
                 }}
               >
-                Konfirmasi Penyimpanan
+                Konfirmasi
               </h3>
               <p
                 style={{
                   margin: 0,
-                  fontSize: "14px",
+                  fontSize: "15px",
                   color: "#64748b",
-                  lineHeight: 1.6,
+                  lineHeight: 1.5,
                 }}
               >
-                Apakah Anda yakin semua data aplikasi yang diinput sudah benar
-                dan siap untuk disimpan?
+                {editMode
+                  ? "Apakah anda yakin ingin memperbarui data?"
+                  : "Apakah data yang diisi sudah benar?"}
               </p>
             </div>
             <div
@@ -3756,60 +3756,39 @@ function OperatorEselon2DataAplikasi() {
                 padding: "20px 24px",
                 display: "flex",
                 gap: "12px",
-                justifyContent: "flex-end",
               }}
             >
               <button
-                onClick={() => setShowConfirmModal(false)}
-                style={{
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
-                  background: "#fff",
-                  color: "#64748b",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#f8fafc";
-                  e.currentTarget.style.borderColor = "#cbd5e1";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "#fff";
-                  e.currentTarget.style.borderColor = "#e2e8f0";
-                }}
-              >
-                Periksa Kembali
-              </button>
-              <button
                 onClick={handleConfirmSave}
                 style={{
-                  padding: "10px 24px",
-                  borderRadius: "8px",
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#4f46e5",
+                  color: "white",
                   border: "none",
-                  background:
-                    "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                  color: "#fff",
-                  fontSize: "14px",
+                  borderRadius: "8px",
                   fontWeight: 600,
                   cursor: "pointer",
-                  transition: "all 0.2s",
-                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 6px 16px rgba(16, 185, 129, 0.4)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(16, 185, 129, 0.3)";
+                  transition: "all 0.2s ease",
                 }}
               >
-                Ya, Simpan Data
+                Ya
+              </button>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#f1f5f9",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Tidak
               </button>
             </div>
           </div>

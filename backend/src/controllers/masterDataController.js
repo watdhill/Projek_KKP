@@ -5,14 +5,20 @@ const tableConfig = {
   eselon1: {
     tableName: 'master_eselon1',
     idField: 'eselon1_id',
-    columns: ['nama_eselon1', 'singkatan', 'status_aktif'],
-    displayColumns: ['Nama Eselon 1', 'Singkatan', 'Status']
+    columns: ['no', 'nama_eselon1', 'singkatan', 'status_aktif'],
+    displayColumns: ['No', 'Nama Eselon 1', 'Singkatan', 'Status']
   },
   eselon2: {
     tableName: 'master_eselon2',
     idField: 'eselon2_id',
-    columns: ['eselon1_id', 'nama_eselon2', 'status_aktif'],
-    displayColumns: ['Eselon 1', 'Nama Eselon 2', 'Status']
+    columns: ['no_urutan', 'eselon1_id', 'nama_eselon2', 'status_aktif'],
+    displayColumns: ['No', 'Eselon 1', 'Nama Eselon 2', 'Status']
+  },
+  upt: {
+    tableName: 'master_upt',
+    idField: 'upt_id',
+    columns: ['no_urutan', 'eselon1_id', 'nama_upt', 'status_aktif'],
+    displayColumns: ['No', 'Eselon 1', 'Nama UPT', 'Status']
   },
   frekuensi_pemakaian: {
     tableName: 'frekuensi_pemakaian',
@@ -53,14 +59,14 @@ const tableConfig = {
   pic_eksternal: {
     tableName: 'pic_eksternal',
     idField: 'pic_eksternal_id',
-    columns: ['eselon2_id', 'nama_pic_eksternal', 'keterangan', 'kontak_pic_eksternal', 'status_aktif'],
-    displayColumns: ['Nama PIC', 'Keterangan', 'Kontak', 'Status']
+    columns: ['eselon2_id', 'nama_pic_eksternal', 'email_pic', 'kontak_pic_eksternal', 'keterangan', 'status_aktif'],
+    displayColumns: ['Eselon 2', 'Nama PIC', 'Email', 'No. HP', 'Keterangan', 'Status']
   },
   pic_internal: {
     tableName: 'pic_internal',
     idField: 'pic_internal_id',
-    columns: ['eselon2_id', 'nama_pic_internal', 'kontak_pic_internal', 'status_aktif'],
-    displayColumns: ['Eselon 2', 'Nama PIC', 'Kontak', 'Status']
+    columns: ['eselon2_id', 'nama_pic_internal', 'email_pic', 'kontak_pic_internal', 'status_aktif'],
+    displayColumns: ['Eselon 2', 'Nama PIC', 'Email', 'No. HP', 'Status']
   }
 };
 
@@ -86,13 +92,30 @@ exports.getAllMasterData = async (req, res) => {
     let query = `SELECT * FROM ${config.tableName}`;
     const params = [];
 
-    // Filter by eselon2_id for PIC types if provided (for Operator Eselon 2 visibility)
-    if ((type === 'pic_internal' || type === 'pic_eksternal') && req.query.eselon2_id) {
-      query += ` WHERE eselon2_id = ?`;
-      params.push(req.query.eselon2_id);
+    // Filter by eselon1_id or eselon2_id for PIC types (Hierarchical Visibility)
+    if (type === 'pic_internal' || type === 'pic_eksternal') {
+      if (req.query.eselon1_id) {
+        // Filter by Eselon 1: Join with master_eselon2 to get all PICs under this Eselon 1
+        query = `SELECT t.* FROM ${config.tableName} t 
+                 JOIN master_eselon2 e2 ON t.eselon2_id = e2.eselon2_id 
+                 WHERE e2.eselon1_id = ?`;
+        params.push(req.query.eselon1_id);
+      } else if (req.query.eselon2_id) {
+        // Filter by Eselon 2: Direct filter on eselon2_id
+        query = `SELECT * FROM ${config.tableName} WHERE eselon2_id = ?`;
+        params.push(req.query.eselon2_id);
+      }
     }
 
-    query += ` ORDER BY ${config.idField} DESC`;
+    let orderClause = ` ORDER BY ${config.idField} DESC`;
+    if (type === 'eselon1') {
+      orderClause = ` ORDER BY no ASC`;
+    } else if (type === 'eselon2') {
+      orderClause = ` ORDER BY no_urutan ASC`;
+    } else if (type === 'upt') {
+      orderClause = ` ORDER BY no_urutan ASC`;
+    }
+    query += orderClause;
 
     const [rows] = await pool.query(query, params);
     res.json({
@@ -159,8 +182,8 @@ exports.createMasterData = async (req, res) => {
     console.log('Type:', type);
     console.log('Body:', req.body);
 
-    // Validate eselon1_id exists for eselon2 type
-    if (type === 'eselon2' && req.body.eselon1_id) {
+    // Validate eselon1_id exists for eselon2 or upt type
+    if ((type === 'eselon2' || type === 'upt') && req.body.eselon1_id) {
       const [eselon1Check] = await pool.query(
         'SELECT eselon1_id FROM master_eselon1 WHERE eselon1_id = ?',
         [req.body.eselon1_id]
@@ -177,6 +200,7 @@ exports.createMasterData = async (req, res) => {
     const nameField = {
       eselon1: 'nama_eselon1',
       eselon2: 'nama_eselon2',
+      upt: 'nama_upt',
       frekuensi_pemakaian: 'nama_frekuensi',
       status_aplikasi: 'nama_status',
       environment: 'jenis_environment',
@@ -210,6 +234,44 @@ exports.createMasterData = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`
+        });
+      }
+    }
+
+    // Check for duplicate 'no' in eselon1 or 'no_urutan' in eselon2
+    if (type === 'eselon1' && req.body.no !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT eselon1_id FROM master_eselon1 WHERE no = ?',
+        [req.body.no]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`
+        });
+      }
+    }
+    if (type === 'eselon2' && req.body.no_urutan !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ?',
+        [req.body.no_urutan]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+        });
+      }
+    }
+    if (type === 'upt' && req.body.no_urutan !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT upt_id FROM master_upt WHERE no_urutan = ?',
+        [req.body.no_urutan]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
         });
       }
     }
@@ -309,6 +371,44 @@ exports.updateMasterData = async (req, res) => {
           val = JSON.stringify(val);
         }
         values.push(val);
+      }
+    }
+
+    // Check for duplicate 'no' in eselon1 or 'no_urutan' in eselon2 (excluding current record)
+    if (type === 'eselon1' && req.body.no !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT eselon1_id FROM master_eselon1 WHERE no = ? AND eselon1_id != ?',
+        [req.body.no, req.params.id]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`
+        });
+      }
+    }
+    if (type === 'eselon2' && req.body.no_urutan !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ? AND eselon2_id != ?',
+        [req.body.no_urutan, req.params.id]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+        });
+      }
+    }
+    if (type === 'upt' && req.body.no_urutan !== undefined) {
+      const [noCheck] = await pool.query(
+        'SELECT upt_id FROM master_upt WHERE no_urutan = ? AND upt_id != ?',
+        [req.body.no_urutan, req.params.id]
+      );
+      if (noCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+        });
       }
     }
 

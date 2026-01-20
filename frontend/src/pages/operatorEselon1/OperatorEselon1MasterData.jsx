@@ -14,15 +14,12 @@ const ID_FIELDS = {
 };
 
 const TABLE_COLUMNS = {
-  pic_internal: [
-    "eselon2_id",
-    "nama_pic_internal",
-    "kontak_pic_internal",
-    "status_aktif",
-  ],
+  pic_internal: ["eselon2_id", "nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
   pic_eksternal: [
+    "eselon2_id",
     "nama_pic_eksternal",
     "keterangan",
+    "email_pic",
     "kontak_pic_eksternal",
     "status_aktif",
   ],
@@ -45,10 +42,17 @@ const FORM_FIELDS = {
       required: true,
     },
     {
+      name: "email_pic",
+      label: "Email",
+      type: "email",
+      placeholder: "Contoh: pic@mail.com",
+      required: true,
+    },
+    {
       name: "kontak_pic_internal",
-      label: "Kontak",
+      label: "Nomor HP",
       type: "text",
-      placeholder: "Email / No. HP",
+      placeholder: "Contoh: 08123456789",
       required: true,
     },
     {
@@ -64,6 +68,13 @@ const FORM_FIELDS = {
   ],
   pic_eksternal: [
     {
+      name: "eselon2_id",
+      label: "Unit Eselon 2",
+      type: "select",
+      options: [],
+      required: true,
+    }, // Options diisi dynamic
+    {
       name: "nama_pic_eksternal",
       label: "Nama PIC Eksternal",
       type: "text",
@@ -72,16 +83,23 @@ const FORM_FIELDS = {
     },
     {
       name: "keterangan",
-      label: "Keterangan",
+      label: "Instansi",
       type: "text",
-      placeholder: "Keterangan",
+      placeholder: "Nama Instansi",
+      required: true,
+    },
+    {
+      name: "email_pic",
+      label: "Email",
+      type: "email",
+      placeholder: "Contoh: pic@mail.com",
       required: true,
     },
     {
       name: "kontak_pic_eksternal",
-      label: "Kontak",
+      label: "Nomor HP",
       type: "text",
-      placeholder: "Email / No. HP",
+      placeholder: "Contoh: 08123456789",
       required: true,
     },
     {
@@ -104,6 +122,7 @@ function OperatorEselon1MasterData() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [eselon2Options, setEselon2Options] = useState([]);
@@ -135,7 +154,13 @@ function OperatorEselon1MasterData() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}?type=${activeTab}`);
+      let url = `${API_BASE}?type=${activeTab}`;
+      const eselon1Id = localStorage.getItem("eselon1_id");
+      if (eselon1Id) {
+        url += `&eselon1_id=${eselon1Id}`;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Gagal mengambil data");
       const result = await response.json();
       setData(result.data || []);
@@ -213,7 +238,7 @@ function OperatorEselon1MasterData() {
     setShowModal(true);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     try {
       // Client-side validation
@@ -230,7 +255,14 @@ function OperatorEselon1MasterData() {
           }
         }
       }
+      setShowConfirm(true);
+    } catch (err) {
+      alert(err.message || "Terjadi kesalahan");
+    }
+  };
 
+  const handleConfirmSave = async () => {
+    try {
       const idField = ID_FIELDS[activeTab];
       const editId = editingItem?.[idField] ?? editingItem?.id;
       const url = editingItem
@@ -256,6 +288,7 @@ function OperatorEselon1MasterData() {
       if (!response.ok)
         throw new Error(result.message || "Gagal menyimpan data");
 
+      setShowConfirm(false);
       setShowModal(false);
       setEditingItem(null);
       fetchData();
@@ -486,9 +519,44 @@ function OperatorEselon1MasterData() {
         >
           <div style={{ fontSize: "32px", marginBottom: "8px" }}>📋</div>
           <div style={{ fontWeight: 500 }}>Belum ada data</div>
-          <div style={{ fontSize: "12px", marginTop: "4px" }}>
+          <div style={{ fontSize: "12px", marginTop: "4px", marginBottom: "16px" }}>
             Klik tombol "Tambah Data" untuk menambahkan data baru
           </div>
+          <button
+            onClick={handleAdd}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "10px 20px",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: 600,
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => (e.target.style.transform = "translateY(-1px)")}
+            onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Tambah Data
+          </button>
         </div>
       ) : (
         <div
@@ -997,6 +1065,112 @@ function OperatorEselon1MasterData() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1100,
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "400px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              animation: "slideUp 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px",
+              }}
+            >
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#d97706"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h3 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 700, color: "#1e293b" }}>
+              Konfirmasi
+            </h3>
+            <p style={{ margin: "0 0 28px", color: "#64748b", fontSize: "15px", lineHeight: "1.5" }}>
+              {editingItem
+                ? "Apakah anda yakin ingin memperbarui data?"
+                : "Apakah data yang diisi sudah benar?"}
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={handleConfirmSave}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#4f46e5",
+                  color: "#white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+              >
+                Ya
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#f1f5f9",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#e2e8f0")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
+              >
+                Tidak
+              </button>
+            </div>
           </div>
         </div>
       )}
