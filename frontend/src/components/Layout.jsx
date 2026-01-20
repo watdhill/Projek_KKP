@@ -164,14 +164,8 @@ function Layout({ navItems }) {
   };
 
   return (
-    <div
-      className="app-shell"
-      style={{ gridTemplateColumns: isCollapsed ? "80px 1fr" : "280px 1fr" }}
-    >
-      <aside
-        className={`sidebar ${isCollapsed ? "collapsed" : ""}`}
-        style={{ display: "flex", flexDirection: "column" }}
-      >
+    <div className={`app-shell ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+      <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
         <div className="brand">
           {!isCollapsed ? (
             <div
@@ -321,7 +315,9 @@ function Layout({ navItems }) {
       )}
 
       <main className="content">
-        <Outlet />
+        <div className="content-inner">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
