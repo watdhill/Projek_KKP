@@ -8,8 +8,9 @@ const TABS = [
   { key: "format_laporan", label: "Format Laporan" },
   { key: "eselon1", label: "Eselon 1" },
   { key: "eselon2", label: "Eselon 2" },
+  { key: "upt", label: "UPT" },
   { key: "status_aplikasi", label: "Status Aplikasi" },
-  { key: "environment", label: "Environment" },
+  { key: "environment", label: "Ekosistem" },
   { key: "cara_akses", label: "Cara Akses" },
   { key: "pdn", label: "PDN" },
 ];
@@ -17,6 +18,13 @@ const TABS = [
 // Form field configurations per type
 const FORM_FIELDS = {
   eselon1: [
+    {
+      name: "no",
+      label: "No Urutan",
+      type: "number",
+      placeholder: "Nomor urutan",
+      required: true,
+    },
     {
       name: "nama_eselon1",
       label: "Eselon I",
@@ -44,6 +52,13 @@ const FORM_FIELDS = {
   ],
   eselon2: [
     {
+      name: "no_urutan",
+      label: "No Urutan",
+      type: "number",
+      placeholder: "Nomor urutan",
+      required: true,
+    },
+    {
       name: "eselon1_id",
       label: "Eselon 1",
       type: "select",
@@ -55,6 +70,39 @@ const FORM_FIELDS = {
       label: "Nama Eselon 2",
       type: "text",
       placeholder: "Nama Eselon 2",
+      required: true,
+    },
+    {
+      name: "status_aktif",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: [
+        { value: 1, label: "Aktif" },
+        { value: 0, label: "Nonaktif" },
+      ],
+    },
+  ],
+  upt: [
+    {
+      name: "no_urutan",
+      label: "No Urutan",
+      type: "number",
+      placeholder: "Nomor urutan",
+      required: true,
+    },
+    {
+      name: "eselon1_id",
+      label: "Eselon 1",
+      type: "select",
+      required: true,
+      options: [],
+    }, // populated dynamically
+    {
+      name: "nama_upt",
+      label: "Nama UPT",
+      type: "text",
+      placeholder: "Nama UPT",
       required: true,
     },
     {
@@ -109,9 +157,9 @@ const FORM_FIELDS = {
   environment: [
     {
       name: "jenis_environment",
-      label: "Jenis Environment",
+      label: "Jenis Ekosistem",
       type: "text",
-      placeholder: "Jenis Environment",
+      placeholder: "Jenis Ekosistem",
       required: true,
     },
     {
@@ -186,8 +234,9 @@ const FORM_FIELDS = {
 
 // Table column configurations per type
 const TABLE_COLUMNS = {
-  eselon1: ["nama_eselon1", "singkatan", "status_aktif"],
-  eselon2: ["nama_eselon2", "status_aktif"],
+  eselon1: ["no", "nama_eselon1", "singkatan", "status_aktif"],
+  eselon2: ["no_urutan", "nama_eselon2", "status_aktif"],
+  upt: ["no_urutan", "nama_upt", "status_aktif"],
   frekuensi_pemakaian: ["nama_frekuensi", "status_aktif"],
   status_aplikasi: ["nama_status", "status_aktif"],
   environment: ["jenis_environment", "status_aktif"],
@@ -201,6 +250,7 @@ const TABLE_COLUMNS = {
 const ID_FIELDS = {
   eselon1: "eselon1_id",
   eselon2: "eselon2_id",
+  upt: "upt_id",
   frekuensi_pemakaian: "frekuensi_pemakaian", // kalau di backend kamu *_id, ubah ya
   status_aplikasi: "status_aplikasi_id",
   environment: "environment_id",
@@ -453,7 +503,9 @@ function MasterDataSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [eselon1Options, setEselon1Options] = useState([]);
@@ -531,7 +583,7 @@ function MasterDataSection() {
   // ---------- Fetch ----------
   useEffect(() => {
     fetchData();
-    if (activeTab === "eselon2") fetchEselon1Options();
+    if (activeTab === "eselon2" || activeTab === "upt") fetchEselon1Options();
     // reset picker ketika pindah tab format_laporan
     if (activeTab === "format_laporan") {
       setupFormatPicker([]);
@@ -733,7 +785,25 @@ function MasterDataSection() {
     return null;
   };
 
-  const handleSubmit = async (e) => {
+  // Get all leaf node IDs from the hierarchical fields
+  const getAllLeafIds = (nodes) => {
+    let ids = [];
+    for (const node of nodes) {
+      if (!node.children || node.children.length === 0) {
+        ids.push(node.field_id);
+      } else {
+        ids = [...ids, ...getAllLeafIds(node.children)];
+      }
+    }
+    return ids;
+  };
+
+  const selectAllHierarchicalFields = () => {
+    const allLeafIds = getAllLeafIds(hierarchicalFields);
+    setSelectedFieldIds(allLeafIds);
+  };
+
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     try {
@@ -764,6 +834,14 @@ function MasterDataSection() {
         throw new Error("Silakan pilih minimal satu data untuk format laporan");
       }
 
+      setShowConfirm(true);
+    } catch (err) {
+      alert(err.message || "Terjadi kesalahan");
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    try {
       const idField = ID_FIELDS[activeTab];
       const editId = editingItem?.[idField] ?? editingItem?.id;
 
@@ -806,6 +884,7 @@ function MasterDataSection() {
       if (!response.ok)
         throw new Error(result.message || "Gagal menyimpan data");
 
+      setShowConfirm(false);
       closeModal();
       fetchData();
     } catch (err) {
@@ -836,6 +915,14 @@ function MasterDataSection() {
 
   // ---------- Derived ----------
   const filteredData = data.filter((item) => {
+    // Status filter
+    if (statusFilter === "active" && !(item.status_aktif === 1 || item.status_aktif === true)) {
+      return false;
+    }
+    if (statusFilter === "inactive" && !(item.status_aktif === 0 || item.status_aktif === false)) {
+      return false;
+    }
+    // Search filter
     if (!searchTerm) return true;
     return Object.values(item).some((val) =>
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
@@ -961,13 +1048,16 @@ function MasterDataSection() {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search and Filter */}
       <div
         style={{
           marginBottom: "20px",
+          display: "flex",
+          gap: "12px",
+          alignItems: "center",
         }}
       >
-        <div style={{ position: "relative", maxWidth: "320px" }}>
+        <div style={{ position: "relative", maxWidth: "320px", flex: 1 }}>
           <svg
             style={{
               position: "absolute",
@@ -986,7 +1076,7 @@ function MasterDataSection() {
             strokeLinejoin="round"
           >
             <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.35-4.35"></path>
+            <path d="M21 21-4.35-4.35"></path>
           </svg>
           <input
             type="text"
@@ -1013,6 +1103,23 @@ function MasterDataSection() {
             }}
           />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{
+            padding: "11px 14px",
+            borderRadius: "10px",
+            border: "1px solid #e2e8f0",
+            fontSize: "14px",
+            outline: "none",
+            backgroundColor: "#ffffff",
+            cursor: "pointer",
+          }}
+        >
+          <option value="all">Semua Status</option>
+          <option value="active">Aktif</option>
+          <option value="inactive">Nonaktif</option>
+        </select>
       </div>
 
       {/* Error Message */}
@@ -1570,6 +1677,25 @@ function MasterDataSection() {
                         >
                           Daftar Data
                         </label>
+                        <button
+                          type="button"
+                          onClick={selectAllHierarchicalFields}
+                          style={{
+                            padding: "6px 12px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            backgroundColor: "#4f46e5",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                          onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
+                          onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+                        >
+                          Pilih Semua
+                        </button>
                       </div>
                       <div style={{ marginBottom: "10px" }}>
                         <input
@@ -1743,7 +1869,7 @@ function MasterDataSection() {
                     </div>
                   </div>
 
-                  {/* Status Aktif */}
+                  {/* Status */}
                   <div style={{ marginBottom: "24px" }}>
                     <label
                       style={{
@@ -1754,7 +1880,7 @@ function MasterDataSection() {
                         color: "#374151",
                       }}
                     >
-                      Status Aktif <span style={{ color: "#ef4444" }}>*</span>
+                      Status <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <select
                       value={formData.status_aktif ?? 1}
@@ -1786,8 +1912,8 @@ function MasterDataSection() {
                         e.target.style.boxShadow = "none";
                       }}
                     >
-                      <option value={1}>True</option>
-                      <option value={0}>False</option>
+                      <option value={1}>Aktif</option>
+                      <option value={0}>Nonaktif</option>
                     </select>
                   </div>
                 </div>
@@ -1952,6 +2078,112 @@ function MasterDataSection() {
         </div >
       )
       }
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1100,
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "400px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              animation: "slideUp 0.3s ease",
+            }}
+          >
+            <div
+              style={{
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px",
+              }}
+            >
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#d97706"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h3 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 700, color: "#1e293b" }}>
+              Konfirmasi
+            </h3>
+            <p style={{ margin: "0 0 28px", color: "#64748b", fontSize: "15px", lineHeight: "1.5" }}>
+              {editingItem
+                ? "Apakah anda yakin ingin memperbarui data?"
+                : "Apakah data yang diisi sudah benar?"}
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={handleConfirmSave}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#4f46e5",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+              >
+                Ya
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#f1f5f9",
+                  color: "#64748b",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => (e.target.style.backgroundColor = "#e2e8f0")}
+                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
+              >
+                Tidak
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section >
   );
 }
