@@ -1,0 +1,1 @@
+<<MOVE_FROM: c:\Users\ASUS\Projek KKP\backend\split_pic_contacts.sql>>

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS users (
   jabatan VARCHAR(150),
   password VARCHAR(255),
   status_aktif TINYINT(1) DEFAULT 1,
+  reset_token VARCHAR(100),
+  reset_token_expired DATETIME,
   FOREIGN KEY (role_id) REFERENCES roles(role_id),
   FOREIGN KEY (eselon1_id) REFERENCES master_eselon1(eselon1_id) ON DELETE SET NULL,
   FOREIGN KEY (eselon2_id) REFERENCES master_eselon2(eselon2_id) ON DELETE SET NULL
