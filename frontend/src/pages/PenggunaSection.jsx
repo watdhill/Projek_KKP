@@ -9,9 +9,10 @@ function PenggunaSection() {
   const [roles, setRoles] = useState([]);
   const [eselon1List, setEselon1List] = useState([]);
   const [eselon2List, setEselon2List] = useState([]);
+  const [uptList, setUptList] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEselon1, setFilterEselon1] = useState("");
-  const [filterEselon2, setFilterEselon2] = useState("");
+  const [filterEselon2Upt, setFilterEselon2Upt] = useState("");
   const [formData, setFormData] = useState({
     nama: "",
     nip: "",
@@ -22,6 +23,7 @@ function PenggunaSection() {
     role_id: "",
     eselon1_id: "",
     eselon2_id: "",
+    upt_id: "",
     status_aktif: 1,
   });
   const [operatorType, setOperatorType] = useState("eselon1");
@@ -55,12 +57,14 @@ function PenggunaSection() {
       result = result.filter(user => user.eselon1_id === parseInt(filterEselon1));
     }
 
-    if (filterEselon2) {
-      result = result.filter(user => user.eselon2_id === parseInt(filterEselon2));
+    if (filterEselon2Upt) {
+      result = result.filter(user =>
+        user.eselon2_id === parseInt(filterEselon2Upt) ||
+        user.upt_id === parseInt(filterEselon2Upt)
+      );
     }
-
     setFilteredUsers(result);
-  }, [searchTerm, filterEselon1, filterEselon2, users]);
+  }, [searchTerm, filterEselon1, filterEselon2Upt, users]);
 
   const fetchUsers = async () => {
     try {
@@ -85,6 +89,7 @@ function PenggunaSection() {
           setRoles(result.data.roles || []);
           setEselon1List(result.data.eselon1 || []);
           setEselon2List(result.data.eselon2 || []);
+          setUptList(result.data.upt || []);
         }
       }
     } catch (err) {
@@ -112,6 +117,7 @@ function PenggunaSection() {
           role_id: value,
           eselon1_id: "",
           eselon2_id: "",
+          upt_id: "",
         }));
       } else if (roleName.includes("Eselon 2")) {
         setOperatorType("eselon2");
@@ -120,6 +126,16 @@ function PenggunaSection() {
           role_id: value,
           eselon1_id: "",
           eselon2_id: "",
+          upt_id: "",
+        }));
+      } else if (roleName.includes("UPT")) {
+        setOperatorType("upt");
+        setFormData((prev) => ({
+          ...prev,
+          role_id: value,
+          eselon1_id: "",
+          eselon2_id: "",
+          upt_id: "",
         }));
       } else {
         setOperatorType("none");
@@ -128,10 +144,11 @@ function PenggunaSection() {
           role_id: value,
           eselon1_id: "",
           eselon2_id: "",
+          upt_id: "",
         }));
       }
     } else if (name === "eselon1_id") {
-      setFormData((prev) => ({ ...prev, eselon1_id: value, eselon2_id: "" }));
+      setFormData((prev) => ({ ...prev, eselon1_id: value, eselon2_id: "", upt_id: "" }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -182,6 +199,7 @@ function PenggunaSection() {
       role_id: user.role_id || "",
       eselon1_id: user.eselon1_id || "",
       eselon2_id: user.eselon2_id || "",
+      upt_id: user.upt_id || "",
       status_aktif: user.status_aktif !== undefined ? user.status_aktif : 1,
     });
 
@@ -191,6 +209,8 @@ function PenggunaSection() {
       setOperatorType("eselon1");
     } else if (roleName.includes("Eselon 2")) {
       setOperatorType("eselon2");
+    } else if (roleName.includes("UPT")) {
+      setOperatorType("upt");
     } else {
       setOperatorType("none");
     }
@@ -228,6 +248,7 @@ function PenggunaSection() {
         role_id: parseInt(formData.role_id),
         eselon1_id: formData.eselon1_id ? parseInt(formData.eselon1_id) : null,
         eselon2_id: formData.eselon2_id ? parseInt(formData.eselon2_id) : null,
+        upt_id: formData.upt_id ? parseInt(formData.upt_id) : null,
         status_aktif: parseInt(formData.status_aktif),
       };
 
@@ -259,6 +280,7 @@ function PenggunaSection() {
         role_id: "",
         eselon1_id: "",
         eselon2_id: "",
+        upt_id: "",
         status_aktif: 1,
       });
       setOperatorType("eselon1");
@@ -290,6 +312,7 @@ function PenggunaSection() {
       role_id: "",
       eselon1_id: "",
       eselon2_id: "",
+      upt_id: "",
       status_aktif: 1,
     });
     setOperatorType("eselon1");
@@ -343,7 +366,7 @@ function PenggunaSection() {
           {/* Filter Section Card */}
           <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", maxWidth: "100%" }}>
             <div style={{ padding: "16px 18px", backgroundColor: "#fafbfc", borderRadius: "12px 12px 0 0", borderBottom: "1px solid #e2e8f0" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr auto auto", gap: "12px", alignItems: "end", marginBottom: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 2fr auto auto", gap: "12px", alignItems: "end", marginBottom: "12px" }}>
                 <div>
                   <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#475569", fontSize: "12px" }}>Cari Pengguna</label>
                   <input type="text" placeholder="Cari nama, email, NIP, atau jabatan..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }} />
@@ -357,9 +380,20 @@ function PenggunaSection() {
                 </div>
                 <div>
                   <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#475569", fontSize: "12px" }}>Eselon 2/UPT</label>
-                  <select value={filterEselon2} onChange={(e) => setFilterEselon2(e.target.value)} disabled={!filterEselon1} style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: !filterEselon1 ? "#f1f5f9" : "#ffffff", cursor: !filterEselon1 ? "not-allowed" : "pointer" }}>
+                  <select value={filterEselon2Upt} onChange={(e) => setFilterEselon2Upt(e.target.value)} disabled={!filterEselon1} style={{ width: "100%", padding: "8px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: !filterEselon1 ? "#f1f5f9" : "#ffffff", cursor: !filterEselon1 ? "not-allowed" : "pointer" }}>
                     <option value="">Semua</option>
-                    {eselon2List.filter((e2) => !filterEselon1 || e2.eselon1_id === parseInt(filterEselon1)).map((e2) => (<option key={e2.eselon2_id} value={e2.eselon2_id}>{e2.nama_eselon2}</option>))}
+                    {[
+                      ...eselon2List.filter((e2) => !filterEselon1 || e2.eselon1_id === parseInt(filterEselon1)).map((e2) => ({
+                        id: e2.eselon2_id,
+                        label: e2.nama_eselon2 + " (Eselon 2)"
+                      })),
+                      ...uptList.filter((upt) => !filterEselon1 || upt.eselon1_id === parseInt(filterEselon1)).map((upt) => ({
+                        id: upt.upt_id,
+                        label: upt.nama_upt + " (UPT)"
+                      }))
+                    ].map((item) => (
+                      <option key={item.id} value={item.id}>{item.label}</option>
+                    ))}
                   </select>
                 </div>
                 <button onClick={resetFilters} style={{ padding: "8px 16px", backgroundColor: "#f1f5f9", color: "#64748b", border: "1px solid #cbd5e1", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" }}>Reset</button>
@@ -388,19 +422,20 @@ function PenggunaSection() {
                   maxHeight: "calc(100vh - 320px)",
                 }}
               >
-                <table style={{ width: "100%", minWidth: "1800px", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
+                <table style={{ width: "100%", minWidth: "2200px", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", height: "44px" }}>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>No</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "15%" }}>Email</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "12%" }}>Nama</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "15%" }}>Eselon 1</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "15%" }}>Eselon 2/UPT</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "12%" }}>NIP</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "10%" }}>Jabatan</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "9%" }}>Kontak</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "8%" }}>Role</th>
-                    <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "8%" }}>Status</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "5%" }}>No</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "14%" }}>Email</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "11%" }}>Nama</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 1</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 2</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>UPT</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "10%" }}>NIP</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "9%" }}>Jabatan</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "8%" }}>Kontak</th>
+                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "7%" }}>Role</th>
+                    <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Status</th>
                     <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Aksi</th>
                   </tr>
                 </thead>
@@ -412,12 +447,13 @@ function PenggunaSection() {
                       <td style={{ padding: "10px 12px", color: "#1e293b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama || "-").toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon1 || "-").toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon2 || "-").toUpperCase()}</div></td>
+                      <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_upt || "-").toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", color: "#64748b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nip || "-").toString().toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", color: "#64748b", width: "10%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.jabatan || "-").toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", color: "#64748b", width: "9%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.kontak || "-").toString().toUpperCase()}</div></td>
                       <td style={{ padding: "10px 12px", width: "8%", verticalAlign: "middle" }}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, backgroundColor: user.nama_role === "Admin" ? "#dbeafe" : "#dcfce7", color: user.nama_role === "Admin" ? "#075985" : "#166534", textTransform: "uppercase" }}>
-                          {user.nama_role || "-"}
+                          {user.nama_role === "Admin" ? "Administrator" : (user.nama_role || "-")}
                         </span>
                       </td>
                       <td style={{ padding: "10px 12px", textAlign: "center", width: "8%", verticalAlign: "middle" }}>
@@ -519,7 +555,7 @@ function PenggunaSection() {
                 </select>
               </div>
 
-              {(operatorType === "eselon1" || operatorType === "eselon2") && (
+              {(operatorType === "eselon1" || operatorType === "eselon2" || operatorType === "upt") && (
                 <div style={{ marginBottom: "16px" }}>
                   <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#1e293b", fontSize: "13px" }}>Unit Eselon 1 <span style={{ color: "#ef4444" }}>*</span></label>
                   <select name="eselon1_id" value={formData.eselon1_id} onChange={handleInputChange} required style={{ width: "100%", padding: "9px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box" }}>
@@ -531,10 +567,20 @@ function PenggunaSection() {
 
               {operatorType === "eselon2" && (
                 <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#1e293b", fontSize: "13px" }}>Unit Eselon 2/UPT <span style={{ color: "#ef4444" }}>*</span></label>
+                  <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#1e293b", fontSize: "13px" }}>Unit Eselon 2 <span style={{ color: "#ef4444" }}>*</span></label>
                   <select name="eselon2_id" value={formData.eselon2_id} onChange={handleInputChange} required disabled={!formData.eselon1_id} style={{ width: "100%", padding: "9px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: !formData.eselon1_id ? "#f1f5f9" : "#ffffff", cursor: !formData.eselon1_id ? "not-allowed" : "pointer" }}>
-                    <option value="">{!formData.eselon1_id ? "-- Pilih Eselon 1 terlebih dahulu --" : "-- Pilih Unit Eselon 2/UPT --"}</option>
+                    <option value="">{!formData.eselon1_id ? "-- Pilih Eselon 1 terlebih dahulu --" : "-- Pilih Unit Eselon 2 --"}</option>
                     {eselon2List.filter((e2) => !formData.eselon1_id || e2.eselon1_id === parseInt(formData.eselon1_id)).map((e2) => (<option key={e2.eselon2_id} value={e2.eselon2_id}>{e2.nama_eselon2}</option>))}
+                  </select>
+                </div>
+              )}
+
+              {operatorType === "upt" && (
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "6px", fontWeight: 600, color: "#1e293b", fontSize: "13px" }}>Unit Pelaksana Teknis (UPT) <span style={{ color: "#ef4444" }}>*</span></label>
+                  <select name="upt_id" value={formData.upt_id} onChange={handleInputChange} required disabled={!formData.eselon1_id} style={{ width: "100%", padding: "9px 12px", border: "1px solid #cbd5e1", borderRadius: "6px", fontSize: "13px", boxSizing: "border-box", backgroundColor: !formData.eselon1_id ? "#f1f5f9" : "#ffffff", cursor: !formData.eselon1_id ? "not-allowed" : "pointer" }}>
+                    <option value="">{!formData.eselon1_id ? "-- Pilih Eselon 1 terlebih dahulu --" : "-- Pilih Unit UPT --"}</option>
+                    {uptList.filter((upt) => !formData.eselon1_id || upt.eselon1_id === parseInt(formData.eselon1_id)).map((upt) => (<option key={upt.upt_id} value={upt.upt_id}>{upt.nama_upt}</option>))}
                   </select>
                   <div style={{ fontSize: "11px", color: "#64748b", marginTop: "4px" }}>UPT setara dengan Eselon 2 di bawah Eselon 1</div>
                 </div>

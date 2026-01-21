@@ -22,13 +22,16 @@ exports.login = async (req, res) => {
         u.role_id,
         u.eselon1_id,
         u.eselon2_id,
+        u.upt_id,
         r.nama_role,
         e1.nama_eselon1,
-        e2.nama_eselon2
+        e2.nama_eselon2,
+        upt.nama_upt
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.role_id
       LEFT JOIN master_eselon1 e1 ON u.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON u.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON u.upt_id = upt.upt_id
       WHERE u.email = ?
     `;
     const [rows] = await pool.query(query, [email]);
@@ -69,8 +72,10 @@ exports.login = async (req, res) => {
         nama_role: user.nama_role,
         eselon1_id: user.eselon1_id,
         eselon2_id: user.eselon2_id,
+        upt_id: user.upt_id,
         nama_eselon1: user.nama_eselon1,
-        nama_eselon2: user.nama_eselon2
+        nama_eselon2: user.nama_eselon2,
+        nama_upt: user.nama_upt
       }
     });
   } catch (error) {
@@ -97,13 +102,16 @@ exports.getAllUsers = async (req, res) => {
         u.role_id,
         u.eselon1_id,
         u.eselon2_id,
+        u.upt_id,
         r.nama_role,
         e1.nama_eselon1,
-        e2.nama_eselon2
+        e2.nama_eselon2,
+        upt.nama_upt
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.role_id
       LEFT JOIN master_eselon1 e1 ON u.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON u.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON u.upt_id = upt.upt_id
       ORDER BY u.user_id
     `;
     const [rows] = await pool.query(query);
@@ -136,13 +144,16 @@ exports.getUserById = async (req, res) => {
         u.role_id,
         u.eselon1_id,
         u.eselon2_id,
+        u.upt_id,
         r.nama_role,
         e1.nama_eselon1,
-        e2.nama_eselon2
+        e2.nama_eselon2,
+        upt.nama_upt
       FROM users u
       LEFT JOIN roles r ON u.role_id = r.role_id
       LEFT JOIN master_eselon1 e1 ON u.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON u.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON u.upt_id = upt.upt_id
       WHERE u.user_id = ?
     `;
     const [rows] = await pool.query(query, [req.params.id]);
@@ -168,7 +179,7 @@ exports.getUserById = async (req, res) => {
 // Create user
 exports.createUser = async (req, res) => {
   try {
-    const { role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, password } = req.body;
+    const { role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, password } = req.body;
     
     // Validasi: semua field wajib diisi
     if (!nama || !email || !jabatan || !kontak || !password || !role_id) {
@@ -206,8 +217,8 @@ exports.createUser = async (req, res) => {
     }
     
     const [result] = await pool.query(
-      'INSERT INTO users (role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, password, status_aktif) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
-      [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, password]
+      'INSERT INTO users (role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, password, status_aktif) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      [role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, password]
     );
     res.status(201).json({
       success: true,
@@ -226,7 +237,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, password, status_aktif } = req.body;
+    const { role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, password, status_aktif } = req.body;
     
     // Validasi: field wajib tidak boleh kosong
     if (!nama || !email || !jabatan || !kontak || !role_id) {
@@ -268,11 +279,11 @@ exports.updateUser = async (req, res) => {
     // Jika password tidak dikirim (kosong), jangan update password
     let query, params;
     if (password) {
-      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, kontak = ?, password = ?, status_aktif = ? WHERE user_id = ?';
-      params = [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, password, status_aktif, req.params.id];
+      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, upt_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, kontak = ?, password = ?, status_aktif = ? WHERE user_id = ?';
+      params = [role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, password, status_aktif, req.params.id];
     } else {
-      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, kontak = ?, status_aktif = ? WHERE user_id = ?';
-      params = [role_id, eselon1_id, eselon2_id, nama, nip, email, jabatan, kontak, status_aktif, req.params.id];
+      query = 'UPDATE users SET role_id = ?, eselon1_id = ?, eselon2_id = ?, upt_id = ?, nama = ?, nip = ?, email = ?, jabatan = ?, kontak = ?, status_aktif = ? WHERE user_id = ?';
+      params = [role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, status_aktif, req.params.id];
     }
     
     const [result] = await pool.query(query, params);
