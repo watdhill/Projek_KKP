@@ -574,6 +574,19 @@ exports.getDropdownData = async (req, res) => {
 
     const [eselon2] = await pool.query(eselon2Query, eselon2Params);
 
+    // Query untuk UPT dengan filter eselon1_id yang sama
+    let uptQuery = 'SELECT * FROM master_upt WHERE status_aktif = 1';
+    const uptParams = [];
+
+    if (eselon1_id) {
+      uptQuery += ' AND eselon1_id = ?';
+      uptParams.push(eselon1_id);
+    }
+
+    uptQuery += ' ORDER BY nama_upt';
+
+    const [upt] = await pool.query(uptQuery, uptParams);
+
     // Fetch all master data needed for form dropdowns
     const [cara_akses] = await pool.query('SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY nama_cara_akses');
     const [frekuensi_pemakaian] = await pool.query('SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY nama_frekuensi');
@@ -589,6 +602,7 @@ exports.getDropdownData = async (req, res) => {
         roles,
         eselon1,
         eselon2,
+        upt,
         cara_akses,
         frekuensi_pemakaian,
         status_aplikasi,

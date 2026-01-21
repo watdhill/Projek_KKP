@@ -5,7 +5,8 @@ import kkpLogo from '../kkp.png'
 const roleHome = {
   admin: '/admin',
   operatorEselon1: '/operator-eselon1',
-  operatorEselon2: '/operator-eselon2'
+  operatorEselon2: '/operator-eselon2',
+  operatorUPT: '/operator-upt'
 }
 
 // Map role_id to role key
@@ -13,7 +14,8 @@ const getRoleFromId = (roleId) => {
   const roleMap = {
     1: 'admin',
     2: 'operatorEselon1',
-    3: 'operatorEselon2'
+    3: 'operatorEselon2',
+    4: 'operatorUPT'
   }
   return roleMap[roleId] || 'admin'
 }
@@ -68,8 +70,10 @@ function LoginPage() {
       localStorage.setItem('userName', result.data.nama)
       localStorage.setItem('eselon1_id', result.data.eselon1_id || '')
       localStorage.setItem('eselon2_id', result.data.eselon2_id || '')
+      localStorage.setItem('upt_id', result.data.upt_id || '')
       localStorage.setItem('namaEselon1', result.data.nama_eselon1 || '')
       localStorage.setItem('namaEselon2', result.data.nama_eselon2 || '')
+      localStorage.setItem('namaUPT', result.data.nama_upt || '')
 
       // Navigate ke home page sesuai role
       navigate(roleHome[role] || '/admin', { replace: true })

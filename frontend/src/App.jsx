@@ -9,6 +9,7 @@ import MasterDataSection from './pages/MasterDataSection'
 import PenggunaSection from './pages/PenggunaSection'
 import OperatorEselon1Page from './pages/operatorEselon1/OperatorEselon1Page'
 import OperatorEselon2Page from './pages/operatorEselon2/OperatorEselon2Page'
+import OperatorUPTPage from './pages/operatorUPT/OperatorUPTPage'
 import OperatorEselon1Dashboard from './pages/operatorEselon1/OperatorEselon1Dashboard'
 import OperatorEselon1MasterData from './pages/operatorEselon1/OperatorEselon1MasterData'
 import OperatorEselon1DataAplikasi from './pages/operatorEselon1/OperatorEselon1DataAplikasi'
@@ -17,6 +18,10 @@ import OperatorEselon2Dashboard from './pages/operatorEselon2/OperatorEselon2Das
 import OperatorEselon2MasterData from './pages/operatorEselon2/OperatorEselon2MasterData'
 import OperatorEselon2DataAplikasi from './pages/operatorEselon2/OperatorEselon2DataAplikasi'
 import OperatorEselon2Profile from './pages/operatorEselon2/OperatorEselon2Profile'
+import OperatorUPTDashboard from './pages/operatorUPT/OperatorUPTDashboard'
+import OperatorUPTMasterData from './pages/operatorUPT/OperatorUPTMasterData'
+import OperatorUPTDataAplikasi from './pages/operatorUPT/OperatorUPTDataAplikasi'
+import OperatorUPTProfile from './pages/operatorUPT/OperatorUPTProfile'
 import AdminProfile from './pages/AdminProfile'
 import LoginPage from './pages/LoginPage'
 
@@ -41,10 +46,17 @@ const operatorEselon2Nav = [
   { label: 'Data Aplikasi', path: '/operator-eselon2/data-aplikasi', icon: 'aplikasi' },
 ]
 
+const operatorUPTNav = [
+  { label: 'Dashboard', path: '/operator-upt', icon: 'dashboard' },
+  { label: 'Master Data', path: '/operator-upt/master-data', icon: 'master' },
+  { label: 'Data Aplikasi', path: '/operator-upt/data-aplikasi', icon: 'aplikasi' },
+]
+
 const roleHome = {
   admin: '/admin',
   operatorEselon1: '/operator-eselon1',
-  operatorEselon2: '/operator-eselon2'
+  operatorEselon2: '/operator-eselon2',
+  operatorUPT: '/operator-upt'
 }
 
 function RequireAuth({ allowedRoles, children }) {
@@ -95,6 +107,17 @@ function App() {
             <Route path="profile" element={<OperatorEselon2Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/operator-eselon2" replace />} />
+        </Route>
+
+        {/* Operator UPT area */}
+        <Route path="/operator-upt" element={<RequireAuth allowedRoles={['operatorUPT']}><Layout navItems={operatorUPTNav} /></RequireAuth>}>
+          <Route element={<OperatorUPTPage />}>
+            <Route index element={<OperatorUPTDashboard />} />
+            <Route path="master-data" element={<OperatorUPTMasterData />} />
+            <Route path="data-aplikasi" element={<OperatorUPTDataAplikasi />} />
+            <Route path="profile" element={<OperatorUPTProfile />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/operator-upt" replace />} />
         </Route>
 
         {/* Fallback */}

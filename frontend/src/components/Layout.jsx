@@ -13,10 +13,13 @@ function Layout({ navItems }) {
   const userName = localStorage.getItem("userName") || "User";
   const namaEselon1 = localStorage.getItem("namaEselon1") || "";
   const namaEselon2 = localStorage.getItem("namaEselon2") || "";
+  const namaUPT = localStorage.getItem("namaUPT") || "";
 
   // Tentukan apakah user adalah operator
   const isOperator =
-    userRole === "operatorEselon1" || userRole === "operatorEselon2";
+    userRole === "operatorEselon1" || 
+    userRole === "operatorEselon2" || 
+    userRole === "operatorUPT";
 
   // Tentukan teks eselon yang ditampilkan
   const eselonName =
@@ -24,6 +27,8 @@ function Layout({ navItems }) {
       ? namaEselon1
       : userRole === "operatorEselon2"
       ? namaEselon2
+      : userRole === "operatorUPT"
+      ? namaUPT
       : "";
 
   // Tentukan profile path berdasarkan role (hanya untuk operator)
@@ -31,6 +36,7 @@ function Layout({ navItems }) {
     if (userRole === "admin") return "/admin/profile";
     if (userRole === "operatorEselon1") return "/operator-eselon1/profile";
     if (userRole === "operatorEselon2") return "/operator-eselon2/profile";
+    if (userRole === "operatorUPT") return "/operator-upt/profile";
     return "/profile"; // fallback
   };
 
