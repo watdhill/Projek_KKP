@@ -1,3 +1,57 @@
+// Forgot Password - kirim email verifikasi
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email wajib diisi' });
+    }
+
+    // Cek apakah email terdaftar
+    const [rows] = await pool.query('SELECT user_id, nama FROM users WHERE email = ?', [email]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Email tidak ditemukan' });
+    }
+    const user = rows[0];
+
+    // Generate token reset password
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiredAt = new Date(Date.now() + 1000 * 60 * 30); // 30 menit
+
+    // Simpan token ke database (bisa di tabel baru, di sini contoh sederhana: update kolom users)
+    await pool.query('UPDATE users SET reset_token = ?, reset_token_expired = ? WHERE user_id = ?', [token, expiredAt, user.user_id]);
+
+    // Konfigurasi transporter email (gunakan akun Gmail atau SMTP lain)
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER || 'your_gmail@gmail.com',
+        pass: process.env.EMAIL_PASS || 'your_gmail_app_password',
+      },
+    });
+
+    // Link reset password (ganti URL sesuai frontend Anda)
+    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+
+    // Kirim email
+    await transporter.sendMail({
+      from: 'no-reply@kkp.com',
+      to: email,
+      subject: 'Reset Password - SIMA KKP',
+      html: `<p>Halo ${user.nama},</p>
+        <p>Kami menerima permintaan reset password untuk akun Anda.</p>
+        <p>Silakan klik link berikut untuk mengatur ulang password Anda (berlaku 30 menit):</p>
+        <a href="${resetLink}">${resetLink}</a>
+        <p>Jika Anda tidak meminta reset password, abaikan email ini.</p>`
+    });
+
+    res.json({ success: true, message: 'Email verifikasi reset password telah dikirim' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal mengirim email', error: error.message });
+  }
+};
 const pool = require('../config/database');
 
 // Login user

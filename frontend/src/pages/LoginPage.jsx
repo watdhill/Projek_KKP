@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import kkpLogo from '../kkp.png'
+import kkpLogo from '../assets/kkp.png'
 
 const roleHome = {
   admin: '/admin',
@@ -20,29 +20,51 @@ const getRoleFromId = (roleId) => {
   return roleMap[roleId] || 'admin'
 }
 
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [captchaA, setCaptchaA] = useState(getRandomInt(1, 10));
+  const [captchaB, setCaptchaB] = useState(getRandomInt(1, 10));
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const navigate = useNavigate()
 
+  const regenerateCaptcha = () => {
+    setCaptchaA(getRandomInt(1, 10));
+    setCaptchaB(getRandomInt(1, 10));
+    setCaptchaInput('');
+    setCaptchaError('');
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
+    setCaptchaError('');
 
     if (!email || !password) {
-      setError('Email dan password wajib diisi')
-      return
+      setError('Email dan password wajib diisi');
+      return;
     }
 
     if (!email.includes('@')) {
-      setError('Format email tidak valid')
-      return
+      setError('Format email tidak valid');
+      return;
     }
 
-    setLoading(true)
+    if (parseInt(captchaInput) !== captchaA + captchaB) {
+      setCaptchaError('Jawaban captcha salah');
+      regenerateCaptcha();
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await fetch('http://localhost:5000/api/users/auth/login', {
         method: 'POST',
@@ -50,39 +72,40 @@ function LoginPage() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password })
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!result.success) {
-        setError(result.message || 'Login gagal')
-        setLoading(false)
-        return
+        setError(result.message || 'Login gagal');
+        setLoading(false);
+        regenerateCaptcha();
+        return;
       }
 
       // Get role from role_id
-      const role = getRoleFromId(result.data.role_id)
+      const role = getRoleFromId(result.data.role_id);
 
       // Store user data di localStorage
-      localStorage.setItem('userRole', role)
-      localStorage.setItem('userEmail', result.data.email)
-      localStorage.setItem('userId', result.data.user_id)
-      localStorage.setItem('userName', result.data.nama)
-      localStorage.setItem('eselon1_id', result.data.eselon1_id || '')
-      localStorage.setItem('eselon2_id', result.data.eselon2_id || '')
-      localStorage.setItem('upt_id', result.data.upt_id || '')
-      localStorage.setItem('namaEselon1', result.data.nama_eselon1 || '')
-      localStorage.setItem('namaEselon2', result.data.nama_eselon2 || '')
-      localStorage.setItem('namaUPT', result.data.nama_upt || '')
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userEmail', result.data.email);
+      localStorage.setItem('userId', result.data.user_id);
+      localStorage.setItem('userName', result.data.nama);
+      localStorage.setItem('eselon1_id', result.data.eselon1_id || '');
+      localStorage.setItem('eselon2_id', result.data.eselon2_id || '');
+      localStorage.setItem('upt_id', result.data.upt_id || '');
+      localStorage.setItem('namaEselon1', result.data.nama_eselon1 || '');
+      localStorage.setItem('namaEselon2', result.data.nama_eselon2 || '');
+      localStorage.setItem('namaUPT', result.data.nama_upt || '');
 
       // Navigate ke home page sesuai role
-      navigate(roleHome[role] || '/admin', { replace: true })
+      navigate(roleHome[role] || '/admin', { replace: true });
     } catch (error) {
-      setError('Terjadi kesalahan saat login: ' + error.message)
+      setError('Terjadi kesalahan saat login: ' + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div style={{
@@ -252,16 +275,40 @@ function LoginPage() {
               </div>
             </div>
 
+
+            {/* Captcha */}
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>Captcha <span style={{ color: '#ef4444' }}>*</span></label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontWeight: 600, fontSize: '15px', background: '#f1f5f9', padding: '7px 16px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>{captchaA} + {captchaB} = ?</span>
+                <input
+                  type='number'
+                  value={captchaInput}
+                  onChange={e => setCaptchaInput(e.target.value)}
+                  required
+                  placeholder='Jawaban'
+                  style={{ width: '90px', padding: '9px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+                <button type='button' onClick={regenerateCaptcha} style={{ padding: '7px 10px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', borderRadius: '6px', cursor: 'pointer' }} title='Ganti soal'>↻</button>
+              </div>
+              {captchaError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{captchaError}</div>}
+            </div>
+
             {/* Forgot Password Link */}
+
             <div style={{ marginBottom: '32px', textAlign: 'left' }}>
-              <a href="#" style={{
-                color: '#00a8e8',
-                fontSize: '14px',
-                textDecoration: 'none',
-                fontWeight: '500'
-              }}>
+              <span
+                onClick={() => navigate('/forgot-password')}
+                style={{
+                  color: '#00a8e8',
+                  fontSize: '14px',
+                  textDecoration: 'underline',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
                 Lupa Password?
-              </a>
+              </span>
             </div>
 
             {/* Submit Button */}

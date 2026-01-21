@@ -23,7 +23,9 @@ import OperatorUPTMasterData from './pages/operatorUPT/OperatorUPTMasterData'
 import OperatorUPTDataAplikasi from './pages/operatorUPT/OperatorUPTDataAplikasi'
 import OperatorUPTProfile from './pages/operatorUPT/OperatorUPTProfile'
 import AdminProfile from './pages/AdminProfile'
+
 import LoginPage from './pages/LoginPage'
+import ForgotPassword from './pages/ForgotPassword'
 
 const adminNav = [
   { label: 'Dashboard', path: '/admin', icon: 'dashboard' },
@@ -73,6 +75,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Admin area */}
