@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Add keyframe animations
 const styleSheet = document.createElement("style");
@@ -31,6 +31,8 @@ function DataAplikasiSection() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const messageTimerRef = useRef(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showModal, setShowModal] = useState(false);
@@ -88,6 +90,22 @@ function DataAplikasiSection() {
   const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
   const errorBoxShadow = errorRing;
 
+  const showMessage = (type, text, timeoutMs = 3500) => {
+    if (messageTimerRef.current) {
+      clearTimeout(messageTimerRef.current);
+      messageTimerRef.current = null;
+    }
+
+    setMessage({ type, text });
+
+    if (timeoutMs && timeoutMs > 0) {
+      messageTimerRef.current = setTimeout(() => {
+        setMessage({ type: "", text: "" });
+        messageTimerRef.current = null;
+      }, timeoutMs);
+    }
+  };
+
   // fetch apps function (reusable)
   const fetchApps = async () => {
     setLoading(true);
@@ -106,6 +124,12 @@ function DataAplikasiSection() {
   useEffect(() => {
     fetchApps();
     fetchMasterDropdowns();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
+    };
   }, []);
 
   const filtered = apps.filter((a) => {
@@ -209,7 +233,7 @@ function DataAplikasiSection() {
       fetchMasterDropdowns();
       setFieldErrors({});
       const res = await fetch(
-        `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`
+        `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`,
       );
       if (!res.ok) throw new Error("Gagal mengambil detail aplikasi");
       const result = await res.json();
@@ -276,7 +300,7 @@ function DataAplikasiSection() {
       setOriginalAppName(appName);
       setShowModal(true);
     } catch (err) {
-      alert("Error: " + (err.message || err));
+      showMessage("error", "Error: " + (err.message || err), 6000);
     }
   };
 
@@ -451,7 +475,11 @@ function DataAplikasiSection() {
       if (missing.length > 0) {
         setFieldErrors(missingErrors);
         focusFirstInvalidField(missingErrors, fieldOrder);
-        alert("Field berikut wajib diisi:\n- " + missing.join("\n- "));
+        showMessage(
+          "error",
+          "Field berikut wajib diisi:\n- " + missing.join("\n- "),
+          6500,
+        );
         return false;
       }
 
@@ -477,8 +505,10 @@ function DataAplikasiSection() {
         const isValidIpv6 = ipv6Regex.test(ipValue);
 
         if (!isValidIpv4 && !isValidIpv6) {
-          alert(
-            "Alamat IP Publik tidak valid.\n\nFormat yang didukung:\n- IPv4: 192.168.1.1\n- IPv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+          showMessage(
+            "error",
+            "Alamat IP Publik tidak valid.\n\nFormat yang didukung:\n- IPv4: 192.168.1.1\n- IPv6: 2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+            7000,
           );
           return false;
         }
@@ -488,7 +518,11 @@ function DataAplikasiSection() {
         formData.nilai_pengembangan_aplikasi.trim() !== ""
       ) {
         if (isNaN(Number(formData.nilai_pengembangan_aplikasi))) {
-          alert("Nilai Pengembangan Aplikasi harus berupa angka");
+          showMessage(
+            "error",
+            "Nilai Pengembangan Aplikasi harus berupa angka",
+            4500,
+          );
           return false;
         }
       }
@@ -560,8 +594,8 @@ function DataAplikasiSection() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-          originalAppName
-        )}`
+            originalAppName,
+          )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -585,21 +619,25 @@ function DataAplikasiSection() {
       // refresh list
       await fetchApps();
       setShowModal(false);
-      alert(
+      showMessage(
+        "success",
         editMode
           ? "Aplikasi berhasil diupdate"
-          : "Aplikasi berhasil ditambahkan"
+          : "Aplikasi berhasil ditambahkan",
+        3000,
       );
     } catch (err) {
       const status = err?.status;
       const payload = err?.payload;
       if (status === 409 || payload?.code === "DUPLICATE_NAMA_APLIKASI") {
-        alert(
+        showMessage(
+          "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada."
+            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+          7000,
         );
       } else {
-        alert("Error: " + (err?.message || err));
+        showMessage("error", "Error: " + (err?.message || err), 7000);
       }
     } finally {
       setSubmitting(false);
@@ -616,6 +654,83 @@ function DataAplikasiSection() {
         minHeight: "100vh",
       }}
     >
+      {!!message?.text && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            top: 18,
+            right: 18,
+            zIndex: 10000,
+            minWidth: 280,
+            maxWidth: 520,
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: "1px solid #e2e8f0",
+            boxShadow:
+              "0 10px 25px rgba(0,0,0,0.10), 0 4px 10px rgba(0,0,0,0.06)",
+            background:
+              message.type === "success"
+                ? "linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)"
+                : message.type === "error"
+                  ? "linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)"
+                  : "linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <div style={{ display: "flex", gap: 10 }}>
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 999,
+                  marginTop: 6,
+                  backgroundColor:
+                    message.type === "success"
+                      ? "#10b981"
+                      : message.type === "error"
+                        ? "#ef4444"
+                        : "#6366f1",
+                }}
+              />
+              <div
+                style={{
+                  color: "#0f172a",
+                  fontSize: 13,
+                  lineHeight: 1.45,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {message.text}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => showMessage("", "", 0)}
+              aria-label="Tutup notifikasi"
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#64748b",
+                padding: 2,
+                lineHeight: 1,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>×</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div
         style={{
@@ -1270,8 +1385,8 @@ function DataAplikasiSection() {
                                 textTransform: "none",
                               }}
                               onMouseOver={(e) =>
-                              (e.currentTarget.style.textDecoration =
-                                "underline")
+                                (e.currentTarget.style.textDecoration =
+                                  "underline")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.textDecoration = "none")
@@ -1299,7 +1414,12 @@ function DataAplikasiSection() {
                                   strokeLinejoin="round"
                                 />
                               </svg>
-                              <span className="allow-lowercase" style={{ textTransform: "none" }}>{app.domain}</span>
+                              <span
+                                className="allow-lowercase"
+                                style={{ textTransform: "none" }}
+                              >
+                                {app.domain}
+                              </span>
                             </a>
                           </div>
                         )}
@@ -1960,7 +2080,7 @@ function DataAplikasiSection() {
                         {(master.eselon1 || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
+                              x.status_aktif === 1 || x.status_aktif === true,
                           )
                           .map((x) => (
                             <option key={x.eselon1_id} value={x.eselon1_id}>
@@ -2031,7 +2151,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                String(formData.eselon1_id))
+                                  String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -2110,8 +2230,9 @@ function DataAplikasiSection() {
                           }}
                         >
                           {(formData.cara_akses_id || []).length > 0
-                            ? `${(formData.cara_akses_id || []).length
-                            } cara akses dipilih`
+                            ? `${
+                                (formData.cara_akses_id || []).length
+                              } cara akses dipilih`
                             : "-Pilih-"}
                         </span>
                         <svg
@@ -2179,7 +2300,7 @@ function DataAplikasiSection() {
                                 .filter(
                                   (x) =>
                                     x.status_aktif === 1 ||
-                                    x.status_aktif === true
+                                    x.status_aktif === true,
                                 )
                                 .map((x) => (
                                   <label
@@ -2213,11 +2334,11 @@ function DataAplikasiSection() {
                                         const updated = e.target.checked
                                           ? [...current, id]
                                           : current.filter(
-                                            (item) => item !== id
-                                          );
+                                              (item) => item !== id,
+                                            );
                                         handleFormChange(
                                           "cara_akses_id",
-                                          updated
+                                          updated,
                                         );
                                       }}
                                       style={{
@@ -2245,19 +2366,19 @@ function DataAplikasiSection() {
                               master.cara_akses.filter(
                                 (x) =>
                                   x.status_aktif === 1 ||
-                                  x.status_aktif === true
+                                  x.status_aktif === true,
                               ).length === 0) && (
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#94a3b8",
-                                    textAlign: "center",
-                                    padding: "12px",
-                                  }}
-                                >
-                                  Tidak ada data Cara Akses
-                                </div>
-                              )}
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#94a3b8",
+                                  textAlign: "center",
+                                  padding: "12px",
+                                }}
+                              >
+                                Tidak ada data Cara Akses
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
@@ -2325,7 +2446,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "frekuensi_pemakaian",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         style={{
@@ -2342,7 +2463,7 @@ function DataAplikasiSection() {
                         {(master.frekuensi_pemakaian || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
+                              x.status_aktif === 1 || x.status_aktif === true,
                           )
                           .map((x) => (
                             <option
@@ -2385,7 +2506,7 @@ function DataAplikasiSection() {
                         {(master.status_aplikasi || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
+                              x.status_aktif === 1 || x.status_aktif === true,
                           )
                           .map((x) => (
                             <option
@@ -2428,7 +2549,7 @@ function DataAplikasiSection() {
                         {(master.environment || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
+                              x.status_aktif === 1 || x.status_aktif === true,
                           )
                           .map((x) => (
                             <option
@@ -2469,12 +2590,12 @@ function DataAplikasiSection() {
                           const pdnObj = (master.pdn || [])
                             .filter(
                               (p) =>
-                                p.status_aktif === 1 || p.status_aktif === true
+                                p.status_aktif === 1 || p.status_aktif === true,
                             )
                             .find((p) => String(p.pdn_id) === String(id));
                           handleFormChange(
                             "pdn_backup",
-                            pdnObj ? pdnObj.kode_pdn : ""
+                            pdnObj ? pdnObj.kode_pdn : "",
                           );
                         }}
                         style={{
@@ -2491,7 +2612,7 @@ function DataAplikasiSection() {
                         {(master.pdn || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true
+                              x.status_aktif === 1 || x.status_aktif === true,
                           )
                           .map((x) => (
                             <option key={x.pdn_id} value={x.pdn_id}>
@@ -2803,7 +2924,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "kerangka_pengembangan",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: Laravel, Django, Spring Boot"
@@ -2872,7 +2993,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "unit_operasional_teknologi",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: Subbag TI, Divisi Infrastruktur"
@@ -2906,7 +3027,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "nilai_pengembangan_aplikasi",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: 500000000 (dalam Rupiah)"
@@ -2950,7 +3071,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "pusat_komputasi_utama",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: Data Center Jakarta"
@@ -2984,7 +3105,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "pusat_komputasi_backup",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: Data Center Surabaya"
@@ -3018,7 +3139,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "mandiri_komputasi_backup",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         placeholder="Contoh: Server Lokal Kantor"
@@ -3365,7 +3486,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "tipe_lisensi_bahasa",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         style={{
@@ -3402,7 +3523,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange(
                             "api_internal_status",
-                            e.target.value
+                            e.target.value,
                           )
                         }
                         style={{
