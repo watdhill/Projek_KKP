@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:5000/api/master-data";
 
-// Tab configuration matching backend
-const TABS = [
+// Tab configuration matching backend (static tabs)
+const STATIC_TABS = [
   { key: "frekuensi_pemakaian", label: "Frekuensi Pemakaian" },
   { key: "format_laporan", label: "Format Laporan" },
   { key: "eselon1", label: "Eselon 1" },
@@ -303,7 +303,6 @@ const DATA_FIELD_OPTIONS = [
   { value: "api_internal_status", label: "API Internal Status" },
 ];
 
-
 function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
   const [isOpen, setIsOpen] = useState(node.level === 1); // Expand Level 1 by default
 
@@ -324,7 +323,7 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
       return n.children.some(
         (c) =>
           c.nama_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          hasMatchingDescendant(c)
+          hasMatchingDescendant(c),
       );
     };
     return matchesSelf || hasMatchingDescendant(child);
@@ -342,14 +341,15 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
 
   const leafDescendants = getLeafDescendants(node);
   const isFullySelected = leafDescendants.every((id) =>
-    selectedIds.includes(id)
+    selectedIds.includes(id),
   );
   const isPartiallySelected =
     !isFullySelected && leafDescendants.some((id) => selectedIds.includes(id));
 
   // Determine text color based on level
   let textColor = "#475569"; // default (Level 3)
-  if (node.level === 1) textColor = "#ef4444"; // Red
+  if (node.level === 1)
+    textColor = "#ef4444"; // Red
   else if (node.level === 2) textColor = "#3b82f6"; // Blue
 
   // If searching and this node doesn't match and has no matching children, hide it
@@ -361,7 +361,7 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
     return n.children.some(
       (c) =>
         c.nama_field.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        hasMatchingDescendant(c)
+        hasMatchingDescendant(c),
     );
   };
 
@@ -381,7 +381,9 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
           cursor: "pointer",
           transition: "all 0.2s",
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f1f5f9")}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#f1f5f9")
+        }
         onMouseLeave={(e) =>
           (e.currentTarget.style.backgroundColor = "transparent")
         }
@@ -498,6 +500,7 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
 }
 
 function MasterDataSection() {
+  const [tabs, setTabs] = useState(STATIC_TABS); // Dynamic tabs
   const [activeTab, setActiveTab] = useState("eselon1");
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -509,6 +512,7 @@ function MasterDataSection() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [eselon1Options, setEselon1Options] = useState([]);
+  const [dynamicFormFields, setDynamicFormFields] = useState([]); // Dynamic table columns
 
   // State for Format Laporan picker
   const [selectedDataFields, setSelectedDataFields] = useState([]);
@@ -518,6 +522,31 @@ function MasterDataSection() {
   const [hierarchicalFields, setHierarchicalFields] = useState([]);
   const [selectedFieldIds, setSelectedFieldIds] = useState([]);
   const [hierSearchTerm, setHierSearchTerm] = useState("");
+
+  // Load dynamic tables on mount
+  useEffect(() => {
+    fetchDynamicTables();
+  }, []);
+
+  const fetchDynamicTables = async () => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/dynamic-master/available-types",
+      );
+      if (!response.ok) return;
+      const result = await response.json();
+      if (result.success && result.data.length > 0) {
+        const dynamicTabs = result.data.map((table) => ({
+          key: table.key,
+          label: table.label,
+          isDynamic: true,
+        }));
+        setTabs([...STATIC_TABS, ...dynamicTabs]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dynamic tables:", err);
+    }
+  };
 
   // ---------- Helpers ----------
   const formatColumnHeader = (col) =>
@@ -530,8 +559,29 @@ function MasterDataSection() {
     return { bg: "#fee2e2", text: "#991b1b", label: "Nonaktif" };
   };
 
+  const getIdField = (tabKey) => {
+    // Check static tables first
+    if (ID_FIELDS[tabKey]) {
+      return ID_FIELDS[tabKey];
+    }
+    // For dynamic tables, find from tabs state
+    const dynamicTab = tabs.find((t) => t.key === tabKey && t.isDynamic);
+    if (dynamicTab) {
+      // Try to get from backend data
+      const tableData = data[0];
+      if (tableData) {
+        // Find the ID column (usually ends with _id)
+        const possibleIdField = Object.keys(tableData).find(
+          (key) => key.endsWith("_id") && tableData[key] !== undefined,
+        );
+        if (possibleIdField) return possibleIdField;
+      }
+    }
+    return "id"; // fallback
+  };
+
   const getRowId = (item) => {
-    const key = ID_FIELDS[activeTab];
+    const key = getIdField(activeTab);
     return item?.[key] ?? item?.id; // fallback kalau backend masih kirim "id"
   };
 
@@ -583,6 +633,13 @@ function MasterDataSection() {
   // ---------- Fetch ----------
   useEffect(() => {
     fetchData();
+
+    // Check if dynamic tab
+    const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
+    if (isDynamic) {
+      fetchDynamicTableColumns();
+    }
+
     if (activeTab === "eselon2" || activeTab === "upt") fetchEselon1Options();
     // reset picker ketika pindah tab format_laporan
     if (activeTab === "format_laporan") {
@@ -591,6 +648,62 @@ function MasterDataSection() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  const fetchDynamicTableColumns = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/dynamic-master/tables`,
+      );
+      if (!response.ok) return;
+      const result = await response.json();
+
+      // Find columns for current table
+      const tableInfo = result.data.find((t) => t.table_name === activeTab);
+      if (tableInfo && tableInfo.table_schema) {
+        const schema =
+          typeof tableInfo.table_schema === "string"
+            ? JSON.parse(tableInfo.table_schema)
+            : tableInfo.table_schema;
+
+        const fields = schema.map((col) => ({
+          name: col.column_name,
+          label: col.display_name,
+          type: getInputType(col.column_type),
+          required: !col.is_nullable,
+          placeholder: col.display_name,
+        }));
+
+        // Tambahkan field status_aktif otomatis
+        fields.push({
+          name: "status_aktif",
+          label: "Status",
+          type: "select",
+          required: true,
+          options: [
+            { value: 1, label: "Aktif" },
+            { value: 0, label: "Tidak Aktif" },
+          ],
+        });
+
+        setDynamicFormFields(fields);
+      }
+    } catch (err) {
+      console.error("Failed to fetch dynamic table columns:", err);
+    }
+  };
+
+  const getInputType = (columnType) => {
+    const typeMap = {
+      VARCHAR: "text",
+      TEXT: "text",
+      INT: "number",
+      BIGINT: "number",
+      DECIMAL: "number",
+      DATE: "date",
+      BOOLEAN: "select",
+    };
+    return typeMap[columnType] || "text";
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -639,7 +752,10 @@ function MasterDataSection() {
     setEditingItem(null);
 
     const initialData = {};
-    (FORM_FIELDS[activeTab] || []).forEach((field) => {
+    const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
+    const fields = isDynamic ? dynamicFormFields : FORM_FIELDS[activeTab] || [];
+
+    fields.forEach((field) => {
       if (field.name === "eselon1_id") {
         initialData[field.name] = eselon1Options.length
           ? eselon1Options[0].value
@@ -667,7 +783,10 @@ function MasterDataSection() {
   const handleEdit = (item) => {
     setEditingItem(item);
     const editData = {};
-    FORM_FIELDS[activeTab]?.forEach((field) => {
+    const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
+    const fields = isDynamic ? dynamicFormFields : FORM_FIELDS[activeTab] || [];
+
+    fields.forEach((field) => {
       // Handle special case for selected_fields which might not be in FORM_FIELDS config directly
       editData[field.name] = item[field.name] ?? "";
     });
@@ -694,12 +813,12 @@ function MasterDataSection() {
       }
 
       const selectedItems = DATA_FIELD_OPTIONS.filter((opt) =>
-        selectedValues.includes(opt.value)
+        selectedValues.includes(opt.value),
       );
       setSelectedDataFields(selectedItems);
 
       const availableItems = DATA_FIELD_OPTIONS.filter(
-        (opt) => !selectedValues.includes(opt.value)
+        (opt) => !selectedValues.includes(opt.value),
       );
       setAvailableDataFields(availableItems);
 
@@ -722,13 +841,13 @@ function MasterDataSection() {
   const addDataField = (field) => {
     setSelectedDataFields((prev) => [...prev, field]);
     setAvailableDataFields((prev) =>
-      prev.filter((f) => f.value !== field.value)
+      prev.filter((f) => f.value !== field.value),
     );
   };
 
   const removeDataField = (field) => {
     setSelectedDataFields((prev) =>
-      prev.filter((f) => f.value !== field.value)
+      prev.filter((f) => f.value !== field.value),
     );
     setAvailableDataFields((prev) => [...prev, field]);
   };
@@ -749,7 +868,7 @@ function MasterDataSection() {
     if (allSelected) {
       // Unselect all leaf descendants
       setSelectedFieldIds((prev) =>
-        prev.filter((id) => !targetIds.includes(id))
+        prev.filter((id) => !targetIds.includes(id)),
       );
     } else {
       // Select all leaf descendants
@@ -808,7 +927,11 @@ function MasterDataSection() {
 
     try {
       // Validate required fields
-      const fields = FORM_FIELDS[activeTab] || [];
+      const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
+      const fields = isDynamic
+        ? dynamicFormFields
+        : FORM_FIELDS[activeTab] || [];
+
       for (const field of fields) {
         if (!field.required) continue;
 
@@ -842,7 +965,7 @@ function MasterDataSection() {
 
   const handleConfirmSave = async () => {
     try {
-      const idField = ID_FIELDS[activeTab];
+      const idField = getIdField(activeTab);
       const editId = editingItem?.[idField] ?? editingItem?.id;
 
       const url = editingItem
@@ -894,7 +1017,7 @@ function MasterDataSection() {
 
   const handleToggleStatus = async (item, newStatus) => {
     try {
-      const idField = ID_FIELDS[activeTab];
+      const idField = getIdField(activeTab);
       const rowId = item?.[idField] ?? item?.id;
 
       const response = await fetch(
@@ -903,7 +1026,7 @@ function MasterDataSection() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status_aktif: newStatus }),
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Gagal mengubah status");
@@ -916,20 +1039,53 @@ function MasterDataSection() {
   // ---------- Derived ----------
   const filteredData = data.filter((item) => {
     // Status filter
-    if (statusFilter === "active" && !(item.status_aktif === 1 || item.status_aktif === true)) {
+    if (
+      statusFilter === "active" &&
+      !(item.status_aktif === 1 || item.status_aktif === true)
+    ) {
       return false;
     }
-    if (statusFilter === "inactive" && !(item.status_aktif === 0 || item.status_aktif === false)) {
+    if (
+      statusFilter === "inactive" &&
+      !(item.status_aktif === 0 || item.status_aktif === false)
+    ) {
       return false;
     }
     // Search filter
     if (!searchTerm) return true;
     return Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+      String(val).toLowerCase().includes(searchTerm.toLowerCase()),
     );
   });
 
-  const columns = TABLE_COLUMNS[activeTab] || [];
+  // Get columns for table display
+  const getTableColumns = () => {
+    // Check static table first
+    if (TABLE_COLUMNS[activeTab]) {
+      return TABLE_COLUMNS[activeTab];
+    }
+
+    // For dynamic tables, get from first data row or from dynamicFormFields
+    const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
+    if (isDynamic) {
+      if (data.length > 0) {
+        // Get all columns from first row, exclude _id columns, created_at, and updated_at
+        return Object.keys(data[0]).filter(
+          (key) =>
+            (!key.toLowerCase().endsWith("_id") || key === "status_aktif") &&
+            key !== "created_at" &&
+            key !== "updated_at",
+        );
+      } else if (dynamicFormFields.length > 0) {
+        // Get from form fields definition
+        return dynamicFormFields.map((f) => f.name);
+      }
+    }
+
+    return [];
+  };
+
+  const columns = getTableColumns();
 
   return (
     <section id="master-data" className="page-section">
@@ -939,60 +1095,105 @@ function MasterDataSection() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            justifyContent: "space-between",
             marginBottom: "8px",
           }}
         >
-          <div
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </div>
+            <div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "28px",
+                  fontWeight: 700,
+                  color: "#1e293b",
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                Master Data
+              </h1>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#64748b",
+                  fontSize: "14px",
+                  marginTop: "2px",
+                }}
+              >
+                Kelola data referensi sistem
+              </p>
+            </div>
+          </div>
+
+          {/* Button Kelola Jenis Master Data */}
+          <button
+            onClick={() => (window.location.href = "/admin/dynamic-master")}
             style={{
-              width: "48px",
-              height: "48px",
-              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-              borderRadius: "12px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+              gap: "8px",
+              padding: "10px 18px",
+              background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(99, 102, 241, 0.25)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 4px 12px rgba(99, 102, 241, 0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 2px 8px rgba(99, 102, 241, 0.25)";
             }}
           >
             <svg
-              width="24"
-              height="24"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#ffffff"
+              stroke="currentColor"
               strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
             >
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
             </svg>
-          </div>
-          <div>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: "28px",
-                fontWeight: 700,
-                color: "#1e293b",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Master Data
-            </h1>
-            <p
-              style={{
-                margin: 0,
-                color: "#64748b",
-                fontSize: "14px",
-                marginTop: "2px",
-              }}
-            >
-              Kelola data referensi sistem
-            </p>
-          </div>
+            Kelola Jenis Master
+          </button>
         </div>
       </div>
 
@@ -1009,7 +1210,7 @@ function MasterDataSection() {
           border: "1px solid #e2e8f0",
         }}
       >
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -1176,7 +1377,7 @@ function MasterDataSection() {
                 color: "#1e293b",
               }}
             >
-              Daftar {TABS.find((t) => t.key === activeTab)?.label}
+              Daftar {tabs.find((t) => t.key === activeTab)?.label}
             </h3>
             <p
               style={{
@@ -1691,8 +1892,12 @@ function MasterDataSection() {
                             cursor: "pointer",
                             transition: "all 0.2s",
                           }}
-                          onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
-                          onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+                          onMouseEnter={(e) =>
+                            (e.target.style.backgroundColor = "#4338ca")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.target.style.backgroundColor = "#4f46e5")
+                          }
                         >
                           Pilih Semua
                         </button>
@@ -1712,8 +1917,12 @@ function MasterDataSection() {
                             outline: "none",
                             transition: "all 0.2s",
                           }}
-                          onFocus={(e) => (e.target.style.borderColor = "#4f46e5")}
-                          onBlur={(e) => (e.target.style.borderColor = "#e2e8f0")}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor = "#4f46e5")
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = "#e2e8f0")
+                          }
                         />
                       </div>
                       <div
@@ -1803,7 +2012,7 @@ function MasterDataSection() {
                             {selectedFieldIds.map((id) => {
                               const nodeName = findFieldNameById(
                                 id,
-                                hierarchicalFields
+                                hierarchicalFields,
                               );
                               if (!nodeName) return null;
                               return (
@@ -1812,7 +2021,7 @@ function MasterDataSection() {
                                   onClick={() => {
                                     const node = findNodeById(
                                       id,
-                                      hierarchicalFields
+                                      hierarchicalFields,
                                     );
                                     if (node) toggleHierarchicalField(node);
                                   }}
@@ -1919,102 +2128,123 @@ function MasterDataSection() {
                 </div>
               ) : (
                 // Standard Dynamic Form
-                (FORM_FIELDS[activeTab] || []).map((field) => {
-                  let options = field.options || [];
-                  if (field.name === "eselon1_id") options = eselon1Options;
+                (() => {
+                  const isDynamic = tabs.find(
+                    (t) => t.key === activeTab,
+                  )?.isDynamic;
+                  const fields = isDynamic
+                    ? dynamicFormFields
+                    : FORM_FIELDS[activeTab] || [];
 
-                  return (
-                    <div key={field.name} style={{ marginBottom: "18px" }}>
-                      <label
-                        style={{
-                          display: "block",
-                          marginBottom: "8px",
-                          fontSize: "13px",
-                          fontWeight: 600,
-                          color: "#374151",
-                        }}
-                      >
-                        {field.label}{" "}
-                        <span style={{ color: "#ef4444" }}>*</span>
-                      </label>
+                  return fields.map((field) => {
+                    let options = field.options || [];
+                    if (field.name === "eselon1_id") options = eselon1Options;
+                    // Add status_aktif options for BOOLEAN type in dynamic tables
+                    if (
+                      field.type === "select" &&
+                      field.name === "status_aktif"
+                    ) {
+                      options = [
+                        { value: 1, label: "Aktif" },
+                        { value: 0, label: "Nonaktif" },
+                      ];
+                    }
 
-                      {field.type === "select" ? (
-                        <select
-                          value={formData[field.name] ?? ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              [field.name]: e.target.value,
-                            })
-                          }
-                          required
+                    return (
+                      <div key={field.name} style={{ marginBottom: "18px" }}>
+                        <label
                           style={{
-                            width: "100%",
-                            padding: "11px 14px",
-                            borderRadius: "10px",
-                            border: "1px solid #e2e8f0",
-                            fontSize: "14px",
-                            outline: "none",
-                            backgroundColor: "#ffffff",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = "#4f46e5";
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(79, 70, 229, 0.1)";
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = "#e2e8f0";
-                            e.target.style.boxShadow = "none";
+                            display: "block",
+                            marginBottom: "8px",
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#374151",
                           }}
                         >
-                          {options.length === 0 ? (
-                            <option value="">-- belum ada pilihan --</option>
-                          ) : (
-                            options.map((opt) => (
-                              <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </option>
-                            ))
+                          {field.label}{" "}
+                          {field.required && (
+                            <span style={{ color: "#ef4444" }}>*</span>
                           )}
-                        </select>
-                      ) : (
-                        <input
-                          type={field.type}
-                          placeholder={field.placeholder}
-                          value={formData[field.name] ?? ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              [field.name]: e.target.value,
-                            })
-                          }
-                          required
-                          style={{
-                            width: "100%",
-                            padding: "11px 14px",
-                            borderRadius: "10px",
-                            border: "1px solid #e2e8f0",
-                            fontSize: "14px",
-                            outline: "none",
-                            boxSizing: "border-box",
-                            transition: "all 0.2s",
-                          }}
-                          onFocus={(e) => {
-                            e.target.style.borderColor = "#4f46e5";
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(79, 70, 229, 0.1)";
-                          }}
-                          onBlur={(e) => {
-                            e.target.style.borderColor = "#e2e8f0";
-                            e.target.style.boxShadow = "none";
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })
+                        </label>
+
+                        {field.type === "select" ? (
+                          <select
+                            value={formData[field.name] ?? ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                [field.name]: e.target.value,
+                              })
+                            }
+                            required
+                            style={{
+                              width: "100%",
+                              padding: "11px 14px",
+                              borderRadius: "10px",
+                              border: "1px solid #e2e8f0",
+                              fontSize: "14px",
+                              outline: "none",
+                              backgroundColor: "#ffffff",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = "#4f46e5";
+                              e.target.style.boxShadow =
+                                "0 0 0 3px rgba(79, 70, 229, 0.1)";
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = "#e2e8f0";
+                              e.target.style.boxShadow = "none";
+                            }}
+                          >
+                            {options.length === 0 ? (
+                              <option value="">-- belum ada pilihan --</option>
+                            ) : (
+                              options.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))
+                            )}
+                          </select>
+                        ) : (
+                          <input
+                            type={field.type}
+                            placeholder={field.placeholder}
+                            value={formData[field.name] ?? ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                [field.name]: e.target.value,
+                              })
+                            }
+                            required
+                            style={{
+                              width: "100%",
+                              padding: "11px 14px",
+                              borderRadius: "10px",
+                              border: "1px solid #e2e8f0",
+                              fontSize: "14px",
+                              outline: "none",
+                              boxSizing: "border-box",
+                              transition: "all 0.2s",
+                            }}
+                            onFocus={(e) => {
+                              e.target.style.borderColor = "#4f46e5";
+                              e.target.style.boxShadow =
+                                "0 0 0 3px rgba(79, 70, 229, 0.1)";
+                            }}
+                            onBlur={(e) => {
+                              e.target.style.borderColor = "#e2e8f0";
+                              e.target.style.boxShadow = "none";
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  });
+                })()
               )}
 
               <div style={{ display: "flex", gap: "12px", marginTop: "28px" }}>
@@ -2074,10 +2304,9 @@ function MasterDataSection() {
                 </button>
               </div>
             </form>
-          </div >
-        </div >
-      )
-      }
+          </div>
+        </div>
+      )}
       {/* Confirmation Modal */}
       {showConfirm && (
         <div
@@ -2104,7 +2333,8 @@ function MasterDataSection() {
               width: "100%",
               maxWidth: "400px",
               textAlign: "center",
-              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
               animation: "slideUp 0.3s ease",
             }}
           >
@@ -2135,10 +2365,24 @@ function MasterDataSection() {
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </div>
-            <h3 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 700, color: "#1e293b" }}>
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#1e293b",
+              }}
+            >
               Konfirmasi
             </h3>
-            <p style={{ margin: "0 0 28px", color: "#64748b", fontSize: "15px", lineHeight: "1.5" }}>
+            <p
+              style={{
+                margin: "0 0 28px",
+                color: "#64748b",
+                fontSize: "15px",
+                lineHeight: "1.5",
+              }}
+            >
               {editingItem
                 ? "Apakah anda yakin ingin memperbarui data?"
                 : "Apakah data yang diisi sudah benar?"}
@@ -2157,8 +2401,12 @@ function MasterDataSection() {
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#4338ca")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#4f46e5")
+                }
               >
                 Ya
               </button>
@@ -2175,8 +2423,12 @@ function MasterDataSection() {
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#e2e8f0")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#e2e8f0")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#f1f5f9")
+                }
               >
                 Tidak
               </button>
@@ -2184,7 +2436,7 @@ function MasterDataSection() {
           </div>
         </div>
       )}
-    </section >
+    </section>
   );
 }
 

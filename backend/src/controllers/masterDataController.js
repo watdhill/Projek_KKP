@@ -1,99 +1,141 @@
-const pool = require('../config/database');
+const pool = require("../config/database");
+const fs = require("fs");
+const path = require("path");
 
 // Table configuration to map type to database table, columns, and ID field
 const tableConfig = {
   eselon1: {
-    tableName: 'master_eselon1',
-    idField: 'eselon1_id',
-    columns: ['no', 'nama_eselon1', 'singkatan', 'status_aktif'],
-    displayColumns: ['No', 'Nama Eselon 1', 'Singkatan', 'Status']
+    tableName: "master_eselon1",
+    idField: "eselon1_id",
+    columns: ["no", "nama_eselon1", "singkatan", "status_aktif"],
+    displayColumns: ["No", "Nama Eselon 1", "Singkatan", "Status"],
   },
   eselon2: {
-    tableName: 'master_eselon2',
-    idField: 'eselon2_id',
-    columns: ['no_urutan', 'eselon1_id', 'nama_eselon2', 'status_aktif'],
-    displayColumns: ['No', 'Eselon 1', 'Nama Eselon 2', 'Status']
+    tableName: "master_eselon2",
+    idField: "eselon2_id",
+    columns: ["no_urutan", "eselon1_id", "nama_eselon2", "status_aktif"],
+    displayColumns: ["No", "Eselon 1", "Nama Eselon 2", "Status"],
   },
   upt: {
-    tableName: 'master_upt',
-    idField: 'upt_id',
-    columns: ['no_urutan', 'eselon1_id', 'nama_upt', 'status_aktif'],
-    displayColumns: ['No', 'Eselon 1', 'Nama UPT', 'Status']
+    tableName: "master_upt",
+    idField: "upt_id",
+    columns: ["no_urutan", "eselon1_id", "nama_upt", "status_aktif"],
+    displayColumns: ["No", "Eselon 1", "Nama UPT", "Status"],
   },
   frekuensi_pemakaian: {
-    tableName: 'frekuensi_pemakaian',
-    idField: 'frekuensi_pemakaian',
-    columns: ['nama_frekuensi', 'status_aktif'],
-    displayColumns: ['Nama Frekuensi', 'Status']
+    tableName: "frekuensi_pemakaian",
+    idField: "frekuensi_pemakaian",
+    columns: ["nama_frekuensi", "status_aktif"],
+    displayColumns: ["Nama Frekuensi", "Status"],
   },
   status_aplikasi: {
-    tableName: 'status_aplikasi',
-    idField: 'status_aplikasi_id',
-    columns: ['nama_status', 'status_aktif'],
-    displayColumns: ['Nama Status', 'Status']
+    tableName: "status_aplikasi",
+    idField: "status_aplikasi_id",
+    columns: ["nama_status", "status_aktif"],
+    displayColumns: ["Nama Status", "Status"],
   },
   environment: {
-    tableName: 'environment',
-    idField: 'environment_id',
-    columns: ['jenis_environment', 'status_aktif'],
-    displayColumns: ['Jenis Environment', 'Status']
+    tableName: "environment",
+    idField: "environment_id",
+    columns: ["jenis_environment", "status_aktif"],
+    displayColumns: ["Jenis Environment", "Status"],
   },
   cara_akses: {
-    tableName: 'cara_akses',
-    idField: 'cara_akses_id',
-    columns: ['nama_cara_akses', 'status_aktif'],
-    displayColumns: ['Nama Cara Akses', 'Status']
+    tableName: "cara_akses",
+    idField: "cara_akses_id",
+    columns: ["nama_cara_akses", "status_aktif"],
+    displayColumns: ["Nama Cara Akses", "Status"],
   },
   pdn: {
-    tableName: 'PDN',
-    idField: 'pdn_id',
-    columns: ['kode_pdn', 'status_aktif'],
-    displayColumns: ['Kode PDN', 'Status']
+    tableName: "PDN",
+    idField: "pdn_id",
+    columns: ["kode_pdn", "status_aktif"],
+    displayColumns: ["Kode PDN", "Status"],
   },
   format_laporan: {
-    tableName: 'format_laporan',
-    idField: 'format_laporan_id',
-    columns: ['nama_format', 'status_aktif', 'selected_fields'],
-    displayColumns: ['Nama Format', 'Status', 'Field Terpilih']
+    tableName: "format_laporan",
+    idField: "format_laporan_id",
+    columns: ["nama_format", "status_aktif", "selected_fields"],
+    displayColumns: ["Nama Format", "Status", "Field Terpilih"],
   },
   pic_eksternal: {
-    tableName: 'pic_eksternal',
-    idField: 'pic_eksternal_id',
-    columns: ['eselon2_id', 'nama_pic_eksternal', 'email_pic', 'kontak_pic_eksternal', 'keterangan', 'status_aktif'],
-    displayColumns: ['Eselon 2', 'Nama PIC', 'Email', 'No. HP', 'Keterangan', 'Status']
+    tableName: "pic_eksternal",
+    idField: "pic_eksternal_id",
+    columns: [
+      "eselon2_id",
+      "nama_pic_eksternal",
+      "email_pic",
+      "kontak_pic_eksternal",
+      "keterangan",
+      "status_aktif",
+    ],
+    displayColumns: [
+      "Eselon 2",
+      "Nama PIC",
+      "Email",
+      "No. HP",
+      "Keterangan",
+      "Status",
+    ],
   },
   pic_internal: {
-    tableName: 'pic_internal',
-    idField: 'pic_internal_id',
-    columns: ['eselon2_id', 'nama_pic_internal', 'email_pic', 'kontak_pic_internal', 'status_aktif'],
-    displayColumns: ['Eselon 2', 'Nama PIC', 'Email', 'No. HP', 'Status']
-  }
+    tableName: "pic_internal",
+    idField: "pic_internal_id",
+    columns: [
+      "eselon2_id",
+      "nama_pic_internal",
+      "email_pic",
+      "kontak_pic_internal",
+      "status_aktif",
+    ],
+    displayColumns: ["Eselon 2", "Nama PIC", "Email", "No. HP", "Status"],
+  },
 };
 
 // ... (existing code)
 
-
-
-// Get table config by type
+// Get table config by type (support static + dynamic tables)
 const getConfig = (type) => {
-  const config = tableConfig[type];
-  if (!config) {
-    throw new Error(`Tipe master data "${type}" tidak valid. Tipe yang tersedia: ${Object.keys(tableConfig).join(', ')}`);
+  // Check static config first
+  if (tableConfig[type]) {
+    return tableConfig[type];
   }
-  return config;
+
+  // Check dynamic config
+  const dynamicConfigPath = path.join(
+    __dirname,
+    "../config/dynamicTableConfig.json",
+  );
+  try {
+    if (fs.existsSync(dynamicConfigPath)) {
+      // Clear cache untuk hot reload
+      delete require.cache[require.resolve(dynamicConfigPath)];
+      const dynamicConfig = require(dynamicConfigPath);
+
+      if (dynamicConfig[type]) {
+        return dynamicConfig[type];
+      }
+    }
+  } catch (err) {
+    console.error("Error loading dynamic config:", err);
+  }
+
+  throw new Error(
+    `Tipe master data "${type}" tidak valid. Tipe yang tersedia: ${Object.keys(tableConfig).join(", ")}`,
+  );
 };
 
 // Get all master data by type
 exports.getAllMasterData = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
 
     let query = `SELECT * FROM ${config.tableName}`;
     const params = [];
 
     // Filter by eselon1_id or eselon2_id for PIC types (Hierarchical Visibility)
-    if (type === 'pic_internal' || type === 'pic_eksternal') {
+    if (type === "pic_internal" || type === "pic_eksternal") {
       if (req.query.eselon1_id) {
         // Filter by Eselon 1: Join with master_eselon2 to get all PICs under this Eselon 1
         query = `SELECT t.* FROM ${config.tableName} t 
@@ -108,11 +150,11 @@ exports.getAllMasterData = async (req, res) => {
     }
 
     let orderClause = ` ORDER BY ${config.idField} DESC`;
-    if (type === 'eselon1') {
+    if (type === "eselon1") {
       orderClause = ` ORDER BY no ASC`;
-    } else if (type === 'eselon2') {
+    } else if (type === "eselon2") {
       orderClause = ` ORDER BY no_urutan ASC`;
-    } else if (type === 'upt') {
+    } else if (type === "upt") {
       orderClause = ` ORDER BY no_urutan ASC`;
     }
     query += orderClause;
@@ -123,13 +165,13 @@ exports.getAllMasterData = async (req, res) => {
       type: type,
       columns: config.displayColumns,
       idField: config.idField,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil master data',
-      error: error.message
+      message: "Error mengambil master data",
+      error: error.message,
     });
   }
 };
@@ -137,37 +179,40 @@ exports.getAllMasterData = async (req, res) => {
 // Get master data by ID
 exports.getMasterDataById = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
 
-    const [rows] = await pool.query(`SELECT * FROM ${config.tableName} WHERE ${config.idField} = ?`, [req.params.id]);
+    const [rows] = await pool.query(
+      `SELECT * FROM ${config.tableName} WHERE ${config.idField} = ?`,
+      [req.params.id],
+    );
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Master data tidak ditemukan'
+        message: "Master data tidak ditemukan",
       });
     }
 
     const data = rows[0];
 
     // If type is format_laporan, fetch detail field IDs
-    if (type === 'format_laporan') {
+    if (type === "format_laporan") {
       const [details] = await pool.query(
-        'SELECT field_id FROM format_laporan_detail WHERE format_laporan_id = ?',
-        [req.params.id]
+        "SELECT field_id FROM format_laporan_detail WHERE format_laporan_id = ?",
+        [req.params.id],
       );
-      data.field_ids = details.map(d => d.field_id);
+      data.field_ids = details.map((d) => d.field_id);
     }
 
     res.json({
       success: true,
-      data: data
+      data: data,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil master data',
-      error: error.message
+      message: "Error mengambil master data",
+      error: error.message,
     });
   }
 };
@@ -175,52 +220,52 @@ exports.getMasterDataById = async (req, res) => {
 // Create master data
 exports.createMasterData = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
 
-    console.log('=== CREATE MASTER DATA ===');
-    console.log('Type:', type);
-    console.log('Body:', req.body);
+    console.log("=== CREATE MASTER DATA ===");
+    console.log("Type:", type);
+    console.log("Body:", req.body);
 
     // Validate eselon1_id exists for eselon2 or upt type
-    if ((type === 'eselon2' || type === 'upt') && req.body.eselon1_id) {
+    if ((type === "eselon2" || type === "upt") && req.body.eselon1_id) {
       const [eselon1Check] = await pool.query(
-        'SELECT eselon1_id FROM master_eselon1 WHERE eselon1_id = ?',
-        [req.body.eselon1_id]
+        "SELECT eselon1_id FROM master_eselon1 WHERE eselon1_id = ?",
+        [req.body.eselon1_id],
       );
       if (eselon1Check.length === 0) {
         return res.status(400).json({
           success: false,
-          message: `Eselon 1 dengan ID ${req.body.eselon1_id} tidak ditemukan di database`
+          message: `Eselon 1 dengan ID ${req.body.eselon1_id} tidak ditemukan di database`,
         });
       }
     }
 
     // Check for duplicate names based on type
     const nameField = {
-      eselon1: 'nama_eselon1',
-      eselon2: 'nama_eselon2',
-      upt: 'nama_upt',
-      frekuensi_pemakaian: 'nama_frekuensi',
-      status_aplikasi: 'nama_status',
-      environment: 'jenis_environment',
-      cara_akses: 'nama_cara_akses',
-      pdn: 'kode_pdn',
-      format_laporan: 'nama_format',
-      pic_eksternal: 'nama_pic_eksternal',
-      pic_internal: 'nama_pic_internal'
+      eselon1: "nama_eselon1",
+      eselon2: "nama_eselon2",
+      upt: "nama_upt",
+      frekuensi_pemakaian: "nama_frekuensi",
+      status_aplikasi: "nama_status",
+      environment: "jenis_environment",
+      cara_akses: "nama_cara_akses",
+      pdn: "kode_pdn",
+      format_laporan: "nama_format",
+      pic_eksternal: "nama_pic_eksternal",
+      pic_internal: "nama_pic_internal",
     };
 
     // Validate eselon2_id exists for pic types
-    if (type === 'pic_internal' && req.body.eselon2_id) {
+    if (type === "pic_internal" && req.body.eselon2_id) {
       const [eselon2Check] = await pool.query(
-        'SELECT eselon2_id FROM master_eselon2 WHERE eselon2_id = ?',
-        [req.body.eselon2_id]
+        "SELECT eselon2_id FROM master_eselon2 WHERE eselon2_id = ?",
+        [req.body.eselon2_id],
       );
       if (eselon2Check.length === 0) {
         return res.status(400).json({
           success: false,
-          message: `Eselon 2 dengan ID ${req.body.eselon2_id} tidak ditemukan di database`
+          message: `Eselon 2 dengan ID ${req.body.eselon2_id} tidak ditemukan di database`,
         });
       }
     }
@@ -228,50 +273,50 @@ exports.createMasterData = async (req, res) => {
     if (nameField[type] && req.body[nameField[type]]) {
       const [duplicateCheck] = await pool.query(
         `SELECT ${config.idField} FROM ${config.tableName} WHERE ${nameField[type]} = ?`,
-        [req.body[nameField[type]]]
+        [req.body[nameField[type]]],
       );
       if (duplicateCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`
+          message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`,
         });
       }
     }
 
     // Check for duplicate 'no' in eselon1 or 'no_urutan' in eselon2
-    if (type === 'eselon1' && req.body.no !== undefined) {
+    if (type === "eselon1" && req.body.no !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT eselon1_id FROM master_eselon1 WHERE no = ?',
-        [req.body.no]
+        "SELECT eselon1_id FROM master_eselon1 WHERE no = ?",
+        [req.body.no],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
-    if (type === 'eselon2' && req.body.no_urutan !== undefined) {
+    if (type === "eselon2" && req.body.no_urutan !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ?',
-        [req.body.no_urutan]
+        "SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ?",
+        [req.body.no_urutan],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
-    if (type === 'upt' && req.body.no_urutan !== undefined) {
+    if (type === "upt" && req.body.no_urutan !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT upt_id FROM master_upt WHERE no_urutan = ?',
-        [req.body.no_urutan]
+        "SELECT upt_id FROM master_upt WHERE no_urutan = ?",
+        [req.body.no_urutan],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
@@ -281,74 +326,104 @@ exports.createMasterData = async (req, res) => {
     const values = [];
     const placeholders = [];
 
-    for (const col of config.columns) {
+    // For dynamic tables, get actual column names from database
+    const isDynamicTable = !tableConfig[type];
+    let columnsToInsert = config.columns;
+
+    if (isDynamicTable) {
+      // Query table structure to get allowed columns
+      const [tableColumns] = await pool.query(
+        `SHOW COLUMNS FROM ${config.tableName}`,
+      );
+
+      // Exclude auto-increment ID and timestamp columns
+      const allowedColumns = tableColumns
+        .map((col) => col.Field)
+        .filter((field) => {
+          const fieldLower = field.toLowerCase();
+          return (
+            !fieldLower.endsWith("_id") && // exclude ID fields
+            fieldLower !== "created_at" &&
+            fieldLower !== "updated_at" &&
+            req.body[field] !== undefined
+          ); // only fields present in request
+        });
+
+      columnsToInsert = allowedColumns;
+    }
+
+    for (const col of columnsToInsert) {
       if (req.body[col] !== undefined) {
         fields.push(col);
         let val = req.body[col];
-        if (typeof val === 'object' && val !== null) {
+        if (typeof val === "object" && val !== null) {
           val = JSON.stringify(val);
         }
         values.push(val);
-        placeholders.push('?');
+        placeholders.push("?");
       }
     }
 
     if (fields.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Tidak ada field yang diberikan untuk insert'
+        message: "Tidak ada field yang diberikan untuk insert",
       });
     }
 
-    const sql = `INSERT INTO ${config.tableName} (${fields.join(', ')}) VALUES (${placeholders.join(', ')})`;
-    console.log('SQL:', sql);
-    console.log('Values:', values);
+    const sql = `INSERT INTO ${config.tableName} (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`;
+    console.log("SQL:", sql);
+    console.log("Values:", values);
 
     const [result] = await pool.query(sql, values);
     const newId = result.insertId;
 
     // Handle format_laporan_detail if type is format_laporan
-    if (type === 'format_laporan' && req.body.field_ids) {
+    if (type === "format_laporan" && req.body.field_ids) {
       let fieldIds = req.body.field_ids;
-      if (typeof fieldIds === 'string') {
+      if (typeof fieldIds === "string") {
         try {
           fieldIds = JSON.parse(fieldIds);
         } catch (e) {
-          fieldIds = fieldIds.split(',').map(id => id.trim());
+          fieldIds = fieldIds.split(",").map((id) => id.trim());
         }
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        const detailValues = fieldIds.map(fid => [newId, fid]);
+        const detailValues = fieldIds.map((fid) => [newId, fid]);
         await pool.query(
-          'INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?',
-          [detailValues]
+          "INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?",
+          [detailValues],
         );
       }
     }
 
     res.status(201).json({
       success: true,
-      message: 'Master data berhasil ditambahkan',
-      data: { id: newId, ...req.body }
+      message: "Master data berhasil ditambahkan",
+      data: { id: newId, ...req.body },
     });
   } catch (error) {
-    console.error('=== ERROR CREATE MASTER DATA ===');
-    console.error('Error:', error);
+    console.error("=== ERROR CREATE MASTER DATA ===");
+    console.error("Error:", error);
 
     // Provide more detailed error message
-    let errorMessage = 'Error memperbarui master data';
-    if (error.code === 'ER_NO_REFERENCED_ROW_2' || error.code === 'ER_NO_REFERENCED_ROW') {
-      errorMessage = 'Data yang dipilih tidak valid atau tidak ditemukan di tabel referensi (Foreign Key Error)';
-    } else if (error.code === 'ER_DUP_ENTRY') {
-      errorMessage = 'Data sudah ada (duplikat)';
+    let errorMessage = "Error memperbarui master data";
+    if (
+      error.code === "ER_NO_REFERENCED_ROW_2" ||
+      error.code === "ER_NO_REFERENCED_ROW"
+    ) {
+      errorMessage =
+        "Data yang dipilih tidak valid atau tidak ditemukan di tabel referensi (Foreign Key Error)";
+    } else if (error.code === "ER_DUP_ENTRY") {
+      errorMessage = "Data sudah ada (duplikat)";
     }
 
     res.status(500).json({
       success: false,
       message: errorMessage,
       error: error.message,
-      sqlCode: error.code
+      sqlCode: error.code,
     });
   }
 };
@@ -356,18 +431,44 @@ exports.createMasterData = async (req, res) => {
 // Update master data
 exports.updateMasterData = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
 
     // Build dynamic update query
     const updates = [];
     const values = [];
 
-    for (const col of config.columns) {
+    // For dynamic tables, get actual column names from database
+    const isDynamicTable = !tableConfig[type];
+    let columnsToUpdate = config.columns;
+
+    if (isDynamicTable) {
+      // Query table structure to get allowed columns
+      const [tableColumns] = await pool.query(
+        `SHOW COLUMNS FROM ${config.tableName}`,
+      );
+
+      // Exclude auto-increment ID and timestamp columns
+      const allowedColumns = tableColumns
+        .map((col) => col.Field)
+        .filter((field) => {
+          const fieldLower = field.toLowerCase();
+          return (
+            !fieldLower.endsWith("_id") && // exclude ID fields
+            fieldLower !== "created_at" &&
+            fieldLower !== "updated_at" &&
+            req.body[field] !== undefined
+          ); // only fields present in request
+        });
+
+      columnsToUpdate = allowedColumns;
+    }
+
+    for (const col of columnsToUpdate) {
       if (req.body[col] !== undefined) {
         updates.push(`${col} = ?`);
         let val = req.body[col];
-        if (typeof val === 'object' && val !== null) {
+        if (typeof val === "object" && val !== null) {
           val = JSON.stringify(val);
         }
         values.push(val);
@@ -375,39 +476,39 @@ exports.updateMasterData = async (req, res) => {
     }
 
     // Check for duplicate 'no' in eselon1 or 'no_urutan' in eselon2 (excluding current record)
-    if (type === 'eselon1' && req.body.no !== undefined) {
+    if (type === "eselon1" && req.body.no !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT eselon1_id FROM master_eselon1 WHERE no = ? AND eselon1_id != ?',
-        [req.body.no, req.params.id]
+        "SELECT eselon1_id FROM master_eselon1 WHERE no = ? AND eselon1_id != ?",
+        [req.body.no, req.params.id],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
-    if (type === 'eselon2' && req.body.no_urutan !== undefined) {
+    if (type === "eselon2" && req.body.no_urutan !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ? AND eselon2_id != ?',
-        [req.body.no_urutan, req.params.id]
+        "SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ? AND eselon2_id != ?",
+        [req.body.no_urutan, req.params.id],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
-    if (type === 'upt' && req.body.no_urutan !== undefined) {
+    if (type === "upt" && req.body.no_urutan !== undefined) {
       const [noCheck] = await pool.query(
-        'SELECT upt_id FROM master_upt WHERE no_urutan = ? AND upt_id != ?',
-        [req.body.no_urutan, req.params.id]
+        "SELECT upt_id FROM master_upt WHERE no_urutan = ? AND upt_id != ?",
+        [req.body.no_urutan, req.params.id],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`
+          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
         });
       }
     }
@@ -415,53 +516,56 @@ exports.updateMasterData = async (req, res) => {
     if (updates.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'Tidak ada field yang diberikan untuk update'
+        message: "Tidak ada field yang diberikan untuk update",
       });
     }
 
     values.push(req.params.id);
-    const sql = `UPDATE ${config.tableName} SET ${updates.join(', ')} WHERE ${config.idField} = ?`;
+    const sql = `UPDATE ${config.tableName} SET ${updates.join(", ")} WHERE ${config.idField} = ?`;
     const [result] = await pool.query(sql, values);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Master data tidak ditemukan'
+        message: "Master data tidak ditemukan",
       });
     }
 
     // Handle format_laporan_detail if type is format_laporan
-    if (type === 'format_laporan' && req.body.field_ids !== undefined) {
+    if (type === "format_laporan" && req.body.field_ids !== undefined) {
       // Clear existing details
-      await pool.query('DELETE FROM format_laporan_detail WHERE format_laporan_id = ?', [req.params.id]);
+      await pool.query(
+        "DELETE FROM format_laporan_detail WHERE format_laporan_id = ?",
+        [req.params.id],
+      );
 
       let fieldIds = req.body.field_ids;
-      if (typeof fieldIds === 'string') {
+      if (typeof fieldIds === "string") {
         try {
           fieldIds = JSON.parse(fieldIds);
         } catch (e) {
-          fieldIds = fieldIds.split(',').map(id => id.trim());
+          fieldIds = fieldIds.split(",").map((id) => id.trim());
         }
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        const detailValues = fieldIds.map(fid => [req.params.id, fid]);
+        const detailValues = fieldIds.map((fid) => [req.params.id, fid]);
         await pool.query(
-          'INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?',
-          [detailValues]
+          "INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?",
+          [detailValues],
         );
       }
     }
 
     res.json({
       success: true,
-      message: 'Master data berhasil diupdate'
+      message: "Master data berhasil diupdate",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengupdate master data',
-      error: error.message
+      message: "Error mengupdate master data",
+      error: error.message,
     });
   }
 };
@@ -469,15 +573,15 @@ exports.updateMasterData = async (req, res) => {
 // Toggle status (Aktifkan/Nonaktifkan)
 exports.toggleStatus = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
     const { status_aktif } = req.body;
 
     // Check if table has status_aktif column
-    if (!config.columns.includes('status_aktif')) {
+    if (!config.columns.includes("status_aktif")) {
       return res.status(400).json({
         success: false,
-        message: 'Tipe master data ini tidak mendukung toggle status'
+        message: "Tipe master data ini tidak mendukung toggle status",
       });
     }
 
@@ -487,18 +591,18 @@ exports.toggleStatus = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Master data tidak ditemukan'
+        message: "Master data tidak ditemukan",
       });
     }
     res.json({
       success: true,
-      message: `Status berhasil diubah menjadi ${status_aktif ? 'Aktif' : 'Nonaktif'}`
+      message: `Status berhasil diubah menjadi ${status_aktif ? "Aktif" : "Nonaktif"}`,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengubah status',
-      error: error.message
+      message: "Error mengubah status",
+      error: error.message,
     });
   }
 };
@@ -506,25 +610,28 @@ exports.toggleStatus = async (req, res) => {
 // Delete master data
 exports.deleteMasterData = async (req, res) => {
   try {
-    const type = req.query.type || 'eselon1';
+    const type = req.query.type || "eselon1";
     const config = getConfig(type);
 
-    const [result] = await pool.query(`DELETE FROM ${config.tableName} WHERE ${config.idField} = ?`, [req.params.id]);
+    const [result] = await pool.query(
+      `DELETE FROM ${config.tableName} WHERE ${config.idField} = ?`,
+      [req.params.id],
+    );
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Master data tidak ditemukan'
+        message: "Master data tidak ditemukan",
       });
     }
     res.json({
       success: true,
-      message: 'Master data berhasil dihapus'
+      message: "Master data berhasil dihapus",
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menghapus master data',
-      error: error.message
+      message: "Error menghapus master data",
+      error: error.message,
     });
   }
 };
@@ -532,21 +639,21 @@ exports.deleteMasterData = async (req, res) => {
 // Get available types and their metadata
 exports.getTypes = async (req, res) => {
   try {
-    const types = Object.keys(tableConfig).map(key => ({
+    const types = Object.keys(tableConfig).map((key) => ({
       value: key,
-      label: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      label: key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
       columns: tableConfig[key].columns,
-      displayColumns: tableConfig[key].displayColumns
+      displayColumns: tableConfig[key].displayColumns,
     }));
     res.json({
       success: true,
-      data: types
+      data: types,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil tipe master data',
-      error: error.message
+      message: "Error mengambil tipe master data",
+      error: error.message,
     });
   }
 };
@@ -555,46 +662,62 @@ exports.getTypes = async (req, res) => {
 exports.getDropdownData = async (req, res) => {
   try {
     const { eselon1_id } = req.query;
-    console.log('=== GET DROPDOWN DATA ===');
-    console.log('Query Params:', req.query);
-    console.log('Eselon 1 ID requested:', eselon1_id);
+    console.log("=== GET DROPDOWN DATA ===");
+    console.log("Query Params:", req.query);
+    console.log("Eselon 1 ID requested:", eselon1_id);
 
-    const [roles] = await pool.query('SELECT * FROM roles ORDER BY role_id');
-    const [eselon1] = await pool.query('SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1');
+    const [roles] = await pool.query("SELECT * FROM roles ORDER BY role_id");
+    const [eselon1] = await pool.query(
+      "SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1",
+    );
 
-    let eselon2Query = 'SELECT * FROM master_eselon2 WHERE status_aktif = 1';
+    let eselon2Query = "SELECT * FROM master_eselon2 WHERE status_aktif = 1";
     const eselon2Params = [];
 
     if (eselon1_id) {
-      eselon2Query += ' AND eselon1_id = ?';
+      eselon2Query += " AND eselon1_id = ?";
       eselon2Params.push(eselon1_id);
     }
 
-    eselon2Query += ' ORDER BY nama_eselon2';
+    eselon2Query += " ORDER BY nama_eselon2";
 
     const [eselon2] = await pool.query(eselon2Query, eselon2Params);
 
     // Query untuk UPT dengan filter eselon1_id yang sama
-    let uptQuery = 'SELECT * FROM master_upt WHERE status_aktif = 1';
+    let uptQuery = "SELECT * FROM master_upt WHERE status_aktif = 1";
     const uptParams = [];
 
     if (eselon1_id) {
-      uptQuery += ' AND eselon1_id = ?';
+      uptQuery += " AND eselon1_id = ?";
       uptParams.push(eselon1_id);
     }
 
-    uptQuery += ' ORDER BY nama_upt';
+    uptQuery += " ORDER BY nama_upt";
 
     const [upt] = await pool.query(uptQuery, uptParams);
 
     // Fetch all master data needed for form dropdowns
-    const [cara_akses] = await pool.query('SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY nama_cara_akses');
-    const [frekuensi_pemakaian] = await pool.query('SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY nama_frekuensi');
-    const [status_aplikasi] = await pool.query('SELECT * FROM status_aplikasi ORDER BY nama_status');
-    const [pdn] = await pool.query('SELECT * FROM pdn WHERE status_aktif = 1 ORDER BY kode_pdn');
-    const [environment] = await pool.query('SELECT * FROM environment WHERE status_aktif = 1 ORDER BY jenis_environment');
-    const [pic_internal] = await pool.query('SELECT * FROM pic_internal WHERE status_aktif = 1 ORDER BY nama_pic_internal');
-    const [pic_eksternal] = await pool.query('SELECT * FROM pic_eksternal WHERE status_aktif = 1 ORDER BY nama_pic_eksternal');
+    const [cara_akses] = await pool.query(
+      "SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY nama_cara_akses",
+    );
+    const [frekuensi_pemakaian] = await pool.query(
+      "SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY nama_frekuensi",
+    );
+    const [status_aplikasi] = await pool.query(
+      "SELECT * FROM status_aplikasi ORDER BY nama_status",
+    );
+    const [pdn] = await pool.query(
+      "SELECT * FROM pdn WHERE status_aktif = 1 ORDER BY kode_pdn",
+    );
+    const [environment] = await pool.query(
+      "SELECT * FROM environment WHERE status_aktif = 1 ORDER BY jenis_environment",
+    );
+    const [pic_internal] = await pool.query(
+      "SELECT * FROM pic_internal WHERE status_aktif = 1 ORDER BY nama_pic_internal",
+    );
+    const [pic_eksternal] = await pool.query(
+      "SELECT * FROM pic_eksternal WHERE status_aktif = 1 ORDER BY nama_pic_eksternal",
+    );
 
     res.json({
       success: true,
@@ -609,15 +732,14 @@ exports.getDropdownData = async (req, res) => {
         pdn,
         environment,
         pic_internal,
-        pic_eksternal
-      }
+        pic_eksternal,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data dropdown',
-      error: error.message
+      message: "Error mengambil data dropdown",
+      error: error.message,
     });
   }
 };
-
