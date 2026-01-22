@@ -4,11 +4,11 @@ const API_BASE = "http://localhost:5000/api/master-data";
 
 // Tab configuration matching backend (static tabs)
 const STATIC_TABS = [
-  { key: "frekuensi_pemakaian", label: "Frekuensi Pemakaian" },
-  { key: "format_laporan", label: "Format Laporan" },
   { key: "eselon1", label: "Eselon 1" },
   { key: "eselon2", label: "Eselon 2" },
   { key: "upt", label: "UPT" },
+  { key: "frekuensi_pemakaian", label: "Frekuensi Pemakaian" },
+  { key: "format_laporan", label: "Format Laporan" },
   { key: "status_aplikasi", label: "Status Aplikasi" },
   { key: "environment", label: "Ekosistem" },
   { key: "cara_akses", label: "Cara Akses" },
@@ -51,13 +51,7 @@ const FORM_FIELDS = {
     },
   ],
   eselon2: [
-    {
-      name: "no_urutan",
-      label: "No Urutan",
-      type: "number",
-      placeholder: "Nomor urutan",
-      required: true,
-    },
+
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -84,13 +78,7 @@ const FORM_FIELDS = {
     },
   ],
   upt: [
-    {
-      name: "no_urutan",
-      label: "No Urutan",
-      type: "number",
-      placeholder: "Nomor urutan",
-      required: true,
-    },
+
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -235,8 +223,8 @@ const FORM_FIELDS = {
 // Table column configurations per type
 const TABLE_COLUMNS = {
   eselon1: ["no", "nama_eselon1", "singkatan", "status_aktif"],
-  eselon2: ["no_urutan", "nama_eselon2", "status_aktif"],
-  upt: ["no_urutan", "nama_upt", "status_aktif"],
+  eselon2: ["nama_eselon2", "status_aktif"],
+  upt: ["nama_upt", "status_aktif"],
   frekuensi_pemakaian: ["nama_frekuensi", "status_aktif"],
   status_aplikasi: ["nama_status", "status_aktif"],
   environment: ["jenis_environment", "status_aktif"],
@@ -523,10 +511,31 @@ function MasterDataSection() {
   const [selectedFieldIds, setSelectedFieldIds] = useState([]);
   const [hierSearchTerm, setHierSearchTerm] = useState("");
 
+
+
+  const [selectedEselon1Filter, setSelectedEselon1Filter] = useState("");
+
   // Load dynamic tables on mount
   useEffect(() => {
     fetchDynamicTables();
+    fetchEselon1Options();
   }, []);
+
+  const fetchEselon1Options = async () => {
+    try {
+      const response = await fetch(`${API_BASE}?type=eselon1`);
+      if (response.ok) {
+        const result = await response.json();
+        const opts = (result.data || [])
+          .filter((item) => item.status_aktif === 1)
+          .map((item) => ({
+            value: item.eselon1_id,
+            label: item.nama_eselon1
+          }));
+        setEselon1Options(opts);
+      }
+    } catch (e) { console.error("Failed to fetch Eselon 1 options", e); }
+  };
 
   const fetchDynamicTables = async () => {
     try {
@@ -549,8 +558,10 @@ function MasterDataSection() {
   };
 
   // ---------- Helpers ----------
-  const formatColumnHeader = (col) =>
-    col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatColumnHeader = (col) => {
+    if (col === "jenis_environment") return "Jenis Ekosistem";
+    return col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   const getStatusColor = (status) => {
     if (status === 1 || status === true || status === "Aktif") {
@@ -647,7 +658,7 @@ function MasterDataSection() {
       fetchHierarchicalFields();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, selectedEselon1Filter]);
 
   const fetchDynamicTableColumns = async () => {
     try {
@@ -709,7 +720,15 @@ function MasterDataSection() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}?type=${activeTab}`);
+      let url = `${API_BASE}?type=${activeTab}`;
+
+      // Filter logic
+      if ((activeTab === "eselon2" || activeTab === "upt") && selectedEselon1Filter) {
+        url += `&eselon1_id=${selectedEselon1Filter}`;
+      }
+      console.log("Fetching Master Data URL:", url);
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Gagal mengambil data");
       const result = await response.json();
       setData(result.data || []);
@@ -720,21 +739,7 @@ function MasterDataSection() {
     }
   };
 
-  const fetchEselon1Options = async () => {
-    try {
-      const response = await fetch(`${API_BASE}?type=eselon1`);
-      if (!response.ok) return;
 
-      const result = await response.json();
-      const opts = (result.data || [])
-        .filter((item) => item.status_aktif === 1)
-        .map((item) => ({ value: item.eselon1_id, label: item.nama_eselon1 }));
-
-      setEselon1Options(opts);
-    } catch (err) {
-      console.error("Failed to fetch Eselon 1 options:", err);
-    }
-  };
 
   const fetchHierarchicalFields = async () => {
     try {
@@ -995,6 +1000,25 @@ function MasterDataSection() {
         const keys = selectedDataFields.map((f) => f.value);
         processedData.selected_fields = JSON.stringify(keys);
         processedData.field_ids = selectedFieldIds;
+      }
+
+      // Inject user ID for audit
+      const userStr = localStorage.getItem("user");
+      let currentUserId = null;
+      if (userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          if (u.user_id) currentUserId = u.user_id;
+          else if (u.id) currentUserId = u.id;
+        } catch (e) { /* ignore */ }
+      }
+
+      if (currentUserId) {
+        if (editingItem) {
+          processedData.updated_by = currentUserId;
+        } else {
+          processedData.created_by = currentUserId;
+        }
       }
 
       const response = await fetch(url, {
@@ -1266,18 +1290,19 @@ function MasterDataSection() {
               top: "50%",
               transform: "translateY(-50%)",
               pointerEvents: "none",
+              color: "#94a3b8",
             }}
             width="18"
             height="18"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="#94a3b8"
+            stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="M21 21-4.35-4.35"></path>
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
           </svg>
           <input
             type="text"
@@ -1304,6 +1329,32 @@ function MasterDataSection() {
             }}
           />
         </div>
+
+        {/* Eselon 1 Filter (For Eselon 2 and UPT tabs) */}
+        {(activeTab === "eselon2" || activeTab === "upt") && (
+          <select
+            value={selectedEselon1Filter}
+            onChange={(e) => setSelectedEselon1Filter(e.target.value)}
+            style={{
+              padding: "11px 14px",
+              borderRadius: "10px",
+              border: "1px solid #e2e8f0",
+              fontSize: "14px",
+              outline: "none",
+              backgroundColor: "#ffffff",
+              cursor: "pointer",
+              minWidth: "150px",
+            }}
+          >
+            <option value="">Semua Eselon 1</option>
+            {eselon1Options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        )}
+
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -1573,142 +1624,263 @@ function MasterDataSection() {
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item, index) => (
-                <tr
-                  key={getRowId(item) ?? index}
-                  style={{
-                    borderBottom: "1px solid #f1f5f9",
-                    backgroundColor: index % 2 === 0 ? "#ffffff" : "#fafbfc",
-                    transition: "all 0.2s",
-                    height: "50px",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f0f9ff";
-                    e.currentTarget.style.transform = "scale(1.001)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      index % 2 === 0 ? "#ffffff" : "#fafbfc";
-                    e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  {columns.map((col) => {
-                    if (col === "status_aktif") {
-                      const statusColor = getStatusColor(item[col]);
-                      return (
-                        <td
-                          key={col}
+              {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
+              {(activeTab === "eselon2" || activeTab === "upt") && !selectedEselon1Filter ? (
+                (() => {
+                  // Group data
+                  const grouped = {};
+                  filteredData.forEach((item) => {
+                    const e1Id = item.eselon1_id;
+                    if (!grouped[e1Id]) grouped[e1Id] = [];
+                    grouped[e1Id].push(item);
+                  });
+
+                  // Render groups
+                  return Object.keys(grouped).map((e1Id) => {
+                    // Find Eselon 1 Name
+                    const e1Name =
+                      eselon1Options.find((opt) => opt.value === parseInt(e1Id))
+                        ?.label || `Eselon 1 ID: ${e1Id}`;
+
+                    return (
+                      <>
+                        {/* Group Header */}
+                        <tr
+                          key={`group-${e1Id}`}
                           style={{
-                            padding: "10px 14px",
-                            verticalAlign: "middle",
+                            backgroundColor: "#e0e7ff",
+                            borderBottom: "1px solid #c7d2fe",
                           }}
                         >
-                          <span
+                          <td
+                            colSpan={columns.length + 1}
                             style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              padding: "5px 12px",
-                              borderRadius: "6px",
-                              fontSize: "11px",
+                              padding: "10px 14px",
                               fontWeight: 700,
-                              backgroundColor: statusColor.bg,
-                              color: statusColor.text,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.03em",
+                              color: "#3730a3",
+                              fontSize: "13px",
                             }}
                           >
-                            <div
-                              style={{
-                                width: "5px",
-                                height: "5px",
-                                borderRadius: "50%",
-                                backgroundColor: statusColor.text,
-                              }}
-                            ></div>
-                            {statusColor.label}
-                          </span>
-                        </td>
-                      );
-                    }
-                    return (
-                      <td
-                        key={col}
-                        style={{
-                          padding: "10px 14px",
-                          color: "#1e293b",
-                          fontWeight: 500,
-                          verticalAlign: "middle",
-                          fontSize: "13px",
-                        }}
-                      >
-                        {item[col] || "-"}
-                      </td>
+                            {e1Name}
+                          </td>
+                        </tr>
+                        {/* Items in group */}
+                        {grouped[e1Id].map((item, index) => (
+                          <tr
+                            key={getRowId(item) ?? index}
+                            style={{
+                              borderBottom: "1px solid #f1f5f9",
+                              backgroundColor: "#ffffff",
+                              transition: "all 0.2s",
+                              height: "50px",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f0f9ff";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#ffffff";
+                            }}
+                          >
+                            {columns.map((col) => (
+                              <td
+                                key={`${getRowId(item)}-${col}`}
+                                style={{
+                                  padding: "10px 14px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {col === "status_aktif" ? (
+                                  <span
+                                    onClick={() => {
+                                      // Toggle status logic
+                                      const currentStatus = item.status_aktif === 1 || item.status_aktif === true;
+                                      handleToggleStatus(item, !currentStatus);
+                                    }}
+                                    style={{
+                                      backgroundColor: getStatusColor(
+                                        item[col],
+                                      ).bg,
+                                      color: getStatusColor(item[col]).text,
+                                      padding: "4px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      display: "inline-block",
+                                    }}
+                                  >
+                                    {getStatusColor(item[col]).label}
+                                  </span>
+                                ) : (
+                                  item[col]
+                                )}
+                              </td>
+                            ))}
+                            <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  style={{
+                                    padding: "6px 14px",
+                                    background:
+                                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.transform = "translateY(-1px)";
+                                    e.target.style.boxShadow =
+                                      "0 4px 10px rgba(245, 158, 11, 0.35)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.transform = "translateY(0)";
+                                    e.target.style.boxShadow =
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                  }}
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                  Edit
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
                     );
-                  })}
-
-                  <td
+                  });
+                })()
+              ) : (
+                filteredData.map((item, index) => (
+                  <tr
+                    key={getRowId(item) ?? index}
                     style={{
-                      padding: "10px 14px",
-                      textAlign: "center",
-                      verticalAlign: "middle",
+                      borderBottom: "1px solid #f1f5f9",
+                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#fafbfc",
+                      transition: "all 0.2s",
+                      height: "50px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f0f9ff";
+                      e.currentTarget.style.transform = "scale(1.001)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor =
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc";
+                      e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "6px",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <button
-                        onClick={() => handleEdit(item)}
+                    {columns.map((col) => (
+                      <td
+                        key={`${getRowId(item)}-${col}`}
                         style={{
-                          padding: "6px 14px",
-                          background:
-                            "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                          color: "#ffffff",
-                          border: "none",
-                          borderRadius: "6px",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          transition: "all 0.2s",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.target.style.transform = "translateY(-1px)";
-                          e.target.style.boxShadow =
-                            "0 4px 10px rgba(245, 158, 11, 0.35)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.target.style.transform = "translateY(0)";
-                          e.target.style.boxShadow =
-                            "0 2px 6px rgba(245, 158, 11, 0.25)";
+                          padding: "10px 14px",
+                          color: "#334155",
+                          fontWeight: 500,
                         }}
                       >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        {col === "status_aktif" ? (
+                          <span
+                            style={{
+                              backgroundColor: getStatusColor(item[col]).bg,
+                              color: getStatusColor(item[col]).text,
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              display: "inline-block",
+                            }}
+                          >
+                            {getStatusColor(item[col]).label}
+                          </span>
+                        ) : (
+                          item[col]
+                        )}
+                      </td>
+                    ))}
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleEdit(item)}
+                          style={{
+                            padding: "6px 14px",
+                            background:
+                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow =
+                              "0 4px 10px rgba(245, 158, 11, 0.35)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow =
+                              "0 2px 6px rgba(245, 158, 11, 0.25)";
+                          }}
                         >
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                        Edit
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )))}
             </tbody>
           </table>
         </div>
