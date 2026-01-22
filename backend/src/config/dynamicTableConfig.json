@@ -1,1 +1,14 @@
-{}
+{
+  "master_jabatan": {
+    "tableName": "master_jabatan",
+    "idField": "jabatan_id",
+    "columns": [
+      "nama_jabatan",
+      "status_aktif"
+    ],
+    "displayColumns": [
+      "Nama Jabatan",
+      "Status"
+    ]
+  }
+}

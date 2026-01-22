@@ -7,55 +7,55 @@ const tableConfig = {
   eselon1: {
     tableName: "master_eselon1",
     idField: "eselon1_id",
-    columns: ["no", "nama_eselon1", "singkatan", "status_aktif"],
+    columns: ["no", "nama_eselon1", "singkatan", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["No", "Nama Eselon 1", "Singkatan", "Status"],
   },
   eselon2: {
     tableName: "master_eselon2",
     idField: "eselon2_id",
-    columns: ["no_urutan", "eselon1_id", "nama_eselon2", "status_aktif"],
-    displayColumns: ["No", "Eselon 1", "Nama Eselon 2", "Status"],
+    columns: ["eselon1_id", "nama_eselon2", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    displayColumns: ["Eselon 1", "Nama Eselon 2", "Status"],
   },
   upt: {
     tableName: "master_upt",
     idField: "upt_id",
-    columns: ["no_urutan", "eselon1_id", "nama_upt", "status_aktif"],
-    displayColumns: ["No", "Eselon 1", "Nama UPT", "Status"],
+    columns: ["eselon1_id", "nama_upt", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    displayColumns: ["Eselon 1", "Nama UPT", "Status"],
   },
   frekuensi_pemakaian: {
     tableName: "frekuensi_pemakaian",
     idField: "frekuensi_pemakaian",
-    columns: ["nama_frekuensi", "status_aktif"],
+    columns: ["nama_frekuensi", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["Nama Frekuensi", "Status"],
   },
   status_aplikasi: {
     tableName: "status_aplikasi",
     idField: "status_aplikasi_id",
-    columns: ["nama_status", "status_aktif"],
+    columns: ["nama_status", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["Nama Status", "Status"],
   },
   environment: {
     tableName: "environment",
     idField: "environment_id",
-    columns: ["jenis_environment", "status_aktif"],
-    displayColumns: ["Jenis Environment", "Status"],
+    columns: ["jenis_environment", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    displayColumns: ["Jenis Ekosistem", "Status"],
   },
   cara_akses: {
     tableName: "cara_akses",
     idField: "cara_akses_id",
-    columns: ["nama_cara_akses", "status_aktif"],
+    columns: ["nama_cara_akses", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["Nama Cara Akses", "Status"],
   },
   pdn: {
     tableName: "PDN",
     idField: "pdn_id",
-    columns: ["kode_pdn", "status_aktif"],
+    columns: ["kode_pdn", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["Kode PDN", "Status"],
   },
   format_laporan: {
     tableName: "format_laporan",
     idField: "format_laporan_id",
-    columns: ["nama_format", "status_aktif", "selected_fields"],
+    columns: ["nama_format", "status_aktif", "selected_fields", "created_by", "updated_by", "created_at", "updated_at"],
     displayColumns: ["Nama Format", "Status", "Field Terpilih"],
   },
   pic_eksternal: {
@@ -68,6 +68,10 @@ const tableConfig = {
       "kontak_pic_eksternal",
       "keterangan",
       "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
     ],
     displayColumns: [
       "Eselon 2",
@@ -87,6 +91,10 @@ const tableConfig = {
       "email_pic",
       "kontak_pic_internal",
       "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
     ],
     displayColumns: ["Eselon 2", "Nama PIC", "Email", "No. HP", "Status"],
   },
@@ -135,8 +143,13 @@ exports.getAllMasterData = async (req, res) => {
     const params = [];
 
     // Filter by eselon1_id or eselon2_id for PIC types (Hierarchical Visibility)
+    // Also support created_by for strict ownership visibility
     if (type === "pic_internal" || type === "pic_eksternal") {
-      if (req.query.eselon1_id) {
+      if (req.query.created_by) {
+        // Strict ownership: only show records created by this user
+        query = `SELECT * FROM ${config.tableName} WHERE created_by = ?`;
+        params.push(req.query.created_by);
+      } else if (req.query.eselon1_id) {
         // Filter by Eselon 1: Join with master_eselon2 to get all PICs under this Eselon 1
         query = `SELECT t.* FROM ${config.tableName} t 
                  JOIN master_eselon2 e2 ON t.eselon2_id = e2.eselon2_id 
@@ -147,15 +160,21 @@ exports.getAllMasterData = async (req, res) => {
         query = `SELECT * FROM ${config.tableName} WHERE eselon2_id = ?`;
         params.push(req.query.eselon2_id);
       }
+    } else if ((type === "eselon2" || type === "upt") && req.query.eselon1_id) {
+      // Filter Eselon 2 or UPT by Eselon 1
+      query = `SELECT * FROM ${config.tableName} WHERE eselon1_id = ?`;
+      params.push(req.query.eselon1_id);
     }
 
     let orderClause = ` ORDER BY ${config.idField} DESC`;
     if (type === "eselon1") {
       orderClause = ` ORDER BY no ASC`;
-    } else if (type === "eselon2") {
-      orderClause = ` ORDER BY no_urutan ASC`;
-    } else if (type === "upt") {
-      orderClause = ` ORDER BY no_urutan ASC`;
+
+
+    } else if (type === "status_aplikasi") {
+      orderClause = ` ORDER BY nama_status ASC`;
+    } else if (type === "environment") {
+      orderClause = ` ORDER BY jenis_environment ASC`;
     }
     query += orderClause;
 

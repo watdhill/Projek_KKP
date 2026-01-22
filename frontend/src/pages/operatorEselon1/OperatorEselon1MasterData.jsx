@@ -128,8 +128,10 @@ function OperatorEselon1MasterData() {
   const [eselon2Options, setEselon2Options] = useState([]);
 
   // ---------- Helpers ----------
-  const formatColumnHeader = (col) =>
-    col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatColumnHeader = (col) => {
+    if (col === "eselon2_id") return "Eselon 2";
+    return col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
 
   const getStatusColor = (status) => {
     if (status === 1 || status === true || status === "Aktif") {

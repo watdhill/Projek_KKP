@@ -157,10 +157,26 @@ function OperatorEselon2MasterData() {
     setError(null);
     try {
       const eselon2Id = getUserEselon2Id();
+      // Get current user ID for strict ownership check
+      const userStr = localStorage.getItem("user");
+      let currentUserId = null;
+      if (userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          currentUserId = u.id; // Assuming user object has 'id'
+        } catch (e) {
+          console.error("Error parsing user for ID:", e);
+        }
+      }
+
       let url = `${API_BASE}?type=${activeTab}`;
 
-      // Filter by eselon2_id for Operator Eselon 2
-      if (eselon2Id) {
+      // If we have a user ID, use it to filter only their created records
+      if (currentUserId && (activeTab === 'pic_internal' || activeTab === 'pic_eksternal')) {
+        url += `&created_by=${currentUserId}`;
+      }
+      // Fallback or additional filter (though created_by should be sufficient for strict view)
+      else if (eselon2Id) {
         url += `&eselon2_id=${eselon2Id}`;
       }
 
@@ -272,6 +288,21 @@ function OperatorEselon2MasterData() {
       const userEselon2Id = getUserEselon2Id();
       if (!processedData.eselon2_id && userEselon2Id) {
         processedData.eselon2_id = userEselon2Id;
+      }
+
+      // Auto-assign created_by / updated_by from current user
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          if (u.id) {
+            if (editingItem) {
+              processedData.updated_by = u.id;
+            } else {
+              processedData.created_by = u.id;
+            }
+          }
+        } catch (e) { /* ignore */ }
       }
 
       // Normalize ints
