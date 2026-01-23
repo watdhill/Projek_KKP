@@ -17,15 +17,6 @@ async function updateFormatLaporanSchema() {
         const columnNames = columns.map(c => c.Field);
         console.log('Current columns:', columnNames);
 
-        // Add selected_fields if missing
-        if (!columnNames.includes('selected_fields')) {
-            console.log('Adding selected_fields column...');
-            await connection.query('ALTER TABLE format_laporan ADD COLUMN selected_fields TEXT');
-            console.log('Column selected_fields added.');
-        } else {
-            console.log('Column selected_fields already exists.');
-        }
-
         // Remove nama_aplikasi if exists (since user said it's not needed)
         if (columnNames.includes('nama_aplikasi')) {
             console.log('Dropping nama_aplikasi column...');

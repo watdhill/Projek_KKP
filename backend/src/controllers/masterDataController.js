@@ -55,8 +55,8 @@ const tableConfig = {
   format_laporan: {
     tableName: "format_laporan",
     idField: "format_laporan_id",
-    columns: ["nama_format", "status_aktif", "selected_fields", "created_by", "updated_by", "created_at", "updated_at"],
-    displayColumns: ["Nama Format", "Status", "Field Terpilih"],
+    columns: ["nama_format", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    displayColumns: ["Nama Format", "Status"],
   },
   pic_eksternal: {
     tableName: "pic_eksternal",

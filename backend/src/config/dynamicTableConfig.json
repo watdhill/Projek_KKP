@@ -1,7 +1,7 @@
 {
-  "master_jabatan": {
-    "tableName": "master_jabatan",
-    "idField": "jabatan_id",
+  "jabatan": {
+    "tableName": "jabatan",
+    "idField": "jabatan",
     "columns": [
       "nama_jabatan",
       "status_aktif"
