@@ -83,7 +83,6 @@ model format_laporan {
   format_laporan_id Int     @id @default(autoincrement())
   nama_format       String  @unique(map: "nama_format") @db.VarChar(50)
   status_aktif      Boolean @default(true)
-  selected_fields   String  @db.LongText
 }
 
 model frekuensi_pemakaian {

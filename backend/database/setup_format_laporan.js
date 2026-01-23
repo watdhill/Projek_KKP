@@ -40,8 +40,7 @@ async function setup() {
       CREATE TABLE IF NOT EXISTS format_laporan (
         format_laporan_id INT AUTO_INCREMENT PRIMARY KEY,
         nama_format VARCHAR(150) NOT NULL,
-        status_aktif TINYINT(1) DEFAULT 1,
-        selected_fields LONGTEXT
+        status_aktif TINYINT(1) DEFAULT 1
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 

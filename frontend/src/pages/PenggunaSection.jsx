@@ -45,7 +45,7 @@ function PenggunaSection() {
     let result = users;
 
     if (searchTerm) {
-      result = result.filter(user => 
+      result = result.filter(user =>
         user.nama?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.nip?.includes(searchTerm) ||
@@ -183,6 +183,15 @@ function PenggunaSection() {
       }
     }
 
+    if (formData.kontak) {
+      let val = formData.kontak.toString().trim();
+      if (val.startsWith("+62")) val = "0" + val.slice(3);
+      else if (val.startsWith("62")) val = "0" + val.slice(2);
+      if (!val.startsWith("08")) {
+        return "Nomor HP harus diawali dengan 08";
+      }
+    }
+
     return null;
   };
 
@@ -251,6 +260,14 @@ function PenggunaSection() {
         upt_id: formData.upt_id ? parseInt(formData.upt_id) : null,
         status_aktif: parseInt(formData.status_aktif),
       };
+
+      // Normalize Phone Number (08 instead of +62)
+      if (payload.kontak) {
+        let val = payload.kontak.toString().trim().replace(/[^0-9+]/g, "");
+        if (val.startsWith("+62")) val = "0" + val.slice(3);
+        else if (val.startsWith("62")) val = "0" + val.slice(2);
+        payload.kontak = val;
+      }
 
       if (isEditMode && !formData.password) {
         delete payload.password;
@@ -408,7 +425,7 @@ function PenggunaSection() {
 
           {/* Table Card */}
           <div style={{ backgroundColor: "#ffffff", borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", maxWidth: "100%", overflow: "hidden" }}>
-              {filteredUsers.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <div style={{ padding: "40px 20px", textAlign: "center", backgroundColor: "#f8fafc", color: "#94a3b8", fontSize: "14px" }}>
                 <div style={{ fontSize: "32px", marginBottom: "8px" }}>🔍</div>
                 <div style={{ fontWeight: 500 }}>Tidak ada data ditemukan</div>
@@ -423,77 +440,77 @@ function PenggunaSection() {
                 }}
               >
                 <table style={{ width: "100%", minWidth: "2200px", borderCollapse: "collapse", fontSize: "13px", tableLayout: "fixed" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", height: "44px" }}>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "5%" }}>No</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "14%" }}>Email</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "11%" }}>Nama</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 1</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 2</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>UPT</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "10%" }}>NIP</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "9%" }}>Jabatan</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "8%" }}>Kontak</th>
-                    <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "7%" }}>Role</th>
-                    <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Status</th>
-                    <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user, index) => (
-                    <tr key={user.user_id} style={{ borderBottom: "1px solid #e2e8f0", minHeight: "48px" }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}>
-                      <td style={{ padding: "10px 12px", color: "#64748b", fontWeight: 500, width: "6%", verticalAlign: "middle" }}>{index + 1}</td>
-                      <td style={{ padding: "10px 12px", color: "#1e293b", fontWeight: 500, width: "15%", verticalAlign: "middle" }}><div style={{ ...clampStyle, textTransform: "none" }}>{user.email || "-"}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#1e293b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama || "-").toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon1 || "-").toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon2 || "-").toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_upt || "-").toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nip || "-").toString().toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", width: "10%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.jabatan || "-").toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", color: "#64748b", width: "9%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.kontak || "-").toString().toUpperCase()}</div></td>
-                      <td style={{ padding: "10px 12px", width: "8%", verticalAlign: "middle" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, backgroundColor: user.nama_role === "Admin" ? "#dbeafe" : "#dcfce7", color: user.nama_role === "Admin" ? "#075985" : "#166534", textTransform: "uppercase" }}>
-                          {user.nama_role === "Admin" ? "Administrator" : (user.nama_role || "-")}
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 12px", textAlign: "center", width: "8%", verticalAlign: "middle" }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 700, letterSpacing: "0.01em", backgroundColor: user.status_aktif === 1 ? "#e7f8ee" : "#fde8e8", color: user.status_aktif === 1 ? "#15803d" : "#b91c1c" }}>
-                          <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: user.status_aktif === 1 ? "#22c55e" : "#dc2626" }}></span>
-                          <span style={{ textTransform: "uppercase" }}>{user.status_aktif === 1 ? "Aktif" : "Nonaktif"}</span>
-                        </span>
-                      </td>
-                      <td style={{ padding: "10px 12px", textAlign: "center", width: "6%", verticalAlign: "middle" }}>
-                        <button
-                          onClick={() => handleEdit(user)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            padding: "8px 14px",
-                            background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            boxShadow: "0 2px 6px rgba(249, 115, 22, 0.25)",
-                            letterSpacing: "0.01em"
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-                          </svg>
-                          Edit
-                        </button>
-                      </td>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", height: "44px" }}>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "5%" }}>No</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "14%" }}>Email</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "11%" }}>Nama</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 1</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>Eselon 2</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "13%" }}>UPT</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "10%" }}>NIP</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "9%" }}>Jabatan</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "8%" }}>Kontak</th>
+                      <th style={{ padding: "10px 12px", textAlign: "left", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "7%" }}>Role</th>
+                      <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Status</th>
+                      <th style={{ padding: "10px 12px", textAlign: "center", verticalAlign: "middle", fontWeight: 600, color: "#475569", fontSize: "11.5px", textTransform: "uppercase", letterSpacing: "0.05em", width: "6%" }}>Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user, index) => (
+                      <tr key={user.user_id} style={{ borderBottom: "1px solid #e2e8f0", minHeight: "48px" }} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8fafc")} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ffffff")}>
+                        <td style={{ padding: "10px 12px", color: "#64748b", fontWeight: 500, width: "6%", verticalAlign: "middle" }}>{index + 1}</td>
+                        <td style={{ padding: "10px 12px", color: "#1e293b", fontWeight: 500, width: "15%", verticalAlign: "middle" }}><div style={{ ...clampStyle, textTransform: "none" }}>{user.email || "-"}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#1e293b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama || "-").toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon1 || "-").toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_eselon2 || "-").toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", fontSize: "12px", width: "15%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nama_upt || "-").toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", width: "12%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.nip || "-").toString().toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", width: "10%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.jabatan || "-").toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", color: "#64748b", width: "9%", verticalAlign: "middle" }}><div style={clampStyle}>{(user.kontak || "-").toString().toUpperCase()}</div></td>
+                        <td style={{ padding: "10px 12px", width: "8%", verticalAlign: "middle" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: 600, backgroundColor: user.nama_role === "Admin" ? "#dbeafe" : "#dcfce7", color: user.nama_role === "Admin" ? "#075985" : "#166534", textTransform: "uppercase" }}>
+                            {user.nama_role === "Admin" ? "Administrator" : (user.nama_role || "-")}
+                          </span>
+                        </td>
+                        <td style={{ padding: "10px 12px", textAlign: "center", width: "8%", verticalAlign: "middle" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: 700, letterSpacing: "0.01em", backgroundColor: user.status_aktif === 1 ? "#e7f8ee" : "#fde8e8", color: user.status_aktif === 1 ? "#15803d" : "#b91c1c" }}>
+                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: user.status_aktif === 1 ? "#22c55e" : "#dc2626" }}></span>
+                            <span style={{ textTransform: "uppercase" }}>{user.status_aktif === 1 ? "Aktif" : "Nonaktif"}</span>
+                          </span>
+                        </td>
+                        <td style={{ padding: "10px 12px", textAlign: "center", width: "6%", verticalAlign: "middle" }}>
+                          <button
+                            onClick={() => handleEdit(user)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "8px 14px",
+                              background: "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "12px",
+                              fontSize: "12px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              boxShadow: "0 2px 6px rgba(249, 115, 22, 0.25)",
+                              letterSpacing: "0.01em"
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                            </svg>
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

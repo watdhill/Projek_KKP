@@ -267,6 +267,20 @@ function OperatorEselon2MasterData() {
           }
         }
       }
+      // Validation for Phone Number (must start with 08)
+      const hpFields = ["kontak_pic_internal", "kontak_pic_eksternal"];
+      hpFields.forEach(f => {
+        if (formData[f]) {
+          let val = formData[f].toString().trim();
+          if (val.startsWith("+62")) val = "0" + val.slice(3);
+          else if (val.startsWith("62")) val = "0" + val.slice(2);
+
+          if (!val.startsWith("08")) {
+            throw new Error(`Nomor HP pada field "${fields.find(field => field.name === f)?.label}" harus diawali dengan 08`);
+          }
+        }
+      });
+
       setShowConfirm(true);
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
@@ -304,6 +318,20 @@ function OperatorEselon2MasterData() {
           }
         } catch (e) { /* ignore */ }
       }
+
+      // Normalize Phone Numbers (08 instead of +62)
+      const formatHP = (val) => {
+        if (!val) return val;
+        let clean = val.toString().trim().replace(/[^0-9+]/g, "");
+        if (clean.startsWith("+62")) return "0" + clean.slice(3);
+        if (clean.startsWith("62")) return "0" + clean.slice(2);
+        return clean;
+      };
+
+      if (processedData.kontak_pic_internal)
+        processedData.kontak_pic_internal = formatHP(processedData.kontak_pic_internal);
+      if (processedData.kontak_pic_eksternal)
+        processedData.kontak_pic_eksternal = formatHP(processedData.kontak_pic_eksternal);
 
       // Normalize ints
       if (processedData.eselon2_id)
