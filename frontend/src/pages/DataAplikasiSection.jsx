@@ -58,6 +58,8 @@ function DataAplikasiSection() {
     environment_id: "",
     pic_internal: "",
     pic_eksternal: "",
+    kontak_pic_internal: "",
+    kontak_pic_eksternal: "",
     bahasa_pemrograman: "",
     basis_data: "",
     kerangka_pengembangan: "",
@@ -271,6 +273,8 @@ function DataAplikasiSection() {
         environment_id: app.environment_id ? String(app.environment_id) : "",
         pic_internal: app.pic_internal || "",
         pic_eksternal: app.pic_eksternal || "",
+        kontak_pic_internal: app.kontak_pic_internal || "",
+        kontak_pic_eksternal: app.kontak_pic_eksternal || "",
         bahasa_pemrograman: app.bahasa_pemrograman || "",
         basis_data: app.basis_data || "",
         kerangka_pengembangan: app.kerangka_pengembangan || "",
@@ -563,6 +567,8 @@ function DataAplikasiSection() {
         environment_id: formData.environment_id || null,
         pic_internal: formData.pic_internal || null,
         pic_eksternal: formData.pic_eksternal || null,
+        kontak_pic_internal: formData.kontak_pic_internal || null,
+        kontak_pic_eksternal: formData.kontak_pic_eksternal || null,
         bahasa_pemrograman: formData.bahasa_pemrograman || null,
         basis_data: formData.basis_data || null,
         kerangka_pengembangan: formData.kerangka_pengembangan || null,
@@ -594,8 +600,8 @@ function DataAplikasiSection() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName,
-          )}`
+          originalAppName,
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -633,7 +639,7 @@ function DataAplikasiSection() {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
           7000,
         );
       } else {
@@ -1385,8 +1391,8 @@ function DataAplikasiSection() {
                                 textTransform: "none",
                               }}
                               onMouseOver={(e) =>
-                                (e.currentTarget.style.textDecoration =
-                                  "underline")
+                              (e.currentTarget.style.textDecoration =
+                                "underline")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.textDecoration = "none")
@@ -2151,7 +2157,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -2230,9 +2236,8 @@ function DataAplikasiSection() {
                           }}
                         >
                           {(formData.cara_akses_id || []).length > 0
-                            ? `${
-                                (formData.cara_akses_id || []).length
-                              } cara akses dipilih`
+                            ? `${(formData.cara_akses_id || []).length
+                            } cara akses dipilih`
                             : "-Pilih-"}
                         </span>
                         <svg
@@ -2334,8 +2339,8 @@ function DataAplikasiSection() {
                                         const updated = e.target.checked
                                           ? [...current, id]
                                           : current.filter(
-                                              (item) => item !== id,
-                                            );
+                                            (item) => item !== id,
+                                          );
                                         handleFormChange(
                                           "cara_akses_id",
                                           updated,
@@ -2368,17 +2373,17 @@ function DataAplikasiSection() {
                                   x.status_aktif === 1 ||
                                   x.status_aktif === true,
                               ).length === 0) && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                  textAlign: "center",
-                                  padding: "12px",
-                                }}
-                              >
-                                Tidak ada data Cara Akses
-                              </div>
-                            )}
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#94a3b8",
+                                    textAlign: "center",
+                                    padding: "12px",
+                                  }}
+                                >
+                                  Tidak ada data Cara Akses
+                                </div>
+                              )}
                           </div>
                         </>
                       )}
@@ -2712,6 +2717,88 @@ function DataAplikasiSection() {
                             : "#e6eef6",
                         }}
                       />
+                    </div>
+                  </div>
+
+                  {/* Kontak PIC Fields */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Kontak PIC Internal
+                      </label>
+                      <input
+                        data-field="kontak_pic_internal"
+                        type="tel"
+                        value={formData.kontak_pic_internal}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                          handleFormChange("kontak_pic_internal", value);
+                        }}
+                        placeholder="Contoh: 08123456789"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.kontak_pic_internal
+                            ? errorBorderColor
+                            : "#e6eef6",
+                        }}
+                      />
+                      {fieldErrors.kontak_pic_internal && (
+                        <div style={{ color: errorBorderColor, fontSize: "12px", marginTop: "4px" }}>
+                          {fieldErrors.kontak_pic_internal}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Kontak PIC Eksternal
+                      </label>
+                      <input
+                        data-field="kontak_pic_eksternal"
+                        type="tel"
+                        value={formData.kontak_pic_eksternal}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                          handleFormChange("kontak_pic_eksternal", value);
+                        }}
+                        placeholder="Contoh: 08123456789"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.kontak_pic_eksternal
+                            ? errorBorderColor
+                            : "#e6eef6",
+                        }}
+                      />
+                      {fieldErrors.kontak_pic_eksternal && (
+                        <div style={{ color: errorBorderColor, fontSize: "12px", marginTop: "4px" }}>
+                          {fieldErrors.kontak_pic_eksternal}
+                        </div>
+                      )}
                     </div>
                   </div>
 

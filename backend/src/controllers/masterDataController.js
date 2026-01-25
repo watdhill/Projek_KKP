@@ -55,8 +55,8 @@ const tableConfig = {
   format_laporan: {
     tableName: "format_laporan",
     idField: "format_laporan_id",
-    columns: ["nama_format", "status_aktif", "selected_fields", "created_by", "updated_by", "created_at", "updated_at"],
-    displayColumns: ["Nama Format", "Status", "Field Terpilih"],
+    columns: ["nama_format", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    displayColumns: ["Nama Format", "Status"],
   },
   pic_eksternal: {
     tableName: "pic_eksternal",
@@ -409,9 +409,16 @@ exports.createMasterData = async (req, res) => {
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        const detailValues = fieldIds.map((fid) => [newId, fid]);
+        // Insert with explicit NULL for optional columns
+        const detailValues = fieldIds.map((fid) => [
+          newId,        // format_laporan_id
+          null,         // parent_id
+          null,         // judul
+          0,            // is_header
+          fid           // field_id
+        ]);
         await pool.query(
-          "INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?",
+          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
           [detailValues],
         );
       }
@@ -568,9 +575,16 @@ exports.updateMasterData = async (req, res) => {
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        const detailValues = fieldIds.map((fid) => [req.params.id, fid]);
+        // Insert with explicit NULL for optional columns
+        const detailValues = fieldIds.map((fid) => [
+          req.params.id, // format_laporan_id
+          null,          // parent_id
+          null,          // judul
+          0,             // is_header
+          fid            // field_id
+        ]);
         await pool.query(
-          "INSERT INTO format_laporan_detail (format_laporan_id, field_id) VALUES ?",
+          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
           [detailValues],
         );
       }
@@ -581,10 +595,21 @@ exports.updateMasterData = async (req, res) => {
       message: "Master data berhasil diupdate",
     });
   } catch (error) {
+    console.error('=== ERROR UPDATE MASTER DATA ===');
+    console.error('Type:', req.query.type);
+    console.error('ID:', req.params.id);
+    console.error('Body:', req.body);
+    console.error('Error:', error);
+    console.error('Error Code:', error.code);
+    console.error('Error Message:', error.message);
+    console.error('SQL Message:', error.sqlMessage);
+
     res.status(500).json({
       success: false,
       message: "Error mengupdate master data",
       error: error.message,
+      sqlMessage: error.sqlMessage,
+      code: error.code
     });
   }
 };
