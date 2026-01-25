@@ -1,9 +1,236 @@
 const pool = require('../config/database');
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 
-// Get all laporan
-exports.getAllLaporan = async (req, res) => {
+// ============================================
+// FIELD NAME MAPPING
+// ============================================
+
+/**
+ * Map kode_field from master_laporan_field to actual column names in data_aplikasi
+ * This is needed because some kode_field values don't match the actual database columns
+ */
+function mapFieldName(kodeField) {
+  const fieldMapping = {
+    // PDN fields
+    'pdn_utama': 'pdn_id',
+    'pdn_backup': 'pdn_id', // Same as utama, just different context
+
+    // Mandiri field
+    'mandiri': 'mandiri_komputasi_backup',
+    'mandiri_backup': 'mandiri_komputasi_backup',
+
+    // API fields
+    'api_internal_integrasi': 'api_internal_status',
+    'api_internal_sistem_integrasi': 'api_internal_status',
+
+    // VA/PT fields
+    'va_pt': 'va_pt_status',
+    'va_pt_ya_tidak': 'va_pt_status',
+    'ya_tidak': 'va_pt_status',
+    'waktu_va_pt': 'va_pt_waktu',
+    'waktu': 'va_pt_waktu',
+
+    // PIC contact fields (these don't exist in data_aplikasi)
+    'kontak_pic_internal': null, // No column for this
+    'kontak_pic_eksternal': null, // No column for this
+
+    // Default: return as-is
+  };
+
+  return fieldMapping[kodeField] || kodeField;
+}
+
+// ============================================
+// HELPER FUNCTIONS FOR HIERARCHICAL EXPORT
+// ============================================
+
+/**
+ * Parse hierarchical label using '>' delimiter
+ * Example: "Arsitektur Infrastruktur > Fasilitas Komputasi Utama"
+ * Returns: { judul: "Arsitektur Infrastruktur", subJudul: "Fasilitas Komputasi Utama", fieldLabel: "Fasilitas Komputasi Utama" }
+ */
+function parseHierarchicalLabel(labelTampilan) {
+  if (!labelTampilan) return { judul: null, subJudul: null, fieldLabel: labelTampilan };
+
+  const parts = labelTampilan.split('>').map(s => s.trim());
+
+  if (parts.length === 1) {
+    // No hierarchy, just field label
+    return { judul: null, subJudul: null, fieldLabel: parts[0] };
+  } else if (parts.length === 2) {
+    // Judul > Field
+    return { judul: parts[0], subJudul: null, fieldLabel: parts[1] };
+  } else {
+    // Judul > SubJudul > Field
+    return { judul: parts[0], subJudul: parts[1], fieldLabel: parts[2] || parts[1] };
+  }
+}
+
+/**
+ * Build hierarchy from master_laporan_field tree structure
+ * Uses parent_id and level from master_laporan_field to build proper hierarchy
+ */
+async function buildHierarchyFromMasterField(formatDetails) {
+  const structure = [];
+
+  // Get all field_ids from formatDetails
+  const fieldIds = formatDetails
+    .filter(d => d.field_id)
+    .map(d => d.field_id);
+
+  if (fieldIds.length === 0) {
+    return structure;
+  }
+
+  // Query master_laporan_field to get full tree including parents
+  const [allFields] = await pool.query(`
+    WITH RECURSIVE field_tree AS (
+      -- Get selected fields
+      SELECT field_id, nama_field, kode_field, parent_id, level, urutan
+      FROM master_laporan_field
+      WHERE field_id IN (?)
+      
+      UNION
+      
+      -- Get all parents recursively
+      SELECT mlf.field_id, mlf.nama_field, mlf.kode_field, mlf.parent_id, mlf.level, mlf.urutan
+      FROM master_laporan_field mlf
+      INNER JOIN field_tree ft ON mlf.field_id = ft.parent_id
+    )
+    SELECT DISTINCT * FROM field_tree
+    ORDER BY level, urutan
+  `, [fieldIds]);
+
+  // Build tree structure
+  const fieldMap = new Map();
+  allFields.forEach(field => {
+    fieldMap.set(field.field_id, {
+      ...field,
+      children: []
+    });
+  });
+
+  // Link children to parents
+  const roots = [];
+  allFields.forEach(field => {
+    const node = fieldMap.get(field.field_id);
+    if (field.parent_id && fieldMap.has(field.parent_id)) {
+      fieldMap.get(field.parent_id).children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  // Convert tree to export structure
+  function convertToExportStructure(nodes, isSelected) {
+    const result = [];
+
+    nodes.forEach(node => {
+      const nodeIsSelected = fieldIds.includes(node.field_id);
+
+      if (node.level === 1) {
+        // Level 1: Judul (Header Group)
+        const group = {
+          type: 'group',
+          judul: node.nama_field,
+          subGroups: new Map(),
+          fields: []
+        };
+
+        // Process children (Level 2: Sub-Judul)
+        node.children.forEach(child => {
+          if (child.level === 2) {
+            // Sub-Judul
+            const subFields = child.children
+              .filter(f => f.level === 3 && fieldIds.includes(f.field_id))
+              .map(f => ({
+                label: f.nama_field,
+                fieldName: mapFieldName(f.kode_field)
+              }));
+
+            if (subFields.length > 0) {
+              group.subGroups.set(child.nama_field, subFields);
+            }
+          } else if (child.level === 3 && fieldIds.includes(child.field_id)) {
+            // Direct field under Judul (no sub-judul)
+            group.fields.push({
+              label: child.nama_field,
+              fieldName: mapFieldName(child.kode_field)
+            });
+          }
+        });
+
+        // Only add group if it has fields
+        if (group.subGroups.size > 0 || group.fields.length > 0) {
+          result.push(group);
+        }
+      } else if (node.level === 2 && !node.parent_id) {
+        // Level 2 without parent: treat as standalone group
+        const subFields = node.children
+          .filter(f => f.level === 3 && fieldIds.includes(f.field_id))
+          .map(f => ({
+            label: f.nama_field,
+            fieldName: mapFieldName(f.kode_field)
+          }));
+
+        if (subFields.length > 0) {
+          result.push({
+            type: 'group',
+            judul: node.nama_field,
+            subGroups: new Map(),
+            fields: subFields
+          });
+        }
+      } else if (node.level === 3 && !node.parent_id && nodeIsSelected) {
+        // Level 3 without parent: standalone field
+        result.push({
+          type: 'field',
+          label: node.nama_field,
+          fieldName: mapFieldName(node.kode_field)
+        });
+      }
+    });
+
+    return result;
+  }
+
+  return convertToExportStructure(roots, true);
+}
+
+/**
+ * Get format laporan details with hierarchical structure
+ */
+async function getFormatDetails(formatId) {
+  const [details] = await pool.query(`
+    SELECT 
+      fld.id,
+      fld.format_laporan_id,
+      fld.parent_id,
+      fld.judul,
+      fld.is_header,
+      mlf.kode_field as field_name,
+      mlf.nama_field as label_tampilan,
+      fld.field_id,
+      COALESCE(mlf.urutan, 999) as urutan
+    FROM format_laporan_detail fld
+    LEFT JOIN master_laporan_field mlf ON fld.field_id = mlf.field_id
+    WHERE fld.format_laporan_id = ?
+    ORDER BY urutan
+  `, [formatId]);
+
+  return details;
+}
+
+// Get all format laporan for dropdown
+exports.getAllFormatLaporan = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM laporan ORDER BY created_at DESC');
+    const [rows] = await pool.query(`
+      SELECT DISTINCT nama_format, format_laporan_id 
+      FROM format_laporan 
+      WHERE status_aktif = 1
+      ORDER BY nama_format
+    `);
     res.json({
       success: true,
       data: rows
@@ -11,102 +238,499 @@ exports.getAllLaporan = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data laporan',
+      message: 'Error mengambil format laporan',
       error: error.message
     });
   }
 };
 
-// Get laporan by ID
-exports.getLaporanById = async (req, res) => {
+// Get preview data with filters
+exports.getPreviewData = async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM laporan WHERE id = ?', [req.params.id]);
-    if (rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Laporan tidak ditemukan'
-      });
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
+
+    let query = `
+      SELECT 
+        da.nama_aplikasi,
+        e1.nama_eselon1,
+        e1.singkatan as unit,
+        e2.nama_eselon2,
+        da.pic_internal as pic,
+        sa.nama_status as status_aplikasi,
+        YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan,
+        da.domain,
+        da.deskripsi_fungsi,
+        da.user_pengguna,
+        da.data_digunakan,
+        da.luaran_output,
+        da.bahasa_pemrograman,
+        da.basis_data,
+        da.kerangka_pengembangan,
+        da.unit_pengembang,
+        da.unit_operasional_teknologi,
+        da.nilai_pengembangan_aplikasi,
+        da.pusat_komputasi_utama,
+        da.pusat_komputasi_backup,
+        da.mandiri_komputasi_backup,
+        da.perangkat_lunak,
+        da.cloud,
+        da.waf,
+        da.antivirus,
+        da.va_pt_status,
+        da.va_pt_waktu,
+        da.alamat_ip_publik,
+        da.keterangan,
+        da.status_bmn,
+        da.server_aplikasi,
+        da.tipe_lisensi_bahasa,
+        da.api_internal_status,
+        da.ssl
+      FROM data_aplikasi da
+      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
+      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (tahun && tahun !== 'all') {
+      query += ` AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?`;
+      params.push(tahun);
     }
+
+    if (status && status !== 'all') {
+      query += ` AND da.status_aplikasi = ?`;
+      params.push(status);
+    }
+
+    if (eselon1_id && eselon1_id !== 'all') {
+      query += ` AND da.eselon1_id = ?`;
+      params.push(eselon1_id);
+    }
+
+    if (eselon2_id && eselon2_id !== 'all') {
+      query += ` AND da.eselon2_id = ?`;
+      params.push(eselon2_id);
+    }
+
+    query += ` ORDER BY da.nama_aplikasi`;
+
+    const [rows] = await pool.query(query, params);
+
     res.json({
       success: true,
-      data: rows[0]
+      data: rows
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data laporan',
+      message: 'Error mengambil preview data',
       error: error.message
     });
   }
 };
 
-// Create laporan
-exports.createLaporan = async (req, res) => {
+// Export to Excel with hierarchical headers
+exports.exportExcel = async (req, res) => {
   try {
-    const { judul, tipe, status, tanggal_buat } = req.body;
-    const [result] = await pool.query(
-      'INSERT INTO laporan (judul, tipe, status, tanggal_buat) VALUES (?, ?, ?, ?)',
-      [judul, tipe, status || 'Draft', tanggal_buat || new Date().toISOString().split('T')[0]]
-    );
-    res.status(201).json({
-      success: true,
-      message: 'Laporan berhasil ditambahkan',
-      data: { id: result.insertId, judul, tipe, status, tanggal_buat }
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Error menambahkan laporan',
-      error: error.message
-    });
-  }
-};
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
 
-// Update laporan
-exports.updateLaporan = async (req, res) => {
-  try {
-    const { judul, tipe, status, tanggal_buat } = req.body;
-    const [result] = await pool.query(
-      'UPDATE laporan SET judul = ?, tipe = ?, status = ?, tanggal_buat = ? WHERE id = ?',
-      [judul, tipe, status, tanggal_buat, req.params.id]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Laporan tidak ditemukan'
-      });
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'KKP System';
+    workbook.created = new Date();
+
+    // Check if "all formats" is selected
+    const isAllFormats = format_laporan_id === 'all';
+
+    let formats = [];
+    if (isAllFormats) {
+      // Get all active formats
+      const [allFormats] = await pool.query(`
+        SELECT DISTINCT format_laporan_id, nama_format
+        FROM format_laporan
+        WHERE status_aktif = 1
+        ORDER BY nama_format
+      `);
+      formats = allFormats;
+    } else if (format_laporan_id) {
+      // Get single format
+      const [singleFormat] = await pool.query(`
+        SELECT format_laporan_id, nama_format
+        FROM format_laporan
+        WHERE format_laporan_id = ?
+      `, [format_laporan_id]);
+      formats = singleFormat;
     }
-    res.json({
-      success: true,
-      message: 'Laporan berhasil diupdate'
-    });
+
+    const filters = { tahun, status, eselon1_id, eselon2_id };
+
+    // If no format specified, use default columns
+    if (formats.length === 0) {
+      await createDefaultSheet(workbook, filters);
+    } else {
+      // Create sheet for each format
+      for (const format of formats) {
+        await createFormatSheet(workbook, format, filters);
+      }
+    }
+
+    // Generate Excel file
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    const filename = isAllFormats
+      ? `Laporan_Semua_Format_${new Date().toISOString().split('T')[0]}.xlsx`
+      : `Laporan_${formats[0]?.nama_format || 'Aplikasi'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+
   } catch (error) {
+    console.error('Export Excel error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error mengupdate laporan',
+      message: 'Error generating Excel file',
       error: error.message
     });
   }
 };
 
-// Delete laporan
-exports.deleteLaporan = async (req, res) => {
-  try {
-    const [result] = await pool.query('DELETE FROM laporan WHERE id = ?', [req.params.id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Laporan tidak ditemukan'
-      });
-    }
-    res.json({
-      success: true,
-      message: 'Laporan berhasil dihapus'
+// Helper: Create sheet with default columns
+async function createDefaultSheet(workbook, filters) {
+  const worksheet = workbook.addWorksheet('Laporan Aplikasi');
+
+  // Default columns
+  worksheet.columns = [
+    { header: 'No', key: 'no', width: 5 },
+    { header: 'Nama Aplikasi', key: 'nama_aplikasi', width: 30 },
+    { header: 'Unit', key: 'unit', width: 15 },
+    { header: 'PIC', key: 'pic', width: 20 },
+    { header: 'Status', key: 'status', width: 15 },
+    { header: 'Tanggal Ditambahkan', key: 'tanggal', width: 20 }
+  ];
+
+  // Style header
+  worksheet.getRow(1).font = { bold: true };
+  worksheet.getRow(1).fill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FF4472C4' }
+  };
+  worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+
+  // Get data
+  const data = await getFilteredData(filters);
+
+  // Add rows
+  data.forEach((row, index) => {
+    worksheet.addRow({
+      no: index + 1,
+      nama_aplikasi: row.nama_aplikasi,
+      unit: row.unit,
+      pic: row.pic_internal,
+      status: row.status_aplikasi,
+      tanggal: row.created_at ? new Date(row.created_at).toLocaleString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }) : '-'
     });
+  });
+}
+
+// Helper: Create sheet for specific format with hierarchical headers
+async function createFormatSheet(workbook, format, filters) {
+  const worksheet = workbook.addWorksheet(format.nama_format.substring(0, 31)); // Excel sheet name limit
+
+  // Get format details
+  const formatDetails = await getFormatDetails(format.format_laporan_id);
+
+  if (formatDetails.length === 0) {
+    // No format details, use default
+    return createDefaultSheet(workbook, filters);
+  }
+
+  // Build hierarchical structure from master_laporan_field tree
+  const structure = await buildHierarchyFromMasterField(formatDetails);
+
+  console.log(`[createFormatSheet] Built structure:`, JSON.stringify(structure, null, 2));
+
+  // Calculate column positions and create headers
+  let currentCol = 1;
+  const columnMapping = []; // Maps field_name to column index
+
+  // Determine header rows needed
+  let hasJudul = false;
+  let hasSubJudul = false;
+
+  structure.forEach(item => {
+    if (item.type === 'group') {
+      hasJudul = true;
+      if (item.subGroups.size > 0) {
+        hasSubJudul = true;
+      }
+    }
+  });
+
+  const headerStartRow = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
+
+  // Build headers
+  structure.forEach(item => {
+    if (item.type === 'field') {
+      // Standalone field
+      const col = currentCol++;
+
+      // Set header value at the appropriate row
+      worksheet.getCell(headerStartRow, col).value = item.label;
+      columnMapping.push({ fieldName: item.fieldName, col });
+
+      // Merge cells vertically if there are hierarchical headers above
+      if (hasJudul && headerStartRow > 1) {
+        // Merge from row 1 to headerStartRow for this column
+        worksheet.mergeCells(1, col, headerStartRow, col);
+        // Set the value in the merged cell (row 1)
+        worksheet.getCell(1, col).value = item.label;
+      }
+    } else if (item.type === 'group') {
+      // Group with judul
+      const startCol = currentCol;
+      let groupColCount = 0;
+
+      if (item.subGroups.size > 0) {
+        // Has sub-groups
+        item.subGroups.forEach((fields, subJudul) => {
+          const subStartCol = currentCol;
+          fields.forEach(field => {
+            const col = currentCol++;
+            worksheet.getCell(headerStartRow, col).value = field.label;
+            columnMapping.push({ fieldName: field.fieldName, col });
+            groupColCount++;
+          });
+
+          // Sub-judul header (row 2)
+          if (hasSubJudul && currentCol > subStartCol) {
+            worksheet.mergeCells(2, subStartCol, 2, currentCol - 1);
+            worksheet.getCell(2, subStartCol).value = subJudul;
+          }
+        });
+      } else {
+        // No sub-groups, just fields
+        item.fields.forEach(field => {
+          const col = currentCol++;
+          worksheet.getCell(headerStartRow, col).value = field.label;
+          columnMapping.push({ fieldName: field.fieldName, col });
+          groupColCount++;
+        });
+      }
+
+      // Judul header (row 1)
+      if (groupColCount > 0) {
+        worksheet.mergeCells(1, startCol, 1, currentCol - 1);
+        worksheet.getCell(1, startCol).value = item.judul;
+      }
+    }
+  });
+
+  // Style headers
+  for (let row = 1; row <= headerStartRow; row++) {
+    const headerRow = worksheet.getRow(row);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: row === 1 ? 'FF4472C4' : 'FF8EAADB' }
+    };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // Add borders to all header cells
+    headerRow.eachCell({ includeEmpty: true }, (cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
+        right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+      };
+    });
+  }
+
+  // Get data
+  const data = await getFilteredData(filters);
+
+  // Add data rows
+  data.forEach((rowData, index) => {
+    const row = worksheet.getRow(headerStartRow + index + 1);
+    columnMapping.forEach(({ fieldName, col }) => {
+      // Skip if fieldName is null (field doesn't exist in data_aplikasi)
+      if (fieldName) {
+        row.getCell(col).value = rowData[fieldName] || '-';
+      } else {
+        row.getCell(col).value = '-';
+      }
+    });
+  });
+
+  // Auto-fit columns
+  worksheet.columns.forEach(column => {
+    column.width = 15;
+  });
+}
+
+// Helper: Get filtered data
+async function getFilteredData(filters) {
+  const { tahun, status, eselon1_id, eselon2_id } = filters;
+
+  let query = `
+    SELECT 
+      da.*,
+      e1.singkatan as unit,
+      sa.nama_status as status_aplikasi,
+      YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan
+    FROM data_aplikasi da
+    LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
+    LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+    WHERE 1=1
+  `;
+
+  const params = [];
+
+  if (tahun && tahun !== 'all') {
+    query += ' AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?';
+    params.push(tahun);
+  }
+
+  if (status && status !== 'all') {
+    query += ' AND da.status_aplikasi = ?';
+    params.push(status);
+  }
+
+  if (eselon1_id && eselon1_id !== 'all') {
+    query += ' AND da.eselon1_id = ?';
+    params.push(eselon1_id);
+  }
+
+  if (eselon2_id && eselon2_id !== 'all') {
+    query += ' AND da.eselon2_id = ?';
+    params.push(eselon2_id);
+  }
+
+  query += ' ORDER BY da.nama_aplikasi';
+
+  const [rows] = await pool.query(query, params);
+  return rows;
+}
+
+
+// Export to PDF
+exports.exportPDF = async (req, res) => {
+  try {
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
+
+    // Get format laporan name
+    let formatName = 'Laporan Aplikasi';
+    if (format_laporan_id) {
+      const [formatRows] = await pool.query(`
+        SELECT nama_format FROM format_laporan WHERE format_laporan_id = ?
+      `, [format_laporan_id]);
+      if (formatRows.length > 0) {
+        formatName = formatRows[0].nama_format;
+      }
+    }
+
+    // Get data
+    let query = `
+      SELECT 
+        da.nama_aplikasi,
+        e1.singkatan as unit,
+        da.pic_internal as pic,
+        sa.nama_status as status_aplikasi,
+        YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan,
+        da.domain
+      FROM data_aplikasi da
+      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
+      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (tahun && tahun !== 'all') {
+      query += ` AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?`;
+      params.push(tahun);
+    }
+
+    if (status && status !== 'all') {
+      query += ` AND da.status_aplikasi = ?`;
+      params.push(status);
+    }
+
+    if (eselon1_id && eselon1_id !== 'all') {
+      query += ` AND da.eselon1_id = ?`;
+      params.push(eselon1_id);
+    }
+
+    if (eselon2_id && eselon2_id !== 'all') {
+      query += ` AND da.eselon2_id = ?`;
+      params.push(eselon2_id);
+    }
+
+    query += ` ORDER BY da.nama_aplikasi`;
+
+    const [rows] = await pool.query(query, params);
+
+    // Create PDF
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${formatName}_${new Date().toISOString().split('T')[0]}.pdf"`);
+
+    doc.pipe(res);
+
+    // Add title
+    doc.fontSize(16).text(formatName, { align: 'center' });
+    doc.fontSize(10).text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
+    doc.moveDown();
+
+    // Add table header
+    const tableTop = doc.y;
+    doc.fontSize(9).font('Helvetica-Bold');
+    doc.text('No', 50, tableTop, { width: 30 });
+    doc.text('Nama Aplikasi', 80, tableTop, { width: 150 });
+    doc.text('Unit', 230, tableTop, { width: 80 });
+    doc.text('PIC', 310, tableTop, { width: 100 });
+    doc.text('Status', 410, tableTop, { width: 80 });
+    doc.text('Tahun', 490, tableTop, { width: 50 });
+
+    doc.moveDown();
+    doc.font('Helvetica');
+
+    // Add data rows
+    rows.forEach((row, index) => {
+      const y = doc.y;
+      doc.text(index + 1, 50, y, { width: 30 });
+      doc.text(row.nama_aplikasi || '-', 80, y, { width: 150 });
+      doc.text(row.unit || '-', 230, y, { width: 80 });
+      doc.text(row.pic || '-', 310, y, { width: 100 });
+      doc.text(row.status_aplikasi || '-', 410, y, { width: 80 });
+      doc.text(row.tahun_pengembangan || '-', 490, y, { width: 50 });
+      doc.moveDown(0.5);
+
+      // Add new page if needed
+      if (doc.y > 700) {
+        doc.addPage();
+      }
+    });
+
+    doc.end();
+
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menghapus laporan',
+      message: 'Error export PDF',
       error: error.message
     });
   }
