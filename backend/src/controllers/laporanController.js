@@ -192,6 +192,23 @@ async function buildHierarchyFromMasterField(formatDetails) {
       }
     });
 
+    // Prioritize key fields to appear first
+    const priorityFields = ['nama_aplikasi', 'domain', 'deskripsi_fungsi'];
+
+    result.sort((a, b) => {
+      const aIsPriority = a.type === 'field' && priorityFields.includes(a.fieldName);
+      const bIsPriority = b.type === 'field' && priorityFields.includes(b.fieldName);
+
+      if (aIsPriority && !bIsPriority) return -1;
+      if (!aIsPriority && bIsPriority) return 1;
+
+      if (aIsPriority && bIsPriority) {
+        return priorityFields.indexOf(a.fieldName) - priorityFields.indexOf(b.fieldName);
+      }
+
+      return 0;
+    });
+
     return result;
   }
 
@@ -257,6 +274,7 @@ exports.getPreviewData = async (req, res) => {
         e2.nama_eselon2,
         da.pic_internal as pic,
         sa.nama_status as status_aplikasi,
+        DATE_FORMAT(da.created_at, '%Y-%m-%d') as tanggal_ditambahkan,
         YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan,
         da.domain,
         da.deskripsi_fungsi,
@@ -396,6 +414,61 @@ exports.exportExcel = async (req, res) => {
   }
 };
 
+// Export All Formats as Excel (Multiple Sheets)
+exports.exportExcelAll = async (req, res) => {
+  try {
+    const { tahun, status, eselon1_id, eselon2_id } = req.query;
+    const filters = { tahun, status, eselon1_id, eselon2_id };
+
+    // Fetch all active formats
+    const [formats] = await pool.query(`
+      SELECT format_laporan_id, nama_format 
+      FROM format_laporan 
+      WHERE status_aktif = 1
+      ORDER BY nama_format
+    `);
+
+    if (formats.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tidak ada format laporan aktif'
+      });
+    }
+
+    const workbook = new ExcelJS.Workbook();
+
+    // Create worksheet for each format
+    for (const format of formats) {
+      // Create sheet using existing helper function
+      await createFormatSheet(workbook, format, filters);
+    }
+
+    // Generate buffer
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    // Build filename with filters
+    let filenameParts = ['Semua_Format_Laporan'];
+    if (tahun && tahun !== 'all') filenameParts.push(tahun);
+    if (status && status !== 'all') filenameParts.push('Status' + status);
+    if (eselon1_id && eselon1_id !== 'all') filenameParts.push('Eselon1_' + eselon1_id);
+
+    const filename = `${filenameParts.join('_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Export Excel All error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating Excel file with all formats',
+      error: error.message
+    });
+  }
+};
+
+
 // Helper: Create sheet with default columns
 async function createDefaultSheet(workbook, filters) {
   const worksheet = workbook.addWorksheet('Laporan Aplikasi');
@@ -449,8 +522,9 @@ async function createFormatSheet(workbook, format, filters) {
   const formatDetails = await getFormatDetails(format.format_laporan_id);
 
   if (formatDetails.length === 0) {
-    // No format details, use default
-    return createDefaultSheet(workbook, filters);
+    // No format details, skip this format
+    console.log(`Skipping format ${format.nama_format} - no fields defined`);
+    return;
   }
 
   // Build hierarchical structure from master_laporan_field tree
@@ -628,61 +702,40 @@ exports.exportPDF = async (req, res) => {
   try {
     const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
 
-    // Get format laporan name
+    // Get format details
     let formatName = 'Laporan Aplikasi';
+    let formatDetails = [];
+
     if (format_laporan_id) {
       const [formatRows] = await pool.query(`
         SELECT nama_format FROM format_laporan WHERE format_laporan_id = ?
       `, [format_laporan_id]);
+
       if (formatRows.length > 0) {
         formatName = formatRows[0].nama_format;
       }
+
+      const [details] = await pool.query(`
+        SELECT field_id FROM format_laporan_detail 
+        WHERE format_laporan_id = ?
+      `, [format_laporan_id]);
+
+      formatDetails = details;
     }
 
-    // Get data
-    let query = `
-      SELECT 
-        da.nama_aplikasi,
-        e1.singkatan as unit,
-        da.pic_internal as pic,
-        sa.nama_status as status_aplikasi,
-        YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan,
-        da.domain
-      FROM data_aplikasi da
-      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
-      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
-      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
-      WHERE 1=1
-    `;
+    // Build hierarchical structure
+    const structure = await buildHierarchyFromMasterField(formatDetails);
 
-    const params = [];
+    // Get filtered data
+    const filters = { tahun, status, eselon1_id, eselon2_id };
+    const data = await getFilteredData(filters);
 
-    if (tahun && tahun !== 'all') {
-      query += ` AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?`;
-      params.push(tahun);
-    }
-
-    if (status && status !== 'all') {
-      query += ` AND da.status_aplikasi = ?`;
-      params.push(status);
-    }
-
-    if (eselon1_id && eselon1_id !== 'all') {
-      query += ` AND da.eselon1_id = ?`;
-      params.push(eselon1_id);
-    }
-
-    if (eselon2_id && eselon2_id !== 'all') {
-      query += ` AND da.eselon2_id = ?`;
-      params.push(eselon2_id);
-    }
-
-    query += ` ORDER BY da.nama_aplikasi`;
-
-    const [rows] = await pool.query(query, params);
-
-    // Create PDF
-    const doc = new PDFDocument({ margin: 50 });
+    // Create PDF with landscape A3
+    const doc = new PDFDocument({
+      size: 'A3',
+      layout: 'landscape',
+      margin: 30
+    });
 
     // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
@@ -691,43 +744,176 @@ exports.exportPDF = async (req, res) => {
     doc.pipe(res);
 
     // Add title
-    doc.fontSize(16).text(formatName, { align: 'center' });
-    doc.fontSize(10).text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
-    doc.moveDown();
+    doc.fontSize(14).font('Helvetica-Bold').text(formatName, { align: 'center' });
+    doc.fontSize(9).font('Helvetica').text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
+    doc.moveDown(0.5);
 
-    // Add table header
-    const tableTop = doc.y;
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('No', 50, tableTop, { width: 30 });
-    doc.text('Nama Aplikasi', 80, tableTop, { width: 150 });
-    doc.text('Unit', 230, tableTop, { width: 80 });
-    doc.text('PIC', 310, tableTop, { width: 100 });
-    doc.text('Status', 410, tableTop, { width: 80 });
-    doc.text('Tahun', 490, tableTop, { width: 50 });
+    // Calculate layout
+    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const startX = doc.page.margins.left;
+    let startY = doc.y;
 
-    doc.moveDown();
+    // Count total columns
+    let totalColumns = 0;
+    const columnMapping = [];
+
+    structure.forEach(item => {
+      if (item.type === 'field') {
+        totalColumns++;
+        columnMapping.push({ fieldName: item.fieldName, label: item.label });
+      } else if (item.type === 'group') {
+        if (item.subGroups.size > 0) {
+          item.subGroups.forEach(fields => {
+            totalColumns += fields.length;
+            fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+          });
+        } else {
+          totalColumns += item.fields.length;
+          item.fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+        }
+      }
+    });
+
+    const columnWidth = pageWidth / totalColumns;
+    const rowHeight = 18;
+    const fontSize = 7;
+
+    // Determine header rows
+    let hasJudul = false;
+    let hasSubJudul = false;
+
+    structure.forEach(item => {
+      if (item.type === 'group') {
+        hasJudul = true;
+        if (item.subGroups.size > 0) hasSubJudul = true;
+      }
+    });
+
+    const headerRows = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
+
+    // Render headers
+    doc.fontSize(fontSize).font('Helvetica-Bold');
+    let currentCol = 0;
+
+    // Helper function to draw cell
+    const drawCell = (x, y, width, height, text, options = {}) => {
+      const { fill = false, align = 'center', fontSize: fs = fontSize } = options;
+
+      // Draw border
+      doc.rect(x, y, width, height).stroke();
+
+      // Fill background if needed
+      if (fill) {
+        doc.rect(x, y, width, height).fillAndStroke('#e0e0e0', '#000000');
+      }
+
+      // Draw text
+      doc.fontSize(fs).fillColor('#000000');
+      const textY = y + (height - fs) / 2;
+      doc.text(text || '-', x + 2, textY, {
+        width: width - 4,
+        height: height,
+        align: align,
+        ellipsis: true
+      });
+    };
+
+    // Render Level 1 (Judul) if exists
+    if (hasJudul) {
+      let x = startX;
+      structure.forEach(item => {
+        if (item.type === 'field') {
+          // Standalone field - merge all rows
+          const height = rowHeight * headerRows;
+          drawCell(x, startY, columnWidth, height, item.label, { fill: true });
+          x += columnWidth;
+        } else if (item.type === 'group') {
+          // Group - calculate span
+          let colSpan = 0;
+          if (item.subGroups.size > 0) {
+            item.subGroups.forEach(fields => colSpan += fields.length);
+          } else {
+            colSpan = item.fields.length;
+          }
+
+          const width = columnWidth * colSpan;
+          drawCell(x, startY, width, rowHeight, item.judul, { fill: true });
+          x += width;
+        }
+      });
+    }
+
+    // Render Level 2 (Sub-Judul) if exists
+    if (hasSubJudul) {
+      let x = startX;
+      const y = startY + rowHeight;
+
+      structure.forEach(item => {
+        if (item.type === 'field') {
+          // Already merged in Level 1
+          x += columnWidth;
+        } else if (item.type === 'group') {
+          if (item.subGroups.size > 0) {
+            item.subGroups.forEach((fields, subJudul) => {
+              const width = columnWidth * fields.length;
+              drawCell(x, y, width, rowHeight, subJudul, { fill: true });
+              x += width;
+            });
+          } else {
+            // No sub-groups, merge to field row
+            const width = columnWidth * item.fields.length;
+            x += width;
+          }
+        }
+      });
+    }
+
+    // Render Level 3 (Field labels)
+    const fieldY = startY + (rowHeight * (headerRows - 1));
+    let x = startX;
+
+    columnMapping.forEach(col => {
+      drawCell(x, fieldY, columnWidth, rowHeight, col.label, { fill: true });
+      x += columnWidth;
+    });
+
+    // Render data rows
+    startY = fieldY + rowHeight;
     doc.font('Helvetica');
 
-    // Add data rows
-    rows.forEach((row, index) => {
-      const y = doc.y;
-      doc.text(index + 1, 50, y, { width: 30 });
-      doc.text(row.nama_aplikasi || '-', 80, y, { width: 150 });
-      doc.text(row.unit || '-', 230, y, { width: 80 });
-      doc.text(row.pic || '-', 310, y, { width: 100 });
-      doc.text(row.status_aplikasi || '-', 410, y, { width: 80 });
-      doc.text(row.tahun_pengembangan || '-', 490, y, { width: 50 });
-      doc.moveDown(0.5);
-
-      // Add new page if needed
-      if (doc.y > 700) {
+    data.forEach((row, index) => {
+      // Check if need new page
+      if (startY + rowHeight > doc.page.height - doc.page.margins.bottom) {
         doc.addPage();
+        startY = doc.page.margins.top;
+
+        // Re-render headers on new page
+        // (simplified - just render field labels)
+        x = startX;
+        doc.font('Helvetica-Bold');
+        columnMapping.forEach(col => {
+          drawCell(x, startY, columnWidth, rowHeight, col.label, { fill: true });
+          x += columnWidth;
+        });
+        startY += rowHeight;
+        doc.font('Helvetica');
       }
+
+      // Render data cells
+      x = startX;
+      columnMapping.forEach(col => {
+        const value = col.fieldName ? (row[col.fieldName] || '-') : '-';
+        drawCell(x, startY, columnWidth, rowHeight, String(value), { align: 'left' });
+        x += columnWidth;
+      });
+
+      startY += rowHeight;
     });
 
     doc.end();
 
   } catch (error) {
+    console.error('PDF Export Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error export PDF',
@@ -735,3 +921,257 @@ exports.exportPDF = async (req, res) => {
     });
   }
 };
+
+// Export All Formats as PDF (Single Document with Sections)
+exports.exportPDFAll = async (req, res) => {
+  try {
+    const { tahun, status, eselon1_id, eselon2_id } = req.query;
+    const filters = { tahun, status, eselon1_id, eselon2_id };
+
+    // Fetch all active formats
+    const [formats] = await pool.query(`
+      SELECT format_laporan_id, nama_format 
+      FROM format_laporan 
+      WHERE status_aktif = 1
+      ORDER BY nama_format
+    `);
+
+    if (formats.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tidak ada format laporan aktif'
+      });
+    }
+
+    // Get filtered data once (same for all formats)
+    const data = await getFilteredData(filters);
+
+    // Create PDF with landscape A3
+    const doc = new PDFDocument({
+      size: 'A3',
+      layout: 'landscape',
+      margin: 30
+    });
+
+    // Build filename
+    let filenameParts = ['Semua_Format_Laporan'];
+    if (tahun && tahun !== 'all') filenameParts.push(tahun);
+    if (status && status !== 'all') filenameParts.push('Status' + status);
+
+    const filename = `${filenameParts.join('_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    doc.pipe(res);
+
+    // Add cover page
+    doc.fontSize(20).font('Helvetica-Bold').text('LAPORAN APLIKASI', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(14).font('Helvetica').text('Semua Format Laporan', { align: 'center' });
+    doc.fontSize(10).text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
+    doc.fontSize(10).text(`Total Aplikasi: ${data.length}`, { align: 'center' });
+    doc.moveDown(2);
+
+    // Add filter info if applied
+    if (tahun && tahun !== 'all') {
+      doc.fontSize(9).text(`Filter Tahun: ${tahun}`, { align: 'center' });
+    }
+    if (status && status !== 'all') {
+      doc.fontSize(9).text(`Filter Status: ${status}`, { align: 'center' });
+    }
+
+    // Render each format
+    for (let i = 0; i < formats.length; i++) {
+      const format = formats[i];
+
+      // Get format details
+      const [formatDetails] = await pool.query(`
+        SELECT field_id 
+        FROM format_laporan_detail 
+        WHERE format_laporan_id = ?
+      `, [format.format_laporan_id]);
+
+      if (formatDetails.length === 0) {
+        console.log(`Skipping format ${format.nama_format} - no fields defined`);
+        continue;
+      }
+
+      // Add new page for this format (except first)
+      if (i > 0 || doc.y > 100) {
+        doc.addPage();
+      }
+
+      // Add format title
+      doc.fontSize(16).font('Helvetica-Bold').text(format.nama_format, { align: 'center' });
+      doc.moveDown(0.5);
+
+      // Build hierarchical structure
+      const structure = await buildHierarchyFromMasterField(formatDetails);
+
+      // Render PDF table for this format
+      await renderPDFTableSection(doc, structure, data);
+    }
+
+    doc.end();
+
+  } catch (error) {
+    console.error('PDF Export All Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error export PDF semua format',
+      error: error.message
+    });
+  }
+};
+
+// Helper: Render PDF table section (extracted from exportPDF)
+async function renderPDFTableSection(doc, structure, data) {
+  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const startX = doc.page.margins.left;
+  let startY = doc.y;
+
+  // Count total columns and build mapping
+  let totalColumns = 0;
+  const columnMapping = [];
+
+  structure.forEach(item => {
+    if (item.type === 'field') {
+      totalColumns++;
+      columnMapping.push({ fieldName: item.fieldName, label: item.label });
+    } else if (item.type === 'group') {
+      if (item.subGroups.size > 0) {
+        item.subGroups.forEach(fields => {
+          totalColumns += fields.length;
+          fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+        });
+      } else {
+        totalColumns += item.fields.length;
+        item.fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+      }
+    }
+  });
+
+  const columnWidth = pageWidth / totalColumns;
+  const rowHeight = 18;
+  const fontSize = 7;
+
+  // Determine header rows
+  let hasJudul = false;
+  let hasSubJudul = false;
+
+  structure.forEach(item => {
+    if (item.type === 'group') {
+      hasJudul = true;
+      if (item.subGroups.size > 0) hasSubJudul = true;
+    }
+  });
+
+  const headerRows = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
+
+  // Helper function to draw cell
+  const drawCell = (x, y, width, height, text, options = {}) => {
+    const { fill = false, align = 'center', fontSize: fs = fontSize } = options;
+
+    doc.rect(x, y, width, height).stroke();
+
+    if (fill) {
+      doc.rect(x, y, width, height).fillAndStroke('#e0e0e0', '#000000');
+    }
+
+    doc.fontSize(fs).fillColor('#000000');
+    const textY = y + (height - fs) / 2;
+    doc.text(text || '-', x + 2, textY, {
+      width: width - 4,
+      height: height,
+      align: align,
+      ellipsis: true
+    });
+  };
+
+  // Render headers (same logic as exportPDF)
+  doc.fontSize(fontSize).font('Helvetica-Bold');
+
+  if (hasJudul) {
+    let x = startX;
+    structure.forEach(item => {
+      if (item.type === 'field') {
+        const height = rowHeight * headerRows;
+        drawCell(x, startY, columnWidth, height, item.label, { fill: true });
+        x += columnWidth;
+      } else if (item.type === 'group') {
+        let colSpan = 0;
+        if (item.subGroups.size > 0) {
+          item.subGroups.forEach(fields => colSpan += fields.length);
+        } else {
+          colSpan = item.fields.length;
+        }
+
+        const width = columnWidth * colSpan;
+        drawCell(x, startY, width, rowHeight, item.judul, { fill: true });
+        x += width;
+      }
+    });
+  }
+
+  if (hasSubJudul) {
+    let x = startX;
+    const y = startY + rowHeight;
+
+    structure.forEach(item => {
+      if (item.type === 'field') {
+        x += columnWidth;
+      } else if (item.type === 'group') {
+        if (item.subGroups.size > 0) {
+          item.subGroups.forEach((fields, subJudul) => {
+            const width = columnWidth * fields.length;
+            drawCell(x, y, width, rowHeight, subJudul, { fill: true });
+            x += width;
+          });
+        } else {
+          const width = columnWidth * item.fields.length;
+          x += width;
+        }
+      }
+    });
+  }
+
+  const fieldY = startY + (rowHeight * (headerRows - 1));
+  let x = startX;
+
+  columnMapping.forEach(col => {
+    drawCell(x, fieldY, columnWidth, rowHeight, col.label, { fill: true });
+    x += columnWidth;
+  });
+
+  // Render data rows
+  startY = fieldY + rowHeight;
+  doc.font('Helvetica');
+
+  data.forEach((row, index) => {
+    if (startY + rowHeight > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      startY = doc.page.margins.top;
+
+      // Re-render headers on new page
+      x = startX;
+      doc.font('Helvetica-Bold');
+      columnMapping.forEach(col => {
+        drawCell(x, startY, columnWidth, rowHeight, col.label, { fill: true });
+        x += columnWidth;
+      });
+      startY += rowHeight;
+      doc.font('Helvetica');
+    }
+
+    x = startX;
+    columnMapping.forEach(col => {
+      const value = col.fieldName ? (row[col.fieldName] || '-') : '-';
+      drawCell(x, startY, columnWidth, rowHeight, String(value), { align: 'left' });
+      x += columnWidth;
+    });
+
+    startY += rowHeight;
+  });
+}
