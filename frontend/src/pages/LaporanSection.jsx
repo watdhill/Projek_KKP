@@ -105,13 +105,37 @@ function LaporanSection() {
 
   const handleExport = (format) => {
     const params = new URLSearchParams();
-    Object.keys(filters).forEach(key => {
-      if (filters[key] && filters[key] !== 'all') {
-        params.append(key, filters[key]);
-      }
-    });
 
-    const url = `http://localhost:5000/api/laporan/export/${format}?${params.toString()}`;
+    // Determine if exporting all formats or single format
+    const isExportAll = !filters.format_laporan_id || filters.format_laporan_id === 'all';
+
+    // Only add format_laporan_id if a specific format is selected
+    if (!isExportAll) {
+      params.append('format_laporan_id', filters.format_laporan_id);
+    }
+
+    // Add other filters
+    if (filters.tahun && filters.tahun !== 'all') params.append('tahun', filters.tahun);
+    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters.eselon1_id && filters.eselon1_id !== 'all') params.append('eselon1_id', filters.eselon1_id);
+    if (filters.eselon2_id && filters.eselon2_id !== 'all') params.append('eselon2_id', filters.eselon2_id);
+
+    // Use appropriate endpoint based on selection
+    const endpoint = isExportAll ? `${format}-all` : format;
+    const url = `http://localhost:5000/api/laporan/export/${endpoint}?${params.toString()}`;
+    window.open(url, '_blank');
+  };
+
+  const handleExportAll = (format) => {
+    const params = new URLSearchParams();
+
+    // Add filters (no format_laporan_id for export all)
+    if (filters.tahun && filters.tahun !== 'all') params.append('tahun', filters.tahun);
+    if (filters.status && filters.status !== 'all') params.append('status', filters.status);
+    if (filters.eselon1_id && filters.eselon1_id !== 'all') params.append('eselon1_id', filters.eselon1_id);
+    if (filters.eselon2_id && filters.eselon2_id !== 'all') params.append('eselon2_id', filters.eselon2_id);
+
+    const url = `http://localhost:5000/api/laporan/export/${format}-all?${params.toString()}`;
     window.open(url, '_blank');
   };
 
@@ -428,7 +452,7 @@ function LaporanSection() {
                       <td style={{ padding: '12px 16px', color: '#64748b' }}>{item.unit || item.nama_eselon1 || '-'}</td>
                       <td style={{ padding: '12px 16px', color: '#64748b' }}>{item.pic || '-'}</td>
                       <td style={{ padding: '12px 16px', color: '#64748b' }}>{item.status_aplikasi || 'Aktif'}</td>
-                      <td style={{ padding: '12px 16px', color: '#64748b' }}>{item.created_at ? new Date(item.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                      <td style={{ padding: '12px 16px', color: '#64748b' }}>{item.tanggal_ditambahkan || '-'}</td>
                     </tr>
                   ))}
                 </tbody>

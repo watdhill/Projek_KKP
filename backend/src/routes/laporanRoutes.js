@@ -10,7 +10,9 @@ router.get('/preview', laporanController.getPreviewData);
 
 // Export routes
 router.get('/export/excel', laporanController.exportExcel);
+router.get('/export/excel-all', laporanController.exportExcelAll);
 router.get('/export/pdf', laporanController.exportPDF);
+router.get('/export/pdf-all', laporanController.exportPDFAll);
 
 module.exports = router;
 
