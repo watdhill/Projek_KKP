@@ -1,3 +1,36 @@
+// Reset Password - via token
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Token dan password baru wajib diisi' });
+    }
+
+    // Validasi password minimal 8 karakter, huruf besar, kecil, angka, simbol, tanpa spasi
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'Password minimal 8 karakter dan wajib mengandung huruf besar, huruf kecil, angka, dan simbol (tanpa spasi)' });
+    }
+
+    // Cari user berdasarkan token dan cek expired
+    const [rows] = await pool.query('SELECT user_id, reset_token_expired FROM users WHERE reset_token = ?', [token]);
+    if (rows.length === 0) {
+      return res.status(400).json({ success: false, message: 'Token tidak valid' });
+    }
+    const user = rows[0];
+    if (!user.reset_token_expired || new Date(user.reset_token_expired) < new Date()) {
+      return res.status(400).json({ success: false, message: 'Token sudah kadaluarsa' });
+    }
+
+    // Update password dan hapus token
+    await pool.query('UPDATE users SET password = ?, reset_token = NULL, reset_token_expired = NULL WHERE user_id = ?', [newPassword, user.user_id]);
+
+    res.json({ success: true, message: 'Password berhasil direset. Silakan login dengan password baru.' });
+  } catch (error) {
+    console.error('Error reset password:', error);
+    res.status(500).json({ success: false, message: 'Gagal reset password', error: error.message });
+  }
+};
 // Forgot Password - kirim email verifikasi
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
@@ -49,6 +82,7 @@ exports.forgotPassword = async (req, res) => {
 
     res.json({ success: true, message: 'Email verifikasi reset password telah dikirim' });
   } catch (error) {
+    console.error('Error kirim email:', error); // Log error detail ke terminal
     res.status(500).json({ success: false, message: 'Gagal mengirim email', error: error.message });
   }
 };

@@ -1,14 +1,25 @@
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { FaEnvelope, FaCheckCircle, FaExclamationCircle, FaArrowLeft } from 'react-icons/fa';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  const handleConfirm = async () => {
+    setShowConfirm(false);
     setError('');
     setSuccess(false);
     if (!email) {
@@ -47,21 +58,42 @@ function ForgotPassword() {
       <div style={{
         width: '100%',
         maxWidth: '410px',
-        background: 'rgba(255,255,255,0.95)',
-        borderRadius: '18px',
-        padding: '38px 32px 32px 32px',
-        boxShadow: '0 8px 32px rgba(80,80,180,0.10)',
-        border: '1.5px solid #e0e7ff',
-        backdropFilter: 'blur(2px)',
+        background: 'rgba(255,255,255,0.98)',
+        borderRadius: '22px',
+        padding: '44px 36px 36px 36px',
+        boxShadow: '0 8px 32px rgba(80,80,180,0.13)',
+        border: '1.5px solid #c7d2fe',
+        backdropFilter: 'blur(3px)',
         transition: 'box-shadow 0.2s',
+        position: 'relative',
       }}>
+        <div style={{
+          position: 'absolute',
+          top: '-32px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'linear-gradient(90deg,#6366f1 0%,#7c3aed 100%)',
+          borderRadius: '50%',
+          width: '64px',
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(99,102,241,0.13)',
+          color: '#fff',
+          fontSize: '2rem',
+          border: '3px solid #fff',
+        }}>
+          <FaEnvelope />
+        </div>
         <h2 style={{
-          fontWeight: 800,
-          fontSize: '25px',
+          fontWeight: 900,
+          fontSize: '26px',
           marginBottom: '14px',
           color: '#3730a3',
           letterSpacing: '0.5px',
           textAlign: 'center',
+          marginTop: '18px',
         }}>LUPA PASSWORD</h2>
         <p style={{
           color: '#64748b',
@@ -71,6 +103,37 @@ function ForgotPassword() {
         }}>
           MASUKKAN EMAIL YANG TERDAFTAR. KAMI AKAN MENGIRIMKAN LINK VERIFIKASI UNTUK RESET PASSWORD KE EMAIL ANDA.
         </p>
+        <button
+          type="button"
+          onClick={() => setShowBackConfirm(true)}
+          style={{
+            position: 'absolute', left: 18, top: 18, background: 'none', border: 'none', color: '#6366f1', fontSize: 22, cursor: 'pointer', zIndex: 2
+          }}
+        >
+          <FaArrowLeft />
+        </button>
+        {showBackConfirm && createPortal(
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 28, boxShadow: '0 4px 24px rgba(80,80,180,0.13)', minWidth: 320, textAlign: 'center' }}>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 18 }}>Kembali ke halaman login?</div>
+              <button onClick={() => navigate('/login')} style={{ background: 'linear-gradient(90deg,#6366f1 0%,#7c3aed 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 700, fontSize: 16, marginRight: 12, cursor: 'pointer' }}>Iya</button>
+              <button onClick={() => setShowBackConfirm(false)} style={{ background: '#f1f5f9', color: '#6366f1', border: '1px solid #c7d2fe', borderRadius: 8, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Tidak</button>
+            </div>
+          </div>,
+          document.body
+        )}
+        {showConfirm && createPortal(
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999
+          }}>
+            <div style={{ background: '#fff', borderRadius: 12, padding: 28, boxShadow: '0 4px 24px rgba(80,80,180,0.13)', minWidth: 320, textAlign: 'center' }}>
+              <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 18 }}>Kirim link reset password ke email <span style={{ color: '#6366f1' }}>{email}</span>?</div>
+              <button onClick={handleConfirm} style={{ background: 'linear-gradient(90deg,#6366f1 0%,#7c3aed 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 24px', fontWeight: 700, fontSize: 16, marginRight: 12, cursor: 'pointer' }}>Iya</button>
+              <button onClick={() => setShowConfirm(false)} style={{ background: '#f1f5f9', color: '#6366f1', border: '1px solid #c7d2fe', borderRadius: 8, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Tidak</button>
+            </div>
+          </div>,
+          document.body
+        )}
         {success ? (
           <div style={{
             color: '#16a34a',
@@ -82,8 +145,13 @@ function ForgotPassword() {
             border: '1px solid #bbf7d0',
             borderRadius: '8px',
             padding: '12px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
           }}>
-            Email verifikasi berhasil dikirim!<br />Silakan cek inbox/spam email Anda.
+            <FaCheckCircle style={{ fontSize: 20 }} />
+            <span>Email verifikasi berhasil dikirim!<br />Silakan cek inbox/spam email Anda.</span>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
@@ -95,27 +163,29 @@ function ForgotPassword() {
               fontSize: '15px',
               letterSpacing: '0.2px',
             }}>EMAIL</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              placeholder="contoh: user@email.com"
-              style={{
-                width: '100%',
-                padding: '12px 15px',
-                border: '1.5px solid #c7d2fe',
-                borderRadius: '9px',
-                fontSize: '15px',
-                marginBottom: '16px',
-                background: '#f1f5f9',
-                color: '#1e293b',
-                outline: 'none',
-                boxSizing: 'border-box',
-                transition: 'border 0.2s',
-              }}
-              disabled={loading}
-            />
+            <div style={{ position: 'relative', marginBottom: '16px' }}>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                placeholder="contoh: user@email.com"
+                style={{
+                  width: '100%',
+                  padding: '12px 15px 12px 40px',
+                  border: '1.5px solid #c7d2fe',
+                  borderRadius: '9px',
+                  fontSize: '15px',
+                  background: '#f1f5f9',
+                  color: '#1e293b',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  transition: 'border 0.2s',
+                }}
+                disabled={loading}
+              />
+              <FaEnvelope style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#6366f1', fontSize: 18, opacity: 0.7 }} />
+            </div>
             {error && <div style={{
               color: '#ef4444',
               fontSize: '13px',
@@ -126,7 +196,11 @@ function ForgotPassword() {
               border: '1px solid #fecaca',
               borderRadius: '7px',
               padding: '8px 6px',
-            }}>{error.toUpperCase()}</div>}
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}><FaExclamationCircle style={{ fontSize: 16 }} /> {error.toUpperCase()}</div>}
             <button
               type="submit"
               disabled={loading}
@@ -144,6 +218,7 @@ function ForgotPassword() {
                 marginTop: '2px',
                 letterSpacing: '0.2px',
                 transition: 'background 0.2s',
+                  // Removed duplicate boxShadow property
               }}
             >
               {loading ? 'MENGIRIM...' : 'KIRIM LINK VERIFIKASI'}

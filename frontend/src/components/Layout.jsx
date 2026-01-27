@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import kkpLogo from "../kkp.png";
+import kkpLogo from "../assets/kkp.png";
 
 function Layout({ navItems }) {
   const navigate = useNavigate();

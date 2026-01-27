@@ -27,6 +27,7 @@ import DynamicMasterManagement from "./pages/DynamicMasterManagement";
 
 import LoginPage from "./pages/LoginPage";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const adminNav = [
   { label: "Dashboard", path: "/admin", icon: "dashboard" },
@@ -98,6 +99,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Admin area */}
