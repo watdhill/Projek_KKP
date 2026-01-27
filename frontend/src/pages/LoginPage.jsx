@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import kkpLogo from '../assets/kkp.png'
 
@@ -30,18 +30,51 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [captchaA, setCaptchaA] = useState(getRandomInt(1, 10));
-  const [captchaB, setCaptchaB] = useState(getRandomInt(1, 10));
+  const [captcha, setCaptcha] = useState(() => String(getRandomInt(100000, 999999)));
   const [captchaInput, setCaptchaInput] = useState('');
   const [captchaError, setCaptchaError] = useState('');
+  const captchaCanvasRef = useRef(null);
   const navigate = useNavigate()
 
   const regenerateCaptcha = () => {
-    setCaptchaA(getRandomInt(1, 10));
-    setCaptchaB(getRandomInt(1, 10));
+    setCaptcha(String(getRandomInt(100000, 999999)));
     setCaptchaInput('');
     setCaptchaError('');
   };
+
+  // Draw captcha on canvas
+  useEffect(() => {
+    const canvas = captchaCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Background
+    ctx.fillStyle = '#2196f3';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Draw each digit with random position/rotation
+    for (let i = 0; i < captcha.length; i++) {
+      const x = 18 + i * 32 + getRandomInt(-4, 4);
+      const y = 38 + getRandomInt(-6, 6);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(getRandomInt(-15, 15) * Math.PI / 180);
+      ctx.font = '32px Pacifico, Caveat, cursive';
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#1565c0';
+      ctx.shadowBlur = 4;
+      ctx.fillText(captcha[i], 0, 0);
+      ctx.restore();
+    }
+    // Optionally add some lines/noise
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.beginPath();
+      ctx.moveTo(getRandomInt(0, 180), getRandomInt(0, 60));
+      ctx.lineTo(getRandomInt(0, 180), getRandomInt(0, 60));
+      ctx.stroke();
+    }
+  }, [captcha]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -58,8 +91,8 @@ function LoginPage() {
       return;
     }
 
-    if (parseInt(captchaInput) !== captchaA + captchaB) {
-      setCaptchaError('Jawaban captcha salah');
+    if (captchaInput !== captcha) {
+      setCaptchaError('Captcha salah');
       regenerateCaptcha();
       return;
     }
@@ -268,16 +301,17 @@ function LoginPage() {
               <div style={{ marginBottom: '18px' }}>
                 <label style={{ display: 'block', marginBottom: '6px', fontWeight: 600, color: '#1e293b', fontSize: '13px' }}>Captcha <span style={{ color: '#ef4444' }}>*</span></label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '15px', background: '#f1f5f9', padding: '7px 16px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>{captchaA} + {captchaB} = ?</span>
+                  <canvas ref={captchaCanvasRef} width={200} height={60} style={{ borderRadius: '6px', background: '#2196f3', display: 'block' }} />
                   <input
-                    type='number'
+                    type='text'
                     value={captchaInput}
-                    onChange={e => setCaptchaInput(e.target.value)}
+                    onChange={e => setCaptchaInput(e.target.value.replace(/\D/g, ''))}
+                    maxLength={6}
                     required
-                    placeholder='Jawaban'
-                    style={{ width: '90px', padding: '9px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
+                    placeholder='Masukkan angka di atas'
+                    style={{ width: '110px', padding: '9px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box', textAlign: 'center' }}
                   />
-                  <button type='button' onClick={regenerateCaptcha} style={{ padding: '7px 10px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', borderRadius: '6px', cursor: 'pointer' }} title='Ganti soal'>↻</button>
+                  <button type='button' onClick={regenerateCaptcha} style={{ padding: '7px 10px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', borderRadius: '6px', cursor: 'pointer' }} title='Ganti angka'>↻</button>
                 </div>
                 {captchaError && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{captchaError}</div>}
               </div>
