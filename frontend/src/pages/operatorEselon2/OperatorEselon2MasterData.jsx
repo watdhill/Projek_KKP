@@ -793,6 +793,7 @@ function OperatorEselon2MasterData() {
                     return (
                       <td
                         key={col}
+                        className={col === "email_pic" ? "allow-lowercase" : ""}
                         style={{
                           padding: "10px 14px",
                           color: "#1e293b",
