@@ -83,22 +83,11 @@ async function buildHierarchyFromMasterField(formatDetails) {
     return structure;
   }
 
-  // Query master_laporan_field to get full tree including parents
+  // Query master_laporan_field to get only selected fields
   const [allFields] = await pool.query(`
-    WITH RECURSIVE field_tree AS (
-      -- Get selected fields
-      SELECT field_id, nama_field, kode_field, parent_id, level, urutan
-      FROM master_laporan_field
-      WHERE field_id IN (?)
-      
-      UNION
-      
-      -- Get all parents recursively
-      SELECT mlf.field_id, mlf.nama_field, mlf.kode_field, mlf.parent_id, mlf.level, mlf.urutan
-      FROM master_laporan_field mlf
-      INNER JOIN field_tree ft ON mlf.field_id = ft.parent_id
-    )
-    SELECT DISTINCT * FROM field_tree
+    SELECT field_id, nama_field, kode_field, parent_id, level, urutan
+    FROM master_laporan_field
+    WHERE field_id IN (?)
     ORDER BY level, urutan
   `, [fieldIds]);
 
@@ -123,7 +112,7 @@ async function buildHierarchyFromMasterField(formatDetails) {
   });
 
   // Convert tree to export structure
-  function convertToExportStructure(nodes, isSelected) {
+  function convertToExportStructure(nodes) {
     const result = [];
 
     nodes.forEach(node => {
@@ -138,7 +127,7 @@ async function buildHierarchyFromMasterField(formatDetails) {
           fields: []
         };
 
-        // Process children (Level 2: Sub-Judul)
+        // Process children (Level 2/3)
         node.children.forEach(child => {
           if (child.level === 2) {
             // Sub-Judul
@@ -161,12 +150,19 @@ async function buildHierarchyFromMasterField(formatDetails) {
           }
         });
 
-        // Only add group if it has fields
+        // Add group if it has fields OR it's a header without children (if selected)
         if (group.subGroups.size > 0 || group.fields.length > 0) {
           result.push(group);
+        } else if (nodeIsSelected && node.kode_field) {
+          // Treat as regular field if it has a kode_field but no children selected
+          result.push({
+            type: 'field',
+            label: node.nama_field,
+            fieldName: mapFieldName(node.kode_field)
+          });
         }
-      } else if (node.level === 2 && !node.parent_id) {
-        // Level 2 without parent: treat as standalone group
+      } else if (node.level === 2) {
+        // Level 2 (Sub-Judul) as root
         const subFields = node.children
           .filter(f => f.level === 3 && fieldIds.includes(f.field_id))
           .map(f => ({
@@ -181,9 +177,15 @@ async function buildHierarchyFromMasterField(formatDetails) {
             subGroups: new Map(),
             fields: subFields
           });
+        } else if (nodeIsSelected && node.kode_field) {
+          result.push({
+            type: 'field',
+            label: node.nama_field,
+            fieldName: mapFieldName(node.kode_field)
+          });
         }
-      } else if (node.level === 3 && !node.parent_id && nodeIsSelected) {
-        // Level 3 without parent: standalone field
+      } else if (node.level === 3 && nodeIsSelected) {
+        // Level 3 (Data Field) as root
         result.push({
           type: 'field',
           label: node.nama_field,

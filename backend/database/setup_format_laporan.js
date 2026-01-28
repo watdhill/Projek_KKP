@@ -123,6 +123,23 @@ async function setup() {
             ['SSL', 'api_internal_status_ssl', keamananDetailId, 3, 1]
         );
 
+        // Level 2: VA/PT under Arsitektur Keamanan
+        const [vaPt] = await connection.query(
+            'INSERT INTO master_laporan_field (nama_field, parent_id, level, urutan) VALUES (?, ?, ?, ?)',
+            ['VA/PT', keamananId, 2, 2]
+        );
+        const vaPtId = vaPt.insertId;
+
+        // Level 3 under VA/PT
+        await connection.query(
+            'INSERT INTO master_laporan_field (nama_field, kode_field, parent_id, level, urutan) VALUES (?, ?, ?, ?, ?)',
+            ['VA/PT', 'va_pt_status', vaPtId, 3, 1]
+        );
+        await connection.query(
+            'INSERT INTO master_laporan_field (nama_field, kode_field, parent_id, level, urutan) VALUES (?, ?, ?, ?, ?)',
+            ['VA/PT - Waktu', 'va_pt_waktu', vaPtId, 3, 2]
+        );
+
         console.log('Database setup and seeding completed successfully.');
     } catch (error) {
         console.error('Error during database setup:', error);

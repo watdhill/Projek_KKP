@@ -145,19 +145,25 @@ exports.getAllMasterData = async (req, res) => {
     // Filter by eselon1_id or eselon2_id for PIC types (Hierarchical Visibility)
     // Also support created_by for strict ownership visibility
     if (type === "pic_internal" || type === "pic_eksternal") {
+      // Base query with JOINs to get unit names for display
+      query = `SELECT t.*, e1.nama_eselon1, e1.eselon1_id, e2.nama_eselon2, u.nama_upt
+               FROM ${config.tableName} t
+               LEFT JOIN master_eselon2 e2 ON t.eselon2_id = e2.eselon2_id
+               LEFT JOIN master_upt u ON t.upt_id = u.upt_id
+               LEFT JOIN master_eselon1 e1 ON e1.eselon1_id = COALESCE(e2.eselon1_id, u.eselon1_id)
+               WHERE 1=1`;
+
       if (req.query.created_by) {
         // Strict ownership: only show records created by this user
-        query = `SELECT * FROM ${config.tableName} WHERE created_by = ?`;
+        query += ` AND t.created_by = ?`;
         params.push(req.query.created_by);
       } else if (req.query.eselon1_id) {
-        // Filter by Eselon 1: Join with master_eselon2 to get all PICs under this Eselon 1
-        query = `SELECT t.* FROM ${config.tableName} t 
-                 JOIN master_eselon2 e2 ON t.eselon2_id = e2.eselon2_id 
-                 WHERE e2.eselon1_id = ?`;
-        params.push(req.query.eselon1_id);
+        // Filter by Eselon 1: show PICs under this Eselon 1 (via Eselon 2 or UPT)
+        query += ` AND (e2.eselon1_id = ? OR u.eselon1_id = ?)`;
+        params.push(req.query.eselon1_id, req.query.eselon1_id);
       } else if (req.query.eselon2_id) {
         // Filter by Eselon 2: Direct filter on eselon2_id
-        query = `SELECT * FROM ${config.tableName} WHERE eselon2_id = ?`;
+        query += ` AND t.eselon2_id = ?`;
         params.push(req.query.eselon2_id);
       }
     } else if ((type === "eselon2" || type === "upt") && req.query.eselon1_id) {
@@ -361,7 +367,7 @@ exports.createMasterData = async (req, res) => {
         .filter((field) => {
           const fieldLower = field.toLowerCase();
           return (
-            !fieldLower.endsWith("_id") && // exclude ID fields
+            field !== config.idField && // exclude ID fields
             fieldLower !== "created_at" &&
             fieldLower !== "updated_at" &&
             req.body[field] !== undefined
@@ -480,7 +486,7 @@ exports.updateMasterData = async (req, res) => {
         .filter((field) => {
           const fieldLower = field.toLowerCase();
           return (
-            !fieldLower.endsWith("_id") && // exclude ID fields
+            field !== config.idField && // exclude ID fields
             fieldLower !== "created_at" &&
             fieldLower !== "updated_at" &&
             req.body[field] !== undefined
