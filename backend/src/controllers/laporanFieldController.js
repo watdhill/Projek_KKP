@@ -23,6 +23,30 @@ exports.getHierarchicalFields = async (req, res) => {
             }
         });
 
+        // ---------------------------------------------------------
+        // DYNAMIC MASTER DATA INTEGRATION (FLATTENED)
+        // ---------------------------------------------------------
+        // Fetch all dynamic master tables from registry
+        const [dynamicTables] = await pool.query('SELECT * FROM master_table_registry WHERE status_aktif = 1');
+
+        if (dynamicTables.length > 0) {
+            // Map each dynamic table directly to a selectable field (Level 3, no parent)
+            dynamicTables.forEach((table, index) => {
+                const tableFieldId = 10000 + table.registry_id;
+                fieldsMap[tableFieldId] = {
+                    field_id: tableFieldId,
+                    nama_field: table.display_name,
+                    kode_field: `${table.table_name}_id`,
+                    parent_id: null, // Flat structure
+                    level: 3,
+                    urutan: 100 + index, // Appear at the bottom
+                    children: []
+                };
+                tree.push(fieldsMap[tableFieldId]);
+            });
+        }
+        // ---------------------------------------------------------
+
         res.json({
             success: true,
             data: tree

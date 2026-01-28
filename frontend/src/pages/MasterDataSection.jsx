@@ -13,6 +13,8 @@ const STATIC_TABS = [
   { key: "environment", label: "Ekosistem" },
   { key: "cara_akses", label: "Cara Akses" },
   { key: "pdn", label: "PDN" },
+  { key: "pic_internal", label: "PIC Internal" },
+  { key: "pic_eksternal", label: "PIC Eksternal" },
 ];
 
 // Form field configurations per type
@@ -218,6 +220,121 @@ const FORM_FIELDS = {
       ],
     },
   ],
+  pic_internal: [
+    {
+      name: "eselon1_id",
+      label: "Eselon 1",
+      type: "select",
+      required: true,
+      options: [],
+    },
+    {
+      name: "eselon2_id",
+      label: "Eselon 2",
+      type: "select",
+      required: false,
+      options: [],
+    },
+    {
+      name: "upt_id",
+      label: "UPT",
+      type: "select",
+      required: false,
+      options: [],
+    },
+    {
+      name: "nama_pic_internal",
+      label: "Nama PIC Internal",
+      type: "text",
+      placeholder: "Nama PIC Internal",
+      required: true,
+    },
+    {
+      name: "email_pic",
+      label: "Email",
+      type: "email",
+      placeholder: "Contoh: pic@mail.com",
+      required: true,
+    },
+    {
+      name: "kontak_pic_internal",
+      label: "Nomor HP",
+      type: "text",
+      placeholder: "Contoh: 08123456789",
+      required: true,
+    },
+    {
+      name: "status_aktif",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: [
+        { value: 1, label: "Aktif" },
+        { value: 0, label: "Nonaktif" },
+      ],
+    },
+  ],
+  pic_eksternal: [
+    {
+      name: "eselon1_id",
+      label: "Eselon 1",
+      type: "select",
+      required: true,
+      options: [],
+    },
+    {
+      name: "eselon2_id",
+      label: "Eselon 2",
+      type: "select",
+      required: false,
+      options: [],
+    },
+    {
+      name: "upt_id",
+      label: "UPT",
+      type: "select",
+      required: false,
+      options: [],
+    },
+    {
+      name: "nama_pic_eksternal",
+      label: "Nama PIC Eksternal",
+      type: "text",
+      placeholder: "Nama PIC Eksternal",
+      required: true,
+    },
+    {
+      name: "keterangan",
+      label: "Instansi",
+      type: "text",
+      placeholder: "Nama Instansi",
+      required: true,
+    },
+    {
+      name: "email_pic",
+      label: "Email",
+      type: "email",
+      placeholder: "Contoh: pic@mail.com",
+      required: true,
+    },
+    {
+      name: "kontak_pic_eksternal",
+      label: "Nomor HP",
+      type: "text",
+      placeholder: "Contoh: 08123456789",
+      required: true,
+    },
+    {
+      name: "status_aktif",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: [
+        { value: 1, label: "Aktif" },
+        { value: 0, label: "Nonaktif" },
+      ],
+    },
+  ],
 };
 
 // Table column configurations per type
@@ -231,6 +348,8 @@ const TABLE_COLUMNS = {
   cara_akses: ["nama_cara_akses", "status_aktif"],
   pdn: ["kode_pdn", "status_aktif"],
   format_laporan: ["nama_format", "status_aktif"],
+  pic_internal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
+  pic_eksternal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_eksternal", "keterangan", "email_pic", "kontak_pic_eksternal", "status_aktif"],
 };
 
 // ID field per type
@@ -245,6 +364,8 @@ const ID_FIELDS = {
   cara_akses: "cara_akses_id",
   pdn: "pdn_id",
   format_laporan: "format_laporan_id",
+  pic_internal: "pic_internal_id",
+  pic_eksternal: "pic_eksternal_id",
 };
 
 // Data field options for Format Laporan picker
@@ -328,11 +449,9 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
   };
 
   const leafDescendants = getLeafDescendants(node);
-  const isFullySelected = leafDescendants.every((id) =>
-    selectedIds.includes(id),
-  );
-  const isPartiallySelected =
-    !isFullySelected && leafDescendants.some((id) => selectedIds.includes(id));
+  // Individual selection state
+  const isSelected = selectedIds.includes(node.field_id);
+  const isPartiallySelected = !isSelected && leafDescendants.some((id) => selectedIds.includes(id));
 
   // Determine text color based on level
   let textColor = "#475569"; // default (Level 3)
@@ -433,7 +552,7 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
         >
           <input
             type="checkbox"
-            checked={isFullySelected}
+            checked={isSelected}
             ref={(el) => el && (el.indeterminate = isPartiallySelected)}
             onChange={(e) => {
               e.stopPropagation();
@@ -500,7 +619,11 @@ function MasterDataSection() {
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [eselon1Options, setEselon1Options] = useState([]);
-  const [dynamicFormFields, setDynamicFormFields] = useState([]); // Dynamic table columns
+  const [eselon2Options, setEselon2Options] = useState([]);
+  const [uptOptions, setUptOptions] = useState([]);
+  const [dynamicFormFields, setDynamicFormFields] = useState([]);
+  const [fkDropdownData, setFkDropdownData] = useState({}); // Store FK dropdown options
+  // Dynamic table columns
 
   // State for Format Laporan picker
   const [selectedDataFields, setSelectedDataFields] = useState([]);
@@ -509,6 +632,8 @@ function MasterDataSection() {
   ]);
   const [hierarchicalFields, setHierarchicalFields] = useState([]);
   const [selectedFieldIds, setSelectedFieldIds] = useState([]);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [hierSearchTerm, setHierSearchTerm] = useState("");
 
 
@@ -537,6 +662,41 @@ function MasterDataSection() {
     } catch (e) { console.error("Failed to fetch Eselon 1 options", e); }
   };
 
+  const fetchEselon2Options = async (e1Id) => {
+    try {
+      const response = await fetch(`${API_BASE}/dropdown?eselon1_id=${e1Id}`);
+      if (response.ok) {
+        const result = await response.json();
+        const opts = (result.data?.eselon2 || []).map((item) => ({
+          value: item.eselon2_id,
+          label: item.nama_eselon2,
+        }));
+        setEselon2Options(opts);
+      }
+    } catch (e) { console.error("Failed to fetch Eselon 2 options", e); }
+  };
+
+  const fetchUptOptions = async (e1Id) => {
+    try {
+      const response = await fetch(`${API_BASE}/dropdown?eselon1_id=${e1Id}`);
+      if (response.ok) {
+        const result = await response.json();
+        const opts = (result.data?.upt || []).map((item) => ({
+          value: item.upt_id,
+          label: item.nama_upt,
+        }));
+        setUptOptions(opts);
+      }
+    } catch (e) { console.error("Failed to fetch UPT options", e); }
+  };
+
+  useEffect(() => {
+    if ((activeTab === "pic_internal" || activeTab === "pic_eksternal") && formData.eselon1_id) {
+      fetchEselon2Options(formData.eselon1_id);
+      fetchUptOptions(formData.eselon1_id);
+    }
+  }, [formData.eselon1_id, activeTab]);
+
   const fetchDynamicTables = async () => {
     try {
       const response = await fetch(
@@ -560,7 +720,10 @@ function MasterDataSection() {
   // ---------- Helpers ----------
   const formatColumnHeader = (col) => {
     if (col === "jenis_environment") return "Jenis Ekosistem";
-    return col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    return col
+      .replace(/_id$/i, "") // Remove _id suffix for display
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
   const getStatusColor = (status) => {
@@ -662,29 +825,72 @@ function MasterDataSection() {
 
   const fetchDynamicTableColumns = async () => {
     try {
+      // Fetch table info with FK constraints
       const response = await fetch(
-        `http://localhost:5000/api/dynamic-master/tables`,
+        `http://localhost:5000/api/dynamic-master/table-info/${activeTab}`,
       );
       if (!response.ok) return;
       const result = await response.json();
 
-      // Find columns for current table
-      const tableInfo = result.data.find((t) => t.table_name === activeTab);
-      if (tableInfo && tableInfo.table_schema) {
-        const schema =
-          typeof tableInfo.table_schema === "string"
-            ? JSON.parse(tableInfo.table_schema)
-            : tableInfo.table_schema;
+      if (result.success && result.data) {
+        const { schema, foreignKeys } = result.data;
 
-        const fields = schema.map((col) => ({
-          name: col.column_name,
-          label: col.display_name,
-          type: getInputType(col.column_type),
-          required: !col.is_nullable,
-          placeholder: col.display_name,
-        }));
+        // Fetch dropdown data for all FK columns
+        const fkData = {};
+        for (const [columnName, fkInfo] of Object.entries(foreignKeys)) {
+          try {
+            const refTableRes = await fetch(
+              `${API_BASE}?type=${fkInfo.referencedTable}`,
+            );
+            if (refTableRes.ok) {
+              const refData = await refTableRes.json();
+              if (refData.success && refData.data) {
+                // Map data to dropdown options
+                // Smartly find the label column (contains 'nama', 'jenis', 'judul', 'kode', or use 2nd column)
+                const labelField = Object.keys(refData.data[0]).find(k =>
+                  k !== fkInfo.referencedColumn &&
+                  k !== 'created_at' &&
+                  k !== 'updated_at' &&
+                  k !== 'status_aktif' &&
+                  /nama|jenis|judul|kode|email/i.test(k)
+                ) || Object.keys(refData.data[0])[1];
 
-        // Tambahkan field status_aktif otomatis
+                const options = refData.data.map((row) => ({
+                  value: row[fkInfo.referencedColumn],
+                  label: String(row[labelField] || Object.values(row)[1]),
+                }));
+                fkData[columnName] = options;
+              }
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch data for FK ${columnName}:`, err);
+          }
+        }
+        setFkDropdownData(fkData);
+
+        // Build form fields
+        const fields = schema.map((col) => {
+          const field = {
+            name: col.column_name,
+            label: col.display_name,
+            required: !col.is_nullable,
+            placeholder: col.display_name,
+          };
+
+          // If this column is a foreign key, use select type
+          if (col.isForeignKey && fkData[col.column_name]) {
+            field.type = "select";
+            field.options = fkData[col.column_name];
+            field.isForeignKey = true;
+            field.referencedTable = col.foreignKeyInfo.referencedTable;
+          } else {
+            field.type = getInputType(col.column_type);
+          }
+
+          return field;
+        });
+
+        // Add status_aktif field
         fields.push({
           name: "status_aktif",
           label: "Status",
@@ -796,6 +1002,14 @@ function MasterDataSection() {
       editData[field.name] = item[field.name] ?? "";
     });
 
+    // Special handling for PIC types to ensure dependent fields work
+    if (activeTab === "pic_internal" || activeTab === "pic_eksternal") {
+      // Ensure IDs are present and handled as strings for dropdown match
+      if (item.eselon1_id) editData.eselon1_id = String(item.eselon1_id);
+      if (item.eselon2_id) editData.eselon2_id = String(item.eselon2_id);
+      if (item.upt_id) editData.upt_id = String(item.upt_id);
+    }
+
     // default status_aktif
     if (editData.status_aktif === undefined) editData.status_aktif = 1;
     setFormData(editData);
@@ -868,17 +1082,18 @@ function MasterDataSection() {
     };
 
     const targetIds = getTargetLeafIds(node);
-    const allSelected = targetIds.every((id) => selectedFieldIds.includes(id));
+    const isNodeSelected = selectedFieldIds.includes(node.field_id);
 
-    if (allSelected) {
-      // Unselect all leaf descendants
+    if (isNodeSelected) {
+      // Unselect current node AND all descendants
       setSelectedFieldIds((prev) =>
-        prev.filter((id) => !targetIds.includes(id)),
+        prev.filter((id) => id !== node.field_id && !targetIds.includes(id)),
       );
     } else {
-      // Select all leaf descendants
+      // Select current node AND all descendants
       setSelectedFieldIds((prev) => {
         const newIds = [...prev];
+        if (!newIds.includes(node.field_id)) newIds.push(node.field_id);
         targetIds.forEach((id) => {
           if (!newIds.includes(id)) newIds.push(id);
         });
@@ -922,9 +1137,18 @@ function MasterDataSection() {
     return ids;
   };
 
-  const selectAllHierarchicalFields = () => {
-    const allLeafIds = getAllLeafIds(hierarchicalFields);
-    setSelectedFieldIds(allLeafIds);
+  // Derived states for Select All checkbox
+  const allLeafIds = getAllLeafIds(hierarchicalFields);
+  const isAllSelected = allLeafIds.length > 0 && allLeafIds.every(id => selectedFieldIds.includes(id));
+  const isAnySelected = allLeafIds.some(id => selectedFieldIds.includes(id));
+  const isIndeterminate = isAnySelected && !isAllSelected;
+
+  const toggleSelectAllHierarchicalFields = () => {
+    if (isAllSelected) {
+      setSelectedFieldIds([]);
+    } else {
+      setSelectedFieldIds(allLeafIds);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -1034,6 +1258,10 @@ function MasterDataSection() {
       setShowConfirm(false);
       closeModal();
       fetchData();
+      setSuccessMessage(
+        editingItem ? "data berhasil di perbarui" : "data berhasil ditambahkan",
+      );
+      setShowSuccess(true);
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
     }
@@ -1092,17 +1320,26 @@ function MasterDataSection() {
     // For dynamic tables, get from first data row or from dynamicFormFields
     const isDynamic = tabs.find((t) => t.key === activeTab)?.isDynamic;
     if (isDynamic) {
+      if (dynamicFormFields.length > 0) {
+        // Get from form fields definition to ensure it matches the form exactly
+        return dynamicFormFields
+          .map((f) => f.name)
+          .filter(
+            (name) => name !== "created_by" && name !== "updated_by",
+          );
+      }
+      // Fallback if form fields not loaded yet but data is
       if (data.length > 0) {
-        // Get all columns from first row, exclude _id columns, created_at, and updated_at
         return Object.keys(data[0]).filter(
           (key) =>
-            (!key.toLowerCase().endsWith("_id") || key === "status_aktif") &&
+            (!key.toLowerCase().endsWith("_id") ||
+              key === "status_aktif" ||
+              fkDropdownData[key]) &&
             key !== "created_at" &&
-            key !== "updated_at",
+            key !== "updated_at" &&
+            key !== "created_by" &&
+            key !== "updated_by",
         );
-      } else if (dynamicFormFields.length > 0) {
-        // Get from form fields definition
-        return dynamicFormFields.map((f) => f.name);
       }
     }
 
@@ -1592,22 +1829,26 @@ function MasterDataSection() {
                   borderBottom: "2px solid #e2e8f0",
                 }}
               >
-                {columns.map((col) => (
-                  <th
-                    key={col}
-                    style={{
-                      padding: "10px 14px",
-                      textAlign: "left",
-                      fontWeight: 700,
-                      color: "#475569",
-                      fontSize: "11.5px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    {formatColumnHeader(col)}
-                  </th>
-                ))}
+                {columns.map((col) => {
+                  const fieldDef = dynamicFormFields.find((f) => f.name === col);
+                  const label = fieldDef ? fieldDef.label : formatColumnHeader(col);
+                  return (
+                    <th
+                      key={col}
+                      style={{
+                        padding: "10px 14px",
+                        textAlign: "left",
+                        fontWeight: 700,
+                        color: "#475569",
+                        fontSize: "11.5px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      {label}
+                    </th>
+                  );
+                })}
                 <th
                   style={{
                     padding: "10px 14px",
@@ -1684,6 +1925,7 @@ function MasterDataSection() {
                             {columns.map((col) => (
                               <td
                                 key={`${getRowId(item)}-${col}`}
+                                className={col === "email_pic" ? "allow-lowercase" : ""}
                                 style={{
                                   padding: "10px 14px",
                                   color: "#334155",
@@ -1800,6 +2042,7 @@ function MasterDataSection() {
                     {columns.map((col) => (
                       <td
                         key={`${getRowId(item)}-${col}`}
+                        className={col === "email_pic" ? "allow-lowercase" : ""}
                         style={{
                           padding: "10px 14px",
                           color: "#334155",
@@ -1820,6 +2063,11 @@ function MasterDataSection() {
                           >
                             {getStatusColor(item[col]).label}
                           </span>
+                        ) : fkDropdownData[col] ? (
+                          fkDropdownData[col].find(
+                            (opt) =>
+                              String(opt.value) === String(item[col]),
+                          )?.label || item[col]
                         ) : (
                           item[col]
                         )}
@@ -1910,7 +2158,12 @@ function MasterDataSection() {
               borderRadius: "16px",
               padding: "28px",
               width: "100%",
-              maxWidth: activeTab === "format_laporan" ? "1200px" : "480px",
+              maxWidth:
+                activeTab === "pic_internal" || activeTab === "pic_eksternal"
+                  ? "840px"
+                  : activeTab === "format_laporan"
+                    ? "1200px"
+                    : "480px",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
               animation: "slideUp 0.3s ease",
             }}
@@ -2050,29 +2303,32 @@ function MasterDataSection() {
                         >
                           Daftar Data
                         </label>
-                        <button
-                          type="button"
-                          onClick={selectAllHierarchicalFields}
-                          style={{
-                            padding: "6px 12px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            backgroundColor: "#4f46e5",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.target.style.backgroundColor = "#4338ca")
-                          }
-                          onMouseLeave={(e) =>
-                            (e.target.style.backgroundColor = "#4f46e5")
-                          }
-                        >
-                          Pilih Semua
-                        </button>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            ref={(el) => el && (el.indeterminate = isIndeterminate)}
+                            onChange={toggleSelectAllHierarchicalFields}
+                            style={{
+                              cursor: "pointer",
+                              width: "16px",
+                              height: "16px",
+                              accentColor: "#4f46e5",
+                            }}
+                          />
+                          <label
+                            onClick={toggleSelectAllHierarchicalFields}
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "#4f46e5",
+                              cursor: "pointer",
+                              userSelect: "none",
+                            }}
+                          >
+                            Pilih Semua
+                          </label>
+                        </div>
                       </div>
                       <div style={{ marginBottom: "10px" }}>
                         <input
@@ -2301,17 +2557,24 @@ function MasterDataSection() {
               ) : (
                 // Standard Dynamic Form
                 (() => {
-                  const isDynamic = tabs.find(
-                    (t) => t.key === activeTab,
-                  )?.isDynamic;
+                  const isDynamic = tabs.find((t) => t.key === activeTab)
+                    ?.isDynamic;
                   const fields = isDynamic
                     ? dynamicFormFields
                     : FORM_FIELDS[activeTab] || [];
 
-                  return fields.map((field) => {
+                  const isPicForm =
+                    activeTab === "pic_internal" ||
+                    activeTab === "pic_eksternal";
+
+                  const formFields = fields.map((field) => {
                     let options = field.options || [];
                     if (field.name === "eselon1_id") options = eselon1Options;
-                    // Add status_aktif options for BOOLEAN type in dynamic tables
+                    if (isPicForm && field.name === "eselon2_id")
+                      options = eselon2Options;
+                    if (isPicForm && field.name === "upt_id")
+                      options = uptOptions;
+
                     if (
                       field.type === "select" &&
                       field.name === "status_aktif"
@@ -2321,101 +2584,120 @@ function MasterDataSection() {
                         { value: 0, label: "Nonaktif" },
                       ];
                     }
+                    return { ...field, options };
+                  });
 
-                    return (
-                      <div key={field.name} style={{ marginBottom: "18px" }}>
-                        <label
-                          style={{
-                            display: "block",
-                            marginBottom: "8px",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            color: "#374151",
-                          }}
-                        >
-                          {field.label}{" "}
-                          {field.required && (
-                            <span style={{ color: "#ef4444" }}>*</span>
-                          )}
-                        </label>
-
-                        {field.type === "select" ? (
-                          <select
-                            value={formData[field.name] ?? ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                [field.name]: e.target.value,
-                              })
-                            }
-                            required
+                  return (
+                    <div
+                      style={{
+                        display: isPicForm ? "grid" : "block",
+                        gridTemplateColumns: isPicForm ? "1fr 1fr" : "none",
+                        gap: "0 24px",
+                      }}
+                    >
+                      {formFields.map((field) => (
+                        <div key={field.name} style={{ marginBottom: "18px" }}>
+                          <label
                             style={{
-                              width: "100%",
-                              padding: "11px 14px",
-                              borderRadius: "10px",
-                              border: "1px solid #e2e8f0",
-                              fontSize: "14px",
-                              outline: "none",
-                              backgroundColor: "#ffffff",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.borderColor = "#4f46e5";
-                              e.target.style.boxShadow =
-                                "0 0 0 3px rgba(79, 70, 229, 0.1)";
-                            }}
-                            onBlur={(e) => {
-                              e.target.style.borderColor = "#e2e8f0";
-                              e.target.style.boxShadow = "none";
+                              display: "block",
+                              marginBottom: "8px",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                              color: "#374151",
                             }}
                           >
-                            {options.length === 0 ? (
-                              <option value="">-- belum ada pilihan --</option>
-                            ) : (
-                              options.map((opt) => (
+                            {field.label}{" "}
+                            {field.required && (
+                              <span style={{ color: "#ef4444" }}>*</span>
+                            )}
+                          </label>
+
+                          {field.type === "select" ? (
+                            <select
+                              value={formData[field.name] ?? ""}
+                              onChange={(e) => {
+                                const newVal = e.target.value;
+                                const newData = {
+                                  ...formData,
+                                  [field.name]: newVal,
+                                };
+                                if (field.name === "eselon1_id") {
+                                  newData.eselon2_id = "";
+                                  newData.upt_id = "";
+                                }
+                                setFormData(newData);
+                              }}
+                              required={field.required}
+                              style={{
+                                width: "100%",
+                                padding: "11px 14px",
+                                borderRadius: "10px",
+                                border: "1px solid #e2e8f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                backgroundColor: "#ffffff",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                boxSizing: "border-box",
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.borderColor = "#4f46e5";
+                                e.target.style.boxShadow =
+                                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.borderColor = "#e2e8f0";
+                                e.target.style.boxShadow = "none";
+                              }}
+                            >
+                              <option value="">
+                                {field.options.length > 0
+                                  ? "-- Pilih --"
+                                  : "-- Belum ada pilihan --"}
+                              </option>
+                              {field.options.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
                                   {opt.label}
                                 </option>
-                              ))
-                            )}
-                          </select>
-                        ) : (
-                          <input
-                            type={field.type}
-                            placeholder={field.placeholder}
-                            value={formData[field.name] ?? ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                [field.name]: e.target.value,
-                              })
-                            }
-                            required
-                            style={{
-                              width: "100%",
-                              padding: "11px 14px",
-                              borderRadius: "10px",
-                              border: "1px solid #e2e8f0",
-                              fontSize: "14px",
-                              outline: "none",
-                              boxSizing: "border-box",
-                              transition: "all 0.2s",
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.borderColor = "#4f46e5";
-                              e.target.style.boxShadow =
-                                "0 0 0 3px rgba(79, 70, 229, 0.1)";
-                            }}
-                            onBlur={(e) => {
-                              e.target.style.borderColor = "#e2e8f0";
-                              e.target.style.boxShadow = "none";
-                            }}
-                          />
-                        )}
-                      </div>
-                    );
-                  });
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type={field.type || "text"}
+                              placeholder={`Masukkan ${field.label.toLowerCase()}`}
+                              value={formData[field.name] ?? ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  [field.name]: e.target.value,
+                                })
+                              }
+                              required={field.required}
+                              style={{
+                                width: "100%",
+                                padding: "11px 14px",
+                                borderRadius: "10px",
+                                border: "1px solid #e2e8f0",
+                                fontSize: "14px",
+                                outline: "none",
+                                transition: "all 0.2s",
+                                boxSizing: "border-box",
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.borderColor = "#4f46e5";
+                                e.target.style.boxShadow =
+                                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.borderColor = "#e2e8f0";
+                                e.target.style.boxShadow = "none";
+                              }}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  );
                 })()
               )}
 
@@ -2476,139 +2758,246 @@ function MasterDataSection() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+          </div >
+        </div >
+      )
+      }
       {/* Confirmation Modal */}
-      {showConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            backdropFilter: "blur(4px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1100,
-            animation: "fadeIn 0.2s ease",
-          }}
-        >
+      {
+        showConfirm && (
           <div
             style={{
-              backgroundColor: "#fff",
-              borderRadius: "16px",
-              padding: "32px",
-              width: "100%",
-              maxWidth: "400px",
-              textAlign: "center",
-              boxShadow:
-                "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-              animation: "slideUp 0.3s ease",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1100,
+              animation: "fadeIn 0.2s ease",
             }}
           >
             <div
               style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                backgroundColor: "#fef3c7",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 20px",
+                backgroundColor: "#fff",
+                borderRadius: "16px",
+                padding: "32px",
+                width: "100%",
+                maxWidth: "400px",
+                textAlign: "center",
+                boxShadow:
+                  "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+                animation: "slideUp 0.3s ease",
               }}
             >
-              <svg
-                width="30"
-                height="30"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#d97706"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-            </div>
-            <h3
-              style={{
-                margin: "0 0 12px",
-                fontSize: "18px",
-                fontWeight: 700,
-                color: "#1e293b",
-              }}
-            >
-              Konfirmasi
-            </h3>
-            <p
-              style={{
-                margin: "0 0 28px",
-                color: "#64748b",
-                fontSize: "15px",
-                lineHeight: "1.5",
-              }}
-            >
-              {editingItem
-                ? "Apakah anda yakin ingin memperbarui data?"
-                : "Apakah data yang diisi sudah benar?"}
-            </p>
-            <div style={{ display: "flex", gap: "12px" }}>
-              <button
-                onClick={handleConfirmSave}
+              <div
                 style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "#4f46e5",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
+                  width: "60px",
+                  height: "60px",
+                  borderRadius: "50%",
+                  backgroundColor: "#fef3c7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 20px",
                 }}
-                onMouseEnter={(e) =>
-                  (e.target.style.backgroundColor = "#4338ca")
-                }
-                onMouseLeave={(e) =>
-                  (e.target.style.backgroundColor = "#4f46e5")
-                }
               >
-                Ya
-              </button>
-              <button
-                onClick={() => setShowConfirm(false)}
+                <svg
+                  width="30"
+                  height="30"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#d97706"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <h3
                 style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "#f1f5f9",
+                  margin: "0 0 12px",
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#1e293b",
+                }}
+              >
+                Konfirmasi
+              </h3>
+              <p
+                style={{
+                  margin: "0 0 28px",
                   color: "#64748b",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
+                  fontSize: "15px",
+                  lineHeight: "1.5",
                 }}
-                onMouseEnter={(e) =>
-                  (e.target.style.backgroundColor = "#e2e8f0")
-                }
-                onMouseLeave={(e) =>
-                  (e.target.style.backgroundColor = "#f1f5f9")
-                }
               >
-                Tidak
-              </button>
+                {editingItem
+                  ? "Apakah anda yakin ingin memperbarui data?"
+                  : "Apakah data yang diisi sudah benar?"}
+              </p>
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  onClick={handleConfirmSave}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    backgroundColor: "#4f46e5",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#4338ca")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "#4f46e5")
+                  }
+                >
+                  Ya
+                </button>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#64748b",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.target.style.backgroundColor = "#e2e8f0")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.target.style.backgroundColor = "#f1f5f9")
+                  }
+                >
+                  Tidak
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </section>
+        )
+      }
+
+      {/* --- Success Popup matching Image --- */}
+      {
+        showSuccess && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "white",
+                padding: "40px",
+                borderRadius: "12px",
+                width: "100%",
+                maxWidth: "450px",
+                textAlign: "center",
+                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+                position: "relative",
+              }}
+            >
+              {/* Green Checkmark Icon */}
+              <div
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  backgroundColor: "#f0fdf4",
+                  borderRadius: "50%",
+                  border: "2px solid #dcfce7",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 24px",
+                }}
+              >
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#22c55e"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 700,
+                  color: "#475569",
+                  margin: "0 0 12px",
+                }}
+              >
+                Berhasil!
+              </h2>
+              <p
+                style={{
+                  fontSize: "16px",
+                  color: "#94a3b8",
+                  margin: "0 0 32px",
+                  lineHeight: "1.5",
+                }}
+              >
+                {successMessage}
+              </p>
+
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setShowSuccess(false)}
+                  style={{
+                    padding: "10px 28px",
+                    backgroundColor: "#7dd3fc",
+                    color: "white",
+                    border: "2px solid #bae6fd",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#38bdf8")}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#7dd3fc")}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </section >
   );
 }
 

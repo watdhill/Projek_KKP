@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS \`${tableName}\` (
   \`${idField}\` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   ${columnDefinitions},
   \`status_aktif\` BOOLEAN NOT NULL DEFAULT 1 COMMENT 'Status: 1=Aktif, 0=Tidak Aktif',
+  \`created_by\` INT NULL COMMENT 'User ID who created this record',
+  \`updated_by\` INT NULL COMMENT 'User ID who last updated this record',
   \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -85,6 +87,104 @@ const updateTableConfig = async (tableName, idField, columns) => {
   await fs.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
 
   return config;
+};
+
+// Get table info with FK constraints
+exports.getTableInfo = async (req, res) => {
+  try {
+    const { tableName } = req.params;
+
+    const connection = await pool.getConnection();
+
+    try {
+      // Get table schema from registry
+      const [tables] = await connection.query(
+        'SELECT table_schema, table_relations FROM master_table_registry WHERE table_name = ? AND status_aktif = 1',
+        [tableName]
+      );
+
+      if (tables.length === 0) {
+        return res.status(404).json({ success: false, message: 'Table not found' });
+      }
+
+      let schema = typeof tables[0].table_schema === 'string'
+        ? JSON.parse(tables[0].table_schema)
+        : tables[0].table_schema;
+
+      // Get ALL columns from INFORMATION_SCHEMA to check for missing ones (like FKs)
+      const [dbColumns] = await connection.query(`
+        SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_KEY
+        FROM INFORMATION_SCHEMA.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+          AND TABLE_NAME = ?
+      `, [tableName]);
+
+      // Get FK constraints
+      const [fkInfo] = await connection.query(`
+        SELECT 
+          COLUMN_NAME,
+          REFERENCED_TABLE_NAME,
+          REFERENCED_COLUMN_NAME
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+          AND REFERENCED_TABLE_NAME IS NOT NULL
+      `, [tableName]);
+
+      const fkMap = {};
+      fkInfo.forEach(fk => {
+        fkMap[fk.COLUMN_NAME] = {
+          referencedTable: fk.REFERENCED_TABLE_NAME,
+          referencedColumn: fk.REFERENCED_COLUMN_NAME
+        };
+      });
+
+      // Merge DB columns into schema if missing
+      dbColumns.forEach(dbCol => {
+        // Skip system columns
+        if (['created_by', 'updated_by', 'created_at', 'updated_at', 'status_aktif'].includes(dbCol.COLUMN_NAME)) return;
+        // Skip ID column (usually handled separately or exists)
+        if (dbCol.COLUMN_NAME === tableName + '_id' || (dbCol.COLUMN_NAME.endsWith('_id') && dbCol.COLUMN_KEY === 'PRI')) return;
+
+        const exists = schema.find(s => s.column_name === dbCol.COLUMN_NAME);
+        if (!exists) {
+          // It's a missing column (likely an auto-added FK), add it to schema for frontend
+          const displayName = dbCol.COLUMN_NAME
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+            .replace('Id', ''); // "Pdn Id" -> "Pdn "
+
+          schema.push({
+            column_name: dbCol.COLUMN_NAME,
+            display_name: displayName.trim(),
+            column_type: dbCol.DATA_TYPE.toUpperCase(),
+            is_nullable: dbCol.IS_NULLABLE === 'YES'
+          });
+        }
+      });
+
+      // Enrich schema with FK info
+      const enrichedSchema = schema.map(col => ({
+        ...col,
+        isForeignKey: !!fkMap[col.column_name],
+        foreignKeyInfo: fkMap[col.column_name] || null
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          schema: enrichedSchema,
+          foreignKeys: fkMap
+        }
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Error getting table info:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 // Get all registered master tables
@@ -204,6 +304,155 @@ exports.createMasterTable = async (req, res) => {
 
     // Execute CREATE TABLE
     await connection.query(createTableSQL);
+
+    console.log("✅ Table created successfully");
+
+    // Add FK constraints for relationships (if any)
+    if (table_relations && Array.isArray(table_relations) && table_relations.length > 0) {
+      console.log("=== ADDING FOREIGN KEY CONSTRAINTS ===");
+
+      // Mapping common table names to their PK columns
+      const tablePKMap = {
+        'frekuensi_pemakaian': 'frekuensi_pemakaian',
+        'format_laporan': 'format_laporan_id',
+        'master_eselon1': 'eselon1_id',
+        'master_eselon2': 'eselon2_id',
+        'master_upt': 'upt_id',
+        'pdn': 'pdn_id',
+        'cara_akses': 'cara_akses_id',
+        'pic_internal': 'pic_internal_id',
+        'pic_eksternal': 'pic_eksternal_id',
+      };
+
+      for (const relation of table_relations) {
+        let column_name, referenced_table, referenced_column;
+
+        // Handle both simple string (table name) and detailed object formats
+        if (typeof relation === 'string') {
+          // Simple format: just the table name
+          referenced_table = relation;
+
+          // Auto-detect PK column from map or query
+          referenced_column = tablePKMap[referenced_table];
+
+          // If not in map, try to query it
+          if (!referenced_column) {
+            try {
+              const [pkInfo] = await connection.query(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                  AND TABLE_NAME = ? 
+                  AND COLUMN_KEY = 'PRI'
+                LIMIT 1
+              `, [referenced_table]);
+
+              if (pkInfo.length > 0) {
+                referenced_column = pkInfo[0].COLUMN_NAME;
+              } else {
+                console.warn(`⚠️ Could not find PK for table: ${referenced_table}`);
+                continue;
+              }
+            } catch (pkError) {
+              console.error(`❌ Error finding PK for ${referenced_table}:`, pkError.message);
+              continue;
+            }
+          }
+
+          // Create FK column name (e.g., "eselon1_id" for "master_eselon1")
+          column_name = referenced_column;
+        } else if (typeof relation === 'object') {
+          // Detailed format: { column_name, referenced_table, referenced_column }
+          column_name = relation.column_name;
+          referenced_table = relation.referenced_table;
+          referenced_column = relation.referenced_column;
+        }
+
+        if (!column_name || !referenced_table || !referenced_column) {
+          console.warn(`⚠️ Skipping invalid relation:`, relation);
+          continue;
+        }
+
+        // Check if column already exists in user's column definitions
+        const columnExists = columns.some(col => col.column_name === column_name);
+
+        if (!columnExists) {
+          // Add the FK column to the table
+          const columnType = referenced_column.includes('id') || referenced_column === 'frekuensi_pemakaian'
+            ? 'BIGINT UNSIGNED'
+            : 'VARCHAR(100)';
+
+          try {
+            await connection.query(`
+              ALTER TABLE \`${table_name}\`
+              ADD COLUMN \`${column_name}\` ${columnType} NULL
+              COMMENT 'FK to ${referenced_table}'
+            `);
+            console.log(`✅ Added FK column: ${column_name}`);
+
+            // ALSO ADD TO COLUMNS ARRAY so it gets saved to registry!
+            columns.push({
+              column_name: column_name,
+              display_name: column_name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ').replace(' Id', ''),
+              column_type: columnType.split(' ')[0], // BIGINT or VARCHAR
+              is_nullable: true
+            });
+
+          } catch (colError) {
+            console.error(`❌ Failed to add column ${column_name}:`, colError.message);
+            continue;
+          }
+        }
+
+        // Add FK constraint
+        const constraintName = `fk_${table_name}_${referenced_table}`;
+        const alterSQL = `
+          ALTER TABLE \`${table_name}\`
+          ADD CONSTRAINT \`${constraintName}\`
+          FOREIGN KEY (\`${column_name}\`)
+          REFERENCES \`${referenced_table}\`(\`${referenced_column}\`)
+          ON UPDATE CASCADE
+          ON DELETE SET NULL
+        `.trim();
+
+        try {
+          await connection.query(alterSQL);
+          console.log(`✅ FK constraint added: ${table_name}.${column_name} -> ${referenced_table}.${referenced_column}`);
+        } catch (fkError) {
+          console.error(`❌ Failed to add FK constraint for ${column_name}:`, fkError.message);
+        }
+      }
+    }
+
+    // Add relationship column to data_aplikasi
+    console.log("=== ADDING COLUMN TO data_aplikasi ===");
+    const dataAplikasiColumnName = `${table_name}_id`;
+    const dataAplikasiFK = `fk_data_aplikasi_${table_name}`;
+
+    try {
+      await connection.query(`
+        ALTER TABLE \`data_aplikasi\`
+        ADD COLUMN \`${dataAplikasiColumnName}\` BIGINT UNSIGNED NULL
+        COMMENT 'Relasi ke ${display_name}'
+      `);
+
+      await connection.query(`
+        ALTER TABLE \`data_aplikasi\`
+        ADD CONSTRAINT \`${dataAplikasiFK}\`
+        FOREIGN KEY (\`${dataAplikasiColumnName}\`)
+        REFERENCES \`${table_name}\`(\`${id_field_name}\`)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+      `);
+
+      console.log(`✅ Added column and FK to data_aplikasi: ${dataAplikasiColumnName}`);
+    } catch (daError) {
+      if (daError.code === 'ER_DUP_FIELDNAME') {
+        console.log(`ℹ️ Column ${dataAplikasiColumnName} already exists in data_aplikasi`);
+      } else {
+        console.error(`❌ Failed to add data_aplikasi relation:`, daError.message);
+      }
+    }
 
     // Insert to registry
     const [registryResult] = await connection.query(
@@ -515,6 +764,48 @@ exports.deleteMasterTable = async (req, res) => {
     const tableName = tables[0].table_name;
 
     console.log(`⚠️  DROPPING TABLE: ${tableName}`);
+
+    // 1. Find all Foreign Keys referencing this table
+    const [references] = await connection.query(
+      `SELECT 
+        TABLE_NAME, 
+        CONSTRAINT_NAME,
+        COLUMN_NAME
+       FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+       WHERE REFERENCED_TABLE_SCHEMA = DATABASE()
+         AND REFERENCED_TABLE_NAME = ?`,
+      [tableName]
+    );
+
+    if (references.length > 0) {
+      console.log(`Found ${references.length} references to cleanup...`);
+
+      for (const ref of references) {
+        console.log(`- Removing FK ${ref.CONSTRAINT_NAME} from ${ref.TABLE_NAME}`);
+
+        // Drop FK Constraint
+        try {
+          await connection.query(
+            `ALTER TABLE \`${ref.TABLE_NAME}\` DROP FOREIGN KEY \`${ref.CONSTRAINT_NAME}\``
+          );
+        } catch (err) {
+          console.warn(`  Warning: Failed to drop FK ${ref.CONSTRAINT_NAME}: ${err.message}`);
+        }
+
+        // Drop Column (Optional - prevents zombie columns)
+        // Only drop if it looks like a relation column (ends with _id or matches table name)
+        if (ref.COLUMN_NAME.endsWith('_id')) {
+          console.log(`- Dropping column ${ref.COLUMN_NAME} from ${ref.TABLE_NAME}`);
+          try {
+            await connection.query(
+              `ALTER TABLE \`${ref.TABLE_NAME}\` DROP COLUMN \`${ref.COLUMN_NAME}\``
+            );
+          } catch (err) {
+            console.warn(`  Warning: Failed to drop column ${ref.COLUMN_NAME}: ${err.message}`);
+          }
+        }
+      }
+    }
 
     // DROP TABLE (HATI-HATI!)
     await connection.query(`DROP TABLE IF EXISTS \`${tableName}\``);
