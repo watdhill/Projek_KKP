@@ -8,24 +8,18 @@ exports.getAllAplikasi = async (req, res) => {
   try {
     const query = `
       SELECT 
-        da.nama_aplikasi,
-        da.domain,
-        da.deskripsi_fungsi,
-        da.bahasa_pemrograman,
-        da.basis_data,
-        da.status_bmn,
-        da.pic_internal AS nama_pic_internal,
-        da.pic_eksternal AS nama_pic_eksternal,
-        da.va_pt_waktu,
-        da.eselon1_id,
-        da.eselon2_id,
+        da.*,
         e1.nama_eselon1,
         e2.nama_eselon2,
         ca.nama_cara_akses,
         fp.nama_frekuensi,
         sa.nama_status,
-        pdn.kode_pdn,
-        env.jenis_environment
+        pdn.kode_pdn AS nama_pdn,
+        env.jenis_environment AS nama_environment,
+        COALESCE(pi.nama_pic_internal, da.pic_internal) AS nama_pic_internal,
+        COALESCE(pi.kontak_pic_internal, da.kontak_pic_internal) AS kontak_pic_internal,
+        COALESCE(pe.nama_pic_eksternal, da.pic_eksternal) AS nama_pic_eksternal,
+        COALESCE(pe.kontak_pic_eksternal, da.kontak_pic_eksternal) AS kontak_pic_eksternal
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
@@ -34,18 +28,33 @@ exports.getAllAplikasi = async (req, res) => {
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
       LEFT JOIN pdn ON da.pdn_id = pdn.pdn_id
       LEFT JOIN environment env ON da.environment_id = env.environment_id
+      LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
+      LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
       ORDER BY da.nama_aplikasi
     `;
+
+    console.log("Executing query...");
     const [rows] = await pool.query(query);
+    console.log(`Query successful, returned ${rows.length} rows`);
+
     res.json({
       success: true,
       data: rows,
     });
   } catch (error) {
+    console.error("Error in getAllAplikasi:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      sqlMessage: error.sqlMessage,
+      sql: error.sql,
+    });
     res.status(500).json({
       success: false,
       message: "Error mengambil data aplikasi",
       error: error.message,
+      sqlError: error.sqlMessage,
     });
   }
 };
@@ -62,6 +71,7 @@ exports.getAplikasiById = async (req, res) => {
         fp.nama_frekuensi,
         sa.nama_status,
         pdn.kode_pdn,
+        da.pdn_backup,
         env.jenis_environment
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
@@ -96,49 +106,10 @@ exports.getAplikasiById = async (req, res) => {
 // Create aplikasi
 exports.createAplikasi = async (req, res) => {
   try {
-    const {
-      nama_aplikasi,
-      eselon1_id,
-      eselon2_id,
-      cara_akses_id,
-      cara_akses_multiple,
-      frekuensi_pemakaian,
-      status_aplikasi,
-      pdn_id,
-      environment_id,
-      pic_internal,
-      pic_eksternal,
-      domain,
-      deskripsi_fungsi,
-      user_pengguna,
-      data_digunakan,
-      luaran_output,
-      server_aplikasi,
-      tipe_lisensi_bahasa,
-      bahasa_pemrograman,
-      basis_data,
-      kerangka_pengembangan,
-      unit_pengembang,
-      unit_operasional_teknologi,
-      nilai_pengembangan_aplikasi,
-      pusat_komputasi_utama,
-      pusat_komputasi_backup,
-      mandiri_komputasi_backup,
-      perangkat_lunak,
-      cloud,
-      ssl,
-      waf,
-      antivirus,
-      va_pt_status,
-      va_pt_waktu,
-      alamat_ip_publik,
-      keterangan,
-      status_bmn,
-      api_internal_status,
-    } = req.body;
-
     const normalizedNamaAplikasi =
-      typeof nama_aplikasi === "string" ? nama_aplikasi.trim() : nama_aplikasi;
+      typeof req.body.nama_aplikasi === "string"
+        ? req.body.nama_aplikasi.trim()
+        : req.body.nama_aplikasi;
 
     if (!normalizedNamaAplikasi) {
       return res.status(400).json({
@@ -147,63 +118,31 @@ exports.createAplikasi = async (req, res) => {
       });
     }
 
-    const [result] = await pool.query(
-      `INSERT INTO data_aplikasi 
-       (\`nama_aplikasi\`, \`eselon1_id\`, \`eselon2_id\`, \`cara_akses_id\`, \`cara_akses_multiple\`, \`frekuensi_pemakaian\`, 
-        \`status_aplikasi\`, \`pdn_id\`, \`environment_id\`, \`pic_internal\`, \`pic_eksternal\`, 
-        \`domain\`, \`deskripsi_fungsi\`, \`user_pengguna\`, \`data_digunakan\`, \`luaran_output\`,
-        \`server_aplikasi\`, \`tipe_lisensi_bahasa\`, \`bahasa_pemrograman\`, \`basis_data\`, 
-        \`kerangka_pengembangan\`, \`unit_pengembang\`, \`unit_operasional_teknologi\`, 
-        \`nilai_pengembangan_aplikasi\`, \`pusat_komputasi_utama\`, \`pusat_komputasi_backup\`, 
-        \`mandiri_komputasi_backup\`, \`perangkat_lunak\`, \`cloud\`, \`ssl\`, \`waf\`, \`antivirus\`, 
-        \`va_pt_status\`, \`va_pt_waktu\`, \`alamat_ip_publik\`, \`keterangan\`, \`status_bmn\`, 
-        \`api_internal_status\`) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        normalizedNamaAplikasi,
-        eselon1_id,
-        eselon2_id,
-        cara_akses_id,
-        cara_akses_multiple,
-        frekuensi_pemakaian,
-        status_aplikasi,
-        pdn_id,
-        environment_id,
-        pic_internal,
-        pic_eksternal,
-        domain,
-        deskripsi_fungsi,
-        user_pengguna,
-        data_digunakan,
-        luaran_output,
-        server_aplikasi,
-        tipe_lisensi_bahasa,
-        bahasa_pemrograman,
-        basis_data,
-        kerangka_pengembangan,
-        unit_pengembang,
-        unit_operasional_teknologi,
-        nilai_pengembangan_aplikasi,
-        pusat_komputasi_utama,
-        pusat_komputasi_backup,
-        mandiri_komputasi_backup,
-        perangkat_lunak,
-        cloud,
-        ssl,
-        waf,
-        antivirus,
-        va_pt_status,
-        va_pt_waktu,
-        alamat_ip_publik,
-        keterangan,
-        status_bmn,
-        api_internal_status,
-      ]
-    );
+    // Build dynamic query to support all fields including dynamic master fields
+    const fields = [];
+    const values = [];
+    const placeholders = [];
+
+    // Process all fields from request body
+    for (const [key, value] of Object.entries(req.body)) {
+      fields.push(`\`${key}\``);
+      values.push(value);
+      placeholders.push("?");
+    }
+
+    // Override nama_aplikasi with normalized version
+    const namaAplikasiIndex = fields.indexOf("`nama_aplikasi`");
+    if (namaAplikasiIndex !== -1) {
+      values[namaAplikasiIndex] = normalizedNamaAplikasi;
+    }
+
+    const query = `INSERT INTO data_aplikasi (${fields.join(", ")}) VALUES (${placeholders.join(", ")})`;
+
+    const [result] = await pool.query(query, values);
     res.status(201).json({
       success: true,
       message: "Aplikasi berhasil ditambahkan",
-      data: { nama_aplikasi: normalizedNamaAplikasi, domain },
+      data: { nama_aplikasi: normalizedNamaAplikasi, domain: req.body.domain },
     });
   } catch (error) {
     if (isDuplicateKeyError(error)) {
@@ -225,52 +164,10 @@ exports.createAplikasi = async (req, res) => {
 // Update aplikasi
 exports.updateAplikasi = async (req, res) => {
   try {
-    const {
-      nama_aplikasi,
-      eselon1_id,
-      eselon2_id,
-      cara_akses_id,
-      cara_akses_multiple,
-      frekuensi_pemakaian,
-      status_aplikasi,
-      pdn_id,
-      pdn_backup,
-      environment_id,
-      pic_internal,
-      pic_eksternal,
-      kontak_pic_internal,
-      kontak_pic_eksternal,
-      domain,
-      deskripsi_fungsi,
-      user_pengguna,
-      data_digunakan,
-      luaran_output,
-      server_aplikasi,
-      tipe_lisensi_bahasa,
-      bahasa_pemrograman,
-      basis_data,
-      kerangka_pengembangan,
-      unit_pengembang,
-      unit_operasional_teknologi,
-      nilai_pengembangan_aplikasi,
-      pusat_komputasi_utama,
-      pusat_komputasi_backup,
-      mandiri_komputasi_backup,
-      perangkat_lunak,
-      cloud,
-      ssl,
-      waf,
-      antivirus,
-      va_pt_status,
-      va_pt_waktu,
-      alamat_ip_publik,
-      keterangan,
-      status_bmn,
-      api_internal_status,
-    } = req.body;
-
     const normalizedNamaAplikasi =
-      typeof nama_aplikasi === "string" ? nama_aplikasi.trim() : nama_aplikasi;
+      typeof req.body.nama_aplikasi === "string"
+        ? req.body.nama_aplikasi.trim()
+        : req.body.nama_aplikasi;
 
     if (!normalizedNamaAplikasi) {
       return res.status(400).json({
@@ -279,63 +176,28 @@ exports.updateAplikasi = async (req, res) => {
       });
     }
 
-    const [result] = await pool.query(
-      `UPDATE data_aplikasi SET 
-       \`nama_aplikasi\` = ?, \`eselon1_id\` = ?, \`eselon2_id\` = ?, \`cara_akses_id\` = ?, \`cara_akses_multiple\` = ?, \`frekuensi_pemakaian\` = ?, 
-       \`status_aplikasi\` = ?, \`pdn_id\` = ?, \`environment_id\` = ?, \`pic_internal\` = ?, 
-       \`pic_eksternal\` = ?, \`kontak_pic_internal\` = ?, \`kontak_pic_eksternal\` = ?, \`domain\` = ?, \`deskripsi_fungsi\` = ?, \`user_pengguna\` = ?, 
-       \`data_digunakan\` = ?, \`luaran_output\` = ?, \`server_aplikasi\` = ?, \`tipe_lisensi_bahasa\` = ?, 
-       \`bahasa_pemrograman\` = ?, \`basis_data\` = ?, \`kerangka_pengembangan\` = ?, \`unit_pengembang\` = ?, 
-       \`unit_operasional_teknologi\` = ?, \`nilai_pengembangan_aplikasi\` = ?, 
-       \`pusat_komputasi_utama\` = ?, \`pusat_komputasi_backup\` = ?, \`mandiri_komputasi_backup\` = ?, 
-       \`perangkat_lunak\` = ?, \`cloud\` = ?, \`ssl\` = ?, \`waf\` = ?, \`antivirus\` = ?, \`va_pt_status\` = ?, 
-       \`va_pt_waktu\` = ?, \`alamat_ip_publik\` = ?, \`keterangan\` = ?, \`status_bmn\` = ?, 
-       \`api_internal_status\` = ? 
-       WHERE \`nama_aplikasi\` = ?`,
-      [
-        normalizedNamaAplikasi,
-        eselon1_id,
-        eselon2_id,
-        cara_akses_id,
-        cara_akses_multiple,
-        frekuensi_pemakaian,
-        status_aplikasi,
-        pdn_id,
-        environment_id,
-        pic_internal,
-        pic_eksternal,
-        kontak_pic_internal,
-        kontak_pic_eksternal,
-        domain,
-        deskripsi_fungsi,
-        user_pengguna,
-        data_digunakan,
-        luaran_output,
-        server_aplikasi,
-        tipe_lisensi_bahasa,
-        bahasa_pemrograman,
-        basis_data,
-        kerangka_pengembangan,
-        unit_pengembang,
-        unit_operasional_teknologi,
-        nilai_pengembangan_aplikasi,
-        pusat_komputasi_utama,
-        pusat_komputasi_backup,
-        mandiri_komputasi_backup,
-        perangkat_lunak,
-        cloud,
-        ssl,
-        waf,
-        antivirus,
-        va_pt_status,
-        va_pt_waktu,
-        alamat_ip_publik,
-        keterangan,
-        status_bmn,
-        api_internal_status,
-        req.params.id,
-      ]
-    );
+    // Build dynamic UPDATE query to support all fields including dynamic master fields
+    const updates = [];
+    const values = [];
+
+    // Process all fields from request body
+    for (const [key, value] of Object.entries(req.body)) {
+      updates.push(`\`${key}\` = ?`);
+      values.push(value);
+    }
+
+    // Override nama_aplikasi with normalized version
+    const namaAplikasiIndex = Object.keys(req.body).indexOf("nama_aplikasi");
+    if (namaAplikasiIndex !== -1) {
+      values[namaAplikasiIndex] = normalizedNamaAplikasi;
+    }
+
+    // Add WHERE parameter
+    values.push(req.params.id);
+
+    const query = `UPDATE data_aplikasi SET ${updates.join(", ")} WHERE \`nama_aplikasi\` = ?`;
+
+    const [result] = await pool.query(query, values);
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
@@ -368,7 +230,7 @@ exports.deleteAplikasi = async (req, res) => {
   try {
     const [result] = await pool.query(
       "DELETE FROM data_aplikasi WHERE nama_aplikasi = ?",
-      [req.params.id]
+      [req.params.id],
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({
