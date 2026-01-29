@@ -11,34 +11,6 @@
       "Status"
     ]
   },
-  "master_baru": {
-    "tableName": "master_baru",
-    "idField": "baru_id",
-    "columns": [
-      "nama_baru",
-      "status_aktif"
-    ],
-    "displayColumns": [
-      "Nama Baru ",
-      "Status"
-    ]
-  },
-  "master_terbaru": {
-    "tableName": "master_terbaru",
-    "idField": "terbaru_id",
-    "columns": [
-      "nama_terbaru",
-      "frekuensi_pemakaian",
-      "environment_id",
-      "status_aktif"
-    ],
-    "displayColumns": [
-      "Terbaru ",
-      "Frekuensi Pemakaian",
-      "Environment",
-      "Status"
-    ]
-  },
   "master_jabatan": {
     "tableName": "master_jabatan",
     "idField": "jabatan_id",
@@ -52,6 +24,18 @@
       "Nama Jabatan ",
       "Environment",
       "Status Aplikasi",
+      "Status"
+    ]
+  },
+  "master3": {
+    "tableName": "master3",
+    "idField": "coba_id",
+    "columns": [
+      "nama",
+      "status_aktif"
+    ],
+    "displayColumns": [
+      "Nama",
       "Status"
     ]
   }

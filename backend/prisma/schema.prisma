@@ -22,6 +22,7 @@ model data_aplikasi {
   frekuensi_pemakaian                                                        BigInt?              @db.UnsignedBigInt
   status_aplikasi                                                            BigInt?              @db.UnsignedBigInt
   pdn_id                                                                     BigInt?              @db.UnsignedBigInt
+  pdn_backup                                                                 String?              @db.VarChar(200)
   environment_id                                                             BigInt?              @db.UnsignedBigInt
   pic_internal_id                                                            BigInt?              @db.UnsignedBigInt
   pic_eksternal_id                                                           BigInt?              @db.UnsignedBigInt
@@ -43,6 +44,8 @@ model data_aplikasi {
   mandiri_komputasi_backup                                                   String?              @db.VarChar(200)
   perangkat_lunak                                                            String?              @db.Text
   cloud                                                                      String?              @db.VarChar(200)
+  ssl                                                                        String?              @db.VarChar(200)
+  ssl_expired                                                                DateTime?            @db.Date
   waf                                                                        String?              @db.VarChar(50)
   antivirus                                                                  String?              @db.VarChar(50)
   va_pt_status                                                               String?              @db.VarChar(50)
