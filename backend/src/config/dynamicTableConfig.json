@@ -26,17 +26,5 @@
       "Status Aplikasi",
       "Status"
     ]
-  },
-  "master3": {
-    "tableName": "master3",
-    "idField": "coba_id",
-    "columns": [
-      "nama",
-      "status_aktif"
-    ],
-    "displayColumns": [
-      "Nama",
-      "Status"
-    ]
   }
 }

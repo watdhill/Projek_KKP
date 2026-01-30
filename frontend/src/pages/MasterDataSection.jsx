@@ -53,7 +53,6 @@ const FORM_FIELDS = {
     },
   ],
   eselon2: [
-
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -80,7 +79,6 @@ const FORM_FIELDS = {
     },
   ],
   upt: [
-
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -348,8 +346,25 @@ const TABLE_COLUMNS = {
   cara_akses: ["nama_cara_akses", "status_aktif"],
   pdn: ["kode_pdn", "status_aktif"],
   format_laporan: ["nama_format", "status_aktif"],
-  pic_internal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
-  pic_eksternal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_eksternal", "keterangan", "email_pic", "kontak_pic_eksternal", "status_aktif"],
+  pic_internal: [
+    "nama_eselon1",
+    "nama_eselon2",
+    "nama_upt",
+    "nama_pic_internal",
+    "email_pic",
+    "kontak_pic_internal",
+    "status_aktif",
+  ],
+  pic_eksternal: [
+    "nama_eselon1",
+    "nama_eselon2",
+    "nama_upt",
+    "nama_pic_eksternal",
+    "keterangan",
+    "email_pic",
+    "kontak_pic_eksternal",
+    "status_aktif",
+  ],
 };
 
 // ID field per type
@@ -451,7 +466,8 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
   const leafDescendants = getLeafDescendants(node);
   // Individual selection state
   const isSelected = selectedIds.includes(node.field_id);
-  const isPartiallySelected = !isSelected && leafDescendants.some((id) => selectedIds.includes(id));
+  const isPartiallySelected =
+    !isSelected && leafDescendants.some((id) => selectedIds.includes(id));
 
   // Determine text color based on level
   let textColor = "#475569"; // default (Level 3)
@@ -636,8 +652,6 @@ function MasterDataSection() {
   const [successMessage, setSuccessMessage] = useState("");
   const [hierSearchTerm, setHierSearchTerm] = useState("");
 
-
-
   const [selectedEselon1Filter, setSelectedEselon1Filter] = useState("");
 
   // Load dynamic tables on mount
@@ -655,11 +669,13 @@ function MasterDataSection() {
           .filter((item) => item.status_aktif === 1)
           .map((item) => ({
             value: item.eselon1_id,
-            label: item.nama_eselon1
+            label: item.nama_eselon1,
           }));
         setEselon1Options(opts);
       }
-    } catch (e) { console.error("Failed to fetch Eselon 1 options", e); }
+    } catch (e) {
+      console.error("Failed to fetch Eselon 1 options", e);
+    }
   };
 
   const fetchEselon2Options = async (e1Id) => {
@@ -673,7 +689,9 @@ function MasterDataSection() {
         }));
         setEselon2Options(opts);
       }
-    } catch (e) { console.error("Failed to fetch Eselon 2 options", e); }
+    } catch (e) {
+      console.error("Failed to fetch Eselon 2 options", e);
+    }
   };
 
   const fetchUptOptions = async (e1Id) => {
@@ -687,11 +705,16 @@ function MasterDataSection() {
         }));
         setUptOptions(opts);
       }
-    } catch (e) { console.error("Failed to fetch UPT options", e); }
+    } catch (e) {
+      console.error("Failed to fetch UPT options", e);
+    }
   };
 
   useEffect(() => {
-    if ((activeTab === "pic_internal" || activeTab === "pic_eksternal") && formData.eselon1_id) {
+    if (
+      (activeTab === "pic_internal" || activeTab === "pic_eksternal") &&
+      formData.eselon1_id
+    ) {
       fetchEselon2Options(formData.eselon1_id);
       fetchUptOptions(formData.eselon1_id);
     }
@@ -847,13 +870,15 @@ function MasterDataSection() {
               if (refData.success && refData.data) {
                 // Map data to dropdown options
                 // Smartly find the label column (contains 'nama', 'jenis', 'judul', 'kode', or use 2nd column)
-                const labelField = Object.keys(refData.data[0]).find(k =>
-                  k !== fkInfo.referencedColumn &&
-                  k !== 'created_at' &&
-                  k !== 'updated_at' &&
-                  k !== 'status_aktif' &&
-                  /nama|jenis|judul|kode|email/i.test(k)
-                ) || Object.keys(refData.data[0])[1];
+                const labelField =
+                  Object.keys(refData.data[0]).find(
+                    (k) =>
+                      k !== fkInfo.referencedColumn &&
+                      k !== "created_at" &&
+                      k !== "updated_at" &&
+                      k !== "status_aktif" &&
+                      /nama|jenis|judul|kode|email/i.test(k),
+                  ) || Object.keys(refData.data[0])[1];
 
                 const options = refData.data.map((row) => ({
                   value: row[fkInfo.referencedColumn],
@@ -929,7 +954,10 @@ function MasterDataSection() {
       let url = `${API_BASE}?type=${activeTab}`;
 
       // Filter logic
-      if ((activeTab === "eselon2" || activeTab === "upt") && selectedEselon1Filter) {
+      if (
+        (activeTab === "eselon2" || activeTab === "upt") &&
+        selectedEselon1Filter
+      ) {
         url += `&eselon1_id=${selectedEselon1Filter}`;
       }
       console.log("Fetching Master Data URL:", url);
@@ -944,8 +972,6 @@ function MasterDataSection() {
       setLoading(false);
     }
   };
-
-
 
   const fetchHierarchicalFields = async () => {
     try {
@@ -1139,8 +1165,10 @@ function MasterDataSection() {
 
   // Derived states for Select All checkbox
   const allLeafIds = getAllLeafIds(hierarchicalFields);
-  const isAllSelected = allLeafIds.length > 0 && allLeafIds.every(id => selectedFieldIds.includes(id));
-  const isAnySelected = allLeafIds.some(id => selectedFieldIds.includes(id));
+  const isAllSelected =
+    allLeafIds.length > 0 &&
+    allLeafIds.every((id) => selectedFieldIds.includes(id));
+  const isAnySelected = allLeafIds.some((id) => selectedFieldIds.includes(id));
   const isIndeterminate = isAnySelected && !isAllSelected;
 
   const toggleSelectAllHierarchicalFields = () => {
@@ -1234,7 +1262,9 @@ function MasterDataSection() {
           const u = JSON.parse(userStr);
           if (u.user_id) currentUserId = u.user_id;
           else if (u.id) currentUserId = u.id;
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       if (currentUserId) {
@@ -1324,9 +1354,7 @@ function MasterDataSection() {
         // Get from form fields definition to ensure it matches the form exactly
         return dynamicFormFields
           .map((f) => f.name)
-          .filter(
-            (name) => name !== "created_by" && name !== "updated_by",
-          );
+          .filter((name) => name !== "created_by" && name !== "updated_by");
       }
       // Fallback if form fields not loaded yet but data is
       if (data.length > 0) {
@@ -1363,19 +1391,19 @@ function MasterDataSection() {
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
               style={{
-                width: "48px",
-                height: "48px",
+                width: "40px",
+                height: "40px",
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                borderRadius: "12px",
+                borderRadius: "10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
               }}
             >
               <svg
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#ffffff"
@@ -1392,10 +1420,15 @@ function MasterDataSection() {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "28px",
+                  marginBottom: "2px",
+                  fontSize: "18px",
                   fontWeight: 700,
-                  color: "#1e293b",
-                  letterSpacing: "-0.02em",
+                  background:
+                    "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.2,
                 }}
               >
                 Master Data
@@ -1404,8 +1437,9 @@ function MasterDataSection() {
                 style={{
                   margin: 0,
                   color: "#64748b",
-                  fontSize: "14px",
-                  marginTop: "2px",
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  lineHeight: 1.3,
                 }}
               >
                 Kelola data referensi sistem
@@ -1830,8 +1864,12 @@ function MasterDataSection() {
                 }}
               >
                 {columns.map((col) => {
-                  const fieldDef = dynamicFormFields.find((f) => f.name === col);
-                  const label = fieldDef ? fieldDef.label : formatColumnHeader(col);
+                  const fieldDef = dynamicFormFields.find(
+                    (f) => f.name === col,
+                  );
+                  const label = fieldDef
+                    ? fieldDef.label
+                    : formatColumnHeader(col);
                   return (
                     <th
                       key={col}
@@ -1866,269 +1904,289 @@ function MasterDataSection() {
             </thead>
             <tbody>
               {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
-              {(activeTab === "eselon2" || activeTab === "upt") && !selectedEselon1Filter ? (
-                (() => {
-                  // Group data
-                  const grouped = {};
-                  filteredData.forEach((item) => {
-                    const e1Id = item.eselon1_id;
-                    if (!grouped[e1Id]) grouped[e1Id] = [];
-                    grouped[e1Id].push(item);
-                  });
+              {(activeTab === "eselon2" || activeTab === "upt") &&
+              !selectedEselon1Filter
+                ? (() => {
+                    // Group data
+                    const grouped = {};
+                    filteredData.forEach((item) => {
+                      const e1Id = item.eselon1_id;
+                      if (!grouped[e1Id]) grouped[e1Id] = [];
+                      grouped[e1Id].push(item);
+                    });
 
-                  // Render groups
-                  return Object.keys(grouped).map((e1Id) => {
-                    // Find Eselon 1 Name
-                    const e1Name =
-                      eselon1Options.find((opt) => opt.value === parseInt(e1Id))
-                        ?.label || `Eselon 1 ID: ${e1Id}`;
+                    // Render groups
+                    return Object.keys(grouped).map((e1Id) => {
+                      // Find Eselon 1 Name
+                      const e1Name =
+                        eselon1Options.find(
+                          (opt) => opt.value === parseInt(e1Id),
+                        )?.label || `Eselon 1 ID: ${e1Id}`;
 
-                    return (
-                      <>
-                        {/* Group Header */}
-                        <tr
-                          key={`group-${e1Id}`}
-                          style={{
-                            backgroundColor: "#e0e7ff",
-                            borderBottom: "1px solid #c7d2fe",
-                          }}
-                        >
-                          <td
-                            colSpan={columns.length + 1}
-                            style={{
-                              padding: "10px 14px",
-                              fontWeight: 700,
-                              color: "#3730a3",
-                              fontSize: "13px",
-                            }}
-                          >
-                            {e1Name}
-                          </td>
-                        </tr>
-                        {/* Items in group */}
-                        {grouped[e1Id].map((item, index) => (
+                      return (
+                        <>
+                          {/* Group Header */}
                           <tr
-                            key={getRowId(item) ?? index}
+                            key={`group-${e1Id}`}
                             style={{
-                              borderBottom: "1px solid #f1f5f9",
-                              backgroundColor: "#ffffff",
-                              transition: "all 0.2s",
-                              height: "50px",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f0f9ff";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#ffffff";
+                              backgroundColor: "#e0e7ff",
+                              borderBottom: "1px solid #c7d2fe",
                             }}
                           >
-                            {columns.map((col) => (
-                              <td
-                                key={`${getRowId(item)}-${col}`}
-                                className={col === "email_pic" ? "allow-lowercase" : ""}
-                                style={{
-                                  padding: "10px 14px",
-                                  color: "#334155",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {col === "status_aktif" ? (
-                                  <span
-                                    onClick={() => {
-                                      // Toggle status logic
-                                      const currentStatus = item.status_aktif === 1 || item.status_aktif === true;
-                                      handleToggleStatus(item, !currentStatus);
-                                    }}
-                                    style={{
-                                      backgroundColor: getStatusColor(
-                                        item[col],
-                                      ).bg,
-                                      color: getStatusColor(item[col]).text,
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      fontSize: "11px",
-                                      fontWeight: 600,
-                                      cursor: "pointer",
-                                      display: "inline-block",
-                                    }}
-                                  >
-                                    {getStatusColor(item[col]).label}
-                                  </span>
-                                ) : (
-                                  item[col]
-                                )}
-                              </td>
-                            ))}
-                            <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "8px",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                <button
-                                  onClick={() => handleEdit(item)}
-                                  style={{
-                                    padding: "6px 14px",
-                                    background:
-                                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    fontSize: "11px",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "5px",
-                                    boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.target.style.transform = "translateY(-1px)";
-                                    e.target.style.boxShadow =
-                                      "0 4px 10px rgba(245, 158, 11, 0.35)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.target.style.transform = "translateY(0)";
-                                    e.target.style.boxShadow =
-                                      "0 2px 6px rgba(245, 158, 11, 0.25)";
-                                  }}
-                                >
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                  </svg>
-                                  Edit
-                                </button>
-                              </div>
+                            <td
+                              colSpan={columns.length + 1}
+                              style={{
+                                padding: "10px 14px",
+                                fontWeight: 700,
+                                color: "#3730a3",
+                                fontSize: "13px",
+                              }}
+                            >
+                              {e1Name}
                             </td>
                           </tr>
-                        ))}
-                      </>
-                    );
-                  });
-                })()
-              ) : (
-                filteredData.map((item, index) => (
-                  <tr
-                    key={getRowId(item) ?? index}
-                    style={{
-                      borderBottom: "1px solid #f1f5f9",
-                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#fafbfc",
-                      transition: "all 0.2s",
-                      height: "50px",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f0f9ff";
-                      e.currentTarget.style.transform = "scale(1.001)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        index % 2 === 0 ? "#ffffff" : "#fafbfc";
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td
-                        key={`${getRowId(item)}-${col}`}
-                        className={col === "email_pic" ? "allow-lowercase" : ""}
-                        style={{
-                          padding: "10px 14px",
-                          color: "#334155",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {col === "status_aktif" ? (
-                          <span
-                            style={{
-                              backgroundColor: getStatusColor(item[col]).bg,
-                              color: getStatusColor(item[col]).text,
-                              padding: "4px 10px",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: 600,
-                              display: "inline-block",
-                            }}
-                          >
-                            {getStatusColor(item[col]).label}
-                          </span>
-                        ) : fkDropdownData[col] ? (
-                          fkDropdownData[col].find(
-                            (opt) =>
-                              String(opt.value) === String(item[col]),
-                          )?.label || item[col]
-                        ) : (
-                          item[col]
-                        )}
-                      </td>
-                    ))}
-                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <button
-                          onClick={() => handleEdit(item)}
+                          {/* Items in group */}
+                          {grouped[e1Id].map((item, index) => (
+                            <tr
+                              key={getRowId(item) ?? index}
+                              style={{
+                                borderBottom: "1px solid #f1f5f9",
+                                backgroundColor: "#ffffff",
+                                transition: "all 0.2s",
+                                height: "50px",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#f0f9ff";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#ffffff";
+                              }}
+                            >
+                              {columns.map((col) => (
+                                <td
+                                  key={`${getRowId(item)}-${col}`}
+                                  className={
+                                    col === "email_pic" ? "allow-lowercase" : ""
+                                  }
+                                  style={{
+                                    padding: "10px 14px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  {col === "status_aktif" ? (
+                                    <span
+                                      onClick={() => {
+                                        // Toggle status logic
+                                        const currentStatus =
+                                          item.status_aktif === 1 ||
+                                          item.status_aktif === true;
+                                        handleToggleStatus(
+                                          item,
+                                          !currentStatus,
+                                        );
+                                      }}
+                                      style={{
+                                        backgroundColor: getStatusColor(
+                                          item[col],
+                                        ).bg,
+                                        color: getStatusColor(item[col]).text,
+                                        padding: "4px 10px",
+                                        borderRadius: "6px",
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                        display: "inline-block",
+                                      }}
+                                    >
+                                      {getStatusColor(item[col]).label}
+                                    </span>
+                                  ) : (
+                                    item[col]
+                                  )}
+                                </td>
+                              ))}
+                              <td
+                                style={{
+                                  padding: "10px 14px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "8px",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    style={{
+                                      padding: "6px 14px",
+                                      background:
+                                        "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      transition: "all 0.2s",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      boxShadow:
+                                        "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.target.style.transform =
+                                        "translateY(-1px)";
+                                      e.target.style.boxShadow =
+                                        "0 4px 10px rgba(245, 158, 11, 0.35)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.target.style.transform =
+                                        "translateY(0)";
+                                      e.target.style.boxShadow =
+                                        "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                    }}
+                                  >
+                                    <svg
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      );
+                    });
+                  })()
+                : filteredData.map((item, index) => (
+                    <tr
+                      key={getRowId(item) ?? index}
+                      style={{
+                        borderBottom: "1px solid #f1f5f9",
+                        backgroundColor:
+                          index % 2 === 0 ? "#ffffff" : "#fafbfc",
+                        transition: "all 0.2s",
+                        height: "50px",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f0f9ff";
+                        e.currentTarget.style.transform = "scale(1.001)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor =
+                          index % 2 === 0 ? "#ffffff" : "#fafbfc";
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      {columns.map((col) => (
+                        <td
+                          key={`${getRowId(item)}-${col}`}
+                          className={
+                            col === "email_pic" ? "allow-lowercase" : ""
+                          }
                           style={{
-                            padding: "6px 14px",
-                            background:
-                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                            color: "#ffffff",
-                            border: "none",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.transform = "translateY(-1px)";
-                            e.target.style.boxShadow =
-                              "0 4px 10px rgba(245, 158, 11, 0.35)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.transform = "translateY(0)";
-                            e.target.style.boxShadow =
-                              "0 2px 6px rgba(245, 158, 11, 0.25)";
+                            padding: "10px 14px",
+                            color: "#334155",
+                            fontWeight: 500,
                           }}
                         >
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                          {col === "status_aktif" ? (
+                            <span
+                              style={{
+                                backgroundColor: getStatusColor(item[col]).bg,
+                                color: getStatusColor(item[col]).text,
+                                padding: "4px 10px",
+                                borderRadius: "6px",
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                display: "inline-block",
+                              }}
+                            >
+                              {getStatusColor(item[col]).label}
+                            </span>
+                          ) : fkDropdownData[col] ? (
+                            fkDropdownData[col].find(
+                              (opt) => String(opt.value) === String(item[col]),
+                            )?.label || item[col]
+                          ) : (
+                            item[col]
+                          )}
+                        </td>
+                      ))}
+                      <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <button
+                            onClick={() => handleEdit(item)}
+                            style={{
+                              padding: "6px 14px",
+                              background:
+                                "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                              color: "#ffffff",
+                              border: "none",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.transform = "translateY(-1px)";
+                              e.target.style.boxShadow =
+                                "0 4px 10px rgba(245, 158, 11, 0.35)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.transform = "translateY(0)";
+                              e.target.style.boxShadow =
+                                "0 2px 6px rgba(245, 158, 11, 0.25)";
+                            }}
                           >
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                          </svg>
-                          Edit
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )))}
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Edit
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
             </tbody>
           </table>
         </div>
@@ -2303,11 +2361,19 @@ function MasterDataSection() {
                         >
                           Daftar Data
                         </label>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
                           <input
                             type="checkbox"
                             checked={isAllSelected}
-                            ref={(el) => el && (el.indeterminate = isIndeterminate)}
+                            ref={(el) =>
+                              el && (el.indeterminate = isIndeterminate)
+                            }
                             onChange={toggleSelectAllHierarchicalFields}
                             style={{
                               cursor: "pointer",
@@ -2557,8 +2623,9 @@ function MasterDataSection() {
               ) : (
                 // Standard Dynamic Form
                 (() => {
-                  const isDynamic = tabs.find((t) => t.key === activeTab)
-                    ?.isDynamic;
+                  const isDynamic = tabs.find(
+                    (t) => t.key === activeTab,
+                  )?.isDynamic;
                   const fields = isDynamic
                     ? dynamicFormFields
                     : FORM_FIELDS[activeTab] || [];
@@ -2758,246 +2825,245 @@ function MasterDataSection() {
                 </button>
               </div>
             </form>
-          </div >
-        </div >
-      )
-      }
+          </div>
+        </div>
+      )}
       {/* Confirmation Modal */}
-      {
-        showConfirm && (
+      {showConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1100,
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
           <div
             style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(4px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1100,
-              animation: "fadeIn 0.2s ease",
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "400px",
+              textAlign: "center",
+              boxShadow:
+                "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              animation: "slideUp 0.3s ease",
             }}
           >
             <div
               style={{
-                backgroundColor: "#fff",
-                borderRadius: "16px",
-                padding: "32px",
-                width: "100%",
-                maxWidth: "400px",
-                textAlign: "center",
-                boxShadow:
-                  "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-                animation: "slideUp 0.3s ease",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px",
               }}
             >
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  backgroundColor: "#fef3c7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                }}
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#d97706"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  width="30"
-                  height="30"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#d97706"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </div>
-              <h3
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#1e293b",
+              }}
+            >
+              Konfirmasi
+            </h3>
+            <p
+              style={{
+                margin: "0 0 28px",
+                color: "#64748b",
+                fontSize: "15px",
+                lineHeight: "1.5",
+              }}
+            >
+              {editingItem
+                ? "Apakah anda yakin ingin memperbarui data?"
+                : "Apakah data yang diisi sudah benar?"}
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={handleConfirmSave}
                 style={{
-                  margin: "0 0 12px",
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#1e293b",
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#4f46e5",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#4338ca")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#4f46e5")
+                }
               >
-                Konfirmasi
-              </h3>
-              <p
+                Ya
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
                 style={{
-                  margin: "0 0 28px",
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#f1f5f9",
                   color: "#64748b",
-                  fontSize: "15px",
-                  lineHeight: "1.5",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#e2e8f0")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#f1f5f9")
+                }
               >
-                {editingItem
-                  ? "Apakah anda yakin ingin memperbarui data?"
-                  : "Apakah data yang diisi sudah benar?"}
-              </p>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button
-                  onClick={handleConfirmSave}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    backgroundColor: "#4f46e5",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#4338ca")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#4f46e5")
-                  }
-                >
-                  Ya
-                </button>
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#64748b",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#e2e8f0")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#f1f5f9")
-                  }
-                >
-                  Tidak
-                </button>
-              </div>
+                Tidak
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* --- Success Popup matching Image --- */}
-      {
-        showSuccess && (
+      {showSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
           <div
             style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
+              backgroundColor: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "450px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
             }}
           >
+            {/* Green Checkmark Icon */}
             <div
               style={{
-                backgroundColor: "white",
-                padding: "40px",
-                borderRadius: "12px",
-                width: "100%",
-                maxWidth: "450px",
-                textAlign: "center",
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-                position: "relative",
+                width: "80px",
+                height: "80px",
+                backgroundColor: "#f0fdf4",
+                borderRadius: "50%",
+                border: "2px solid #dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 24px",
               }}
             >
-              {/* Green Checkmark Icon */}
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  backgroundColor: "#f0fdf4",
-                  borderRadius: "50%",
-                  border: "2px solid #dcfce7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 24px",
-                }}
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
 
-              <h2
-                style={{
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  color: "#475569",
-                  margin: "0 0 12px",
-                }}
-              >
-                Berhasil!
-              </h2>
-              <p
-                style={{
-                  fontSize: "16px",
-                  color: "#94a3b8",
-                  margin: "0 0 32px",
-                  lineHeight: "1.5",
-                }}
-              >
-                {successMessage}
-              </p>
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+                color: "#475569",
+                margin: "0 0 12px",
+              }}
+            >
+              Berhasil!
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#94a3b8",
+                margin: "0 0 32px",
+                lineHeight: "1.5",
+              }}
+            >
+              {successMessage}
+            </p>
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  onClick={() => setShowSuccess(false)}
-                  style={{
-                    padding: "10px 28px",
-                    backgroundColor: "#7dd3fc",
-                    color: "white",
-                    border: "2px solid #bae6fd",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                  }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#38bdf8")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#7dd3fc")}
-                >
-                  OK
-                </button>
-              </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSuccess(false)}
+                style={{
+                  padding: "10px 28px",
+                  backgroundColor: "#7dd3fc",
+                  color: "white",
+                  border: "2px solid #bae6fd",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#38bdf8")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#7dd3fc")
+                }
+              >
+                OK
+              </button>
             </div>
           </div>
-        )
-      }
-    </section >
+        </div>
+      )}
+    </section>
   );
 }
 

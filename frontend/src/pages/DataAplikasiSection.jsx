@@ -984,21 +984,21 @@ function DataAplikasiSection() {
           alignItems: "center",
           justifyContent: "space-between",
           marginBottom: "20px",
-          padding: "18px 22px",
+          padding: "14px 18px",
           background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-          borderRadius: "14px",
+          borderRadius: "12px",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div
             style={{
-              width: "48px",
-              height: "48px",
+              width: "40px",
+              height: "40px",
               background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-              borderRadius: "12px",
+              borderRadius: "10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1006,8 +1006,8 @@ function DataAplikasiSection() {
             }}
           >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -1055,13 +1055,13 @@ function DataAplikasiSection() {
             <h1
               style={{
                 margin: 0,
-                marginBottom: "3px",
-                fontSize: "20px",
+                marginBottom: "2px",
+                fontSize: "18px",
                 fontWeight: 700,
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                letterSpacing: "-0.02em",
+                letterSpacing: "-0.01em",
                 lineHeight: 1.2,
               }}
             >
@@ -1071,7 +1071,7 @@ function DataAplikasiSection() {
               style={{
                 margin: 0,
                 color: "#64748b",
-                fontSize: "12.5px",
+                fontSize: "11px",
                 fontWeight: 500,
                 lineHeight: 1.3,
               }}
