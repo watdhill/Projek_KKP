@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import kkpLogo from "../assets/kkp.png";
+import PixelBlast from "../components/PixelBlast";
 
 const roleHome = {
   admin: "/admin",
@@ -49,31 +50,47 @@ function LoginPage() {
     const canvas = captchaCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     // Background
     ctx.fillStyle = "#2196f3";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw each digit with random position/rotation
+
+    // Set text properties
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+
+    // Draw each digit
     for (let i = 0; i < captcha.length; i++) {
-      const x = 18 + i * 32 + getRandomInt(-4, 4);
-      const y = 38 + getRandomInt(-6, 6);
       ctx.save();
+
+      const x = 12 + i * 20;
+      const y = 22;
+
       ctx.translate(x, y);
-      ctx.rotate((getRandomInt(-15, 15) * Math.PI) / 180);
-      ctx.font = "32px Pacifico, Caveat, cursive";
-      ctx.fillStyle = "#fff";
-      ctx.shadowColor = "#1565c0";
-      ctx.shadowBlur = 4;
+      ctx.rotate((getRandomInt(-8, 8) * Math.PI) / 180);
+
+      ctx.font = "bold 20px Arial, Helvetica, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#1565c0";
+      ctx.lineWidth = 0.5;
+
       ctx.fillText(captcha[i], 0, 0);
+      ctx.strokeText(captcha[i], 0, 0);
+
       ctx.restore();
     }
-    // Optionally add some lines/noise
-    for (let i = 0; i < 3; i++) {
-      ctx.strokeStyle = "rgba(255,255,255,0.3)";
+
+    // Add noise lines
+    ctx.strokeStyle = "rgba(255,255,255,0.4)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 2; i++) {
       ctx.beginPath();
-      ctx.moveTo(getRandomInt(0, 180), getRandomInt(0, 60));
-      ctx.lineTo(getRandomInt(0, 180), getRandomInt(0, 60));
+      ctx.moveTo(getRandomInt(0, 130), getRandomInt(0, 45));
+      ctx.lineTo(getRandomInt(0, 130), getRandomInt(0, 45));
       ctx.stroke();
     }
   }, [captcha]);
@@ -191,19 +208,47 @@ function LoginPage() {
           padding: "20px",
           fontFamily:
             '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* PixelBlast Background */}
+        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 0 }}>
+          <PixelBlast
+            variant="square"
+            pixelSize={4}
+            color="#285dc8"
+            patternScale={2.75}
+            patternDensity={1}
+            pixelSizeJitter={0}
+            enableRipples
+            rippleSpeed={0.4}
+            rippleThickness={0.12}
+            rippleIntensityScale={1.5}
+            liquid={false}
+            liquidStrength={0.12}
+            liquidRadius={1.2}
+            liquidWobbleSpeed={5}
+            speed={0.5}
+            edgeFade={0.25}
+            transparent
+          />
+        </div>
+        
+        {/* Login Card */}
         <div
           style={{
             width: "100%",
-            maxWidth: "900px",
+            maxWidth: "650px",
             backgroundColor: "#ffffff",
-            borderRadius: "24px",
+            borderRadius: "16px",
             display: "flex",
             flexDirection: "row",
             overflow: "hidden",
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.1)",
-            minHeight: "540px",
+            minHeight: "420px",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {/* Left Side: Logo */}
@@ -214,7 +259,7 @@ function LoginPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              padding: "40px",
+              padding: "25px",
               borderRight: "1px solid #f1f5f9",
             }}
           >
@@ -223,7 +268,7 @@ function LoginPage() {
               alt="KKP Logo"
               style={{
                 width: "100%",
-                maxWidth: "320px",
+                maxWidth: "150px",
                 height: "auto",
                 objectFit: "contain",
               }}
@@ -235,13 +280,13 @@ function LoginPage() {
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
-              padding: "60px 50px",
+              padding: "35px 30px",
             }}
           >
-            <div style={{ marginBottom: "40px" }}>
+            <div style={{ marginBottom: "24px" }}>
               <h1
                 style={{
-                  fontSize: "22px",
+                  fontSize: "18px",
                   fontWeight: "700",
                   color: "#1e293b",
                   margin: "0",
@@ -255,13 +300,13 @@ function LoginPage() {
             {error && (
               <div
                 style={{
-                  marginBottom: "24px",
-                  padding: "12px 16px",
+                  marginBottom: "18px",
+                  padding: "10px 14px",
                   backgroundColor: "#fef2f2",
                   border: "1px solid #fee2e2",
-                  borderRadius: "12px",
+                  borderRadius: "10px",
                   color: "#b91c1c",
-                  fontSize: "14px",
+                  fontSize: "13px",
                   fontWeight: "500",
                 }}
               >
@@ -270,7 +315,7 @@ function LoginPage() {
             )}
             <form onSubmit={handleSubmit}>
               {/* Email Input */}
-              <div style={{ marginBottom: "20px" }}>
+              <div style={{ marginBottom: "16px" }}>
                 <label
                   style={{
                     display: "block",
@@ -290,11 +335,11 @@ function LoginPage() {
                   placeholder="nama@kkp.go.id"
                   style={{
                     width: "100%",
-                    padding: "14px 18px",
+                    padding: "10px 14px",
                     backgroundColor: "#cbd5e180",
                     border: "none",
-                    borderRadius: "12px",
-                    fontSize: "15px",
+                    borderRadius: "10px",
+                    fontSize: "13px",
                     color: "#1e293b",
                     boxSizing: "border-box",
                     transition: "all 0.2s ease",
@@ -306,8 +351,8 @@ function LoginPage() {
                 <label
                   style={{
                     display: "block",
-                    marginBottom: "8px",
-                    fontSize: "14px",
+                    marginBottom: "6px",
+                    fontSize: "13px",
                     fontWeight: "500",
                     color: "#64748b",
                   }}
@@ -323,12 +368,12 @@ function LoginPage() {
                     placeholder="Masukkan password"
                     style={{
                       width: "100%",
-                      padding: "14px 18px",
+                      padding: "10px 14px",
                       paddingRight: "46px",
                       backgroundColor: "#cbd5e180",
                       border: "none",
-                      borderRadius: "12px",
-                      fontSize: "15px",
+                      borderRadius: "10px",
+                      fontSize: "13px",
                       color: "#1e293b",
                       boxSizing: "border-box",
                       transition: "all 0.2s ease",
@@ -373,14 +418,14 @@ function LoginPage() {
                   Captcha <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
                   <canvas
                     ref={captchaCanvasRef}
-                    width={200}
-                    height={60}
+                    width={130}
+                    height={45}
                     style={{
-                      borderRadius: "6px",
+                      borderRadius: "5px",
                       background: "#2196f3",
                       display: "block",
                     }}
@@ -395,11 +440,11 @@ function LoginPage() {
                     required
                     placeholder="Masukkan angka di atas"
                     style={{
-                      width: "110px",
-                      padding: "9px 12px",
+                      width: "85px",
+                      padding: "8px 10px",
                       border: "1px solid #cbd5e1",
-                      borderRadius: "6px",
-                      fontSize: "13px",
+                      borderRadius: "5px",
+                      fontSize: "12px",
                       boxSizing: "border-box",
                       textAlign: "center",
                     }}
@@ -408,11 +453,11 @@ function LoginPage() {
                     type="button"
                     onClick={regenerateCaptcha}
                     style={{
-                      padding: "7px 10px",
+                      padding: "6px 8px",
                       border: "1px solid #cbd5e1",
                       background: "#f8fafc",
                       color: "#475569",
-                      borderRadius: "6px",
+                      borderRadius: "5px",
                       cursor: "pointer",
                     }}
                     title="Ganti angka"
@@ -433,12 +478,12 @@ function LoginPage() {
                 )}
               </div>
               {/* Forgot Password Link */}
-              <div style={{ marginBottom: "32px", textAlign: "left" }}>
+              <div style={{ marginBottom: "20px", textAlign: "left" }}>
                 <span
                   onClick={() => navigate("/forgot-password")}
                   style={{
                     color: "#00a8e8",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     textDecoration: "underline",
                     fontWeight: "500",
                     cursor: "pointer",
@@ -453,12 +498,12 @@ function LoginPage() {
                 disabled={loading}
                 style={{
                   width: "100%",
-                  padding: "14px",
+                  padding: "10px",
                   backgroundColor: loading ? "#94a3b8" : "#00a8e8",
                   color: "#ffffff",
                   border: "none",
-                  borderRadius: "12px",
-                  fontSize: "16px",
+                  borderRadius: "10px",
+                  fontSize: "14px",
                   fontWeight: "600",
                   cursor: loading ? "not-allowed" : "pointer",
                   transition: "all 0.2s ease",
