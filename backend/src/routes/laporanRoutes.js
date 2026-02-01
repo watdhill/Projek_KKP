@@ -5,6 +5,9 @@ const laporanController = require('../controllers/laporanController');
 // Get all format laporan
 router.get('/format-laporan', laporanController.getAllFormatLaporan);
 
+// Get format fields for preview
+router.get('/format-fields', laporanController.getFormatFieldsForPreview);
+
 // Get preview data with filters
 router.get('/preview', laporanController.getPreviewData);
 

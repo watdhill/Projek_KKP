@@ -6,10 +6,10 @@ function LaporanSection() {
   const [eselon1List, setEselon1List] = useState([]);
   const [eselon2List, setEselon2List] = useState([]);
   const [statusList, setStatusList] = useState([]);
+  const [formatFields, setFormatFields] = useState([]);
 
   const [filters, setFilters] = useState({
-    format_laporan_id: "all",
-    tahun: "all",
+    format_laporan_id: "",
     status: "all",
     eselon1_id: "all",
     eselon2_id: "all",
@@ -21,7 +21,7 @@ function LaporanSection() {
 
   useEffect(() => {
     fetchDropdownData();
-    fetchPreviewData();
+    // Don't fetch preview data on initial load - wait for user to select format
   }, []);
 
   useEffect(() => {
@@ -32,6 +32,15 @@ function LaporanSection() {
       setFilters((prev) => ({ ...prev, eselon2_id: "all" }));
     }
   }, [filters.eselon1_id]);
+
+  // Fetch format fields when format changes
+  useEffect(() => {
+    if (filters.format_laporan_id) {
+      fetchFormatFields(filters.format_laporan_id);
+    } else {
+      setFormatFields([]);
+    }
+  }, [filters.format_laporan_id]);
 
   const fetchDropdownData = async () => {
     try {
@@ -76,7 +85,28 @@ function LaporanSection() {
     }
   };
 
+  const fetchFormatFields = async (formatId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/laporan/format-fields?format_laporan_id=${formatId}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setFormatFields(data.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching format fields:", err);
+    }
+  };
+
   const fetchPreviewData = async () => {
+    // Don't fetch if no format is selected
+    if (!filters.format_laporan_id) {
+      setPreviewData([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
@@ -111,39 +141,18 @@ function LaporanSection() {
   };
 
   const handleExport = (format) => {
-    const params = new URLSearchParams();
-
-    // Determine if exporting all formats or single format
-    const isExportAll =
-      !filters.format_laporan_id || filters.format_laporan_id === "all";
-
-    // Only add format_laporan_id if a specific format is selected
-    if (!isExportAll) {
-      params.append("format_laporan_id", filters.format_laporan_id);
+    // Validate format selection
+    if (!filters.format_laporan_id) {
+      alert('Silakan pilih format laporan terlebih dahulu');
+      return;
     }
 
-    // Add other filters
-    if (filters.tahun && filters.tahun !== "all")
-      params.append("tahun", filters.tahun);
-    if (filters.status && filters.status !== "all")
-      params.append("status", filters.status);
-    if (filters.eselon1_id && filters.eselon1_id !== "all")
-      params.append("eselon1_id", filters.eselon1_id);
-    if (filters.eselon2_id && filters.eselon2_id !== "all")
-      params.append("eselon2_id", filters.eselon2_id);
-
-    // Use appropriate endpoint based on selection
-    const endpoint = isExportAll ? `${format}-all` : format;
-    const url = `http://localhost:5000/api/laporan/export/${endpoint}?${params.toString()}`;
-    window.open(url, "_blank");
-  };
-
-  const handleExportAll = (format) => {
     const params = new URLSearchParams();
 
-    // Add filters (no format_laporan_id for export all)
-    if (filters.tahun && filters.tahun !== "all")
-      params.append("tahun", filters.tahun);
+    // Add format_laporan_id (required)
+    params.append("format_laporan_id", filters.format_laporan_id);
+
+    // Add other filters
     if (filters.status && filters.status !== "all")
       params.append("status", filters.status);
     if (filters.eselon1_id && filters.eselon1_id !== "all")
@@ -151,19 +160,10 @@ function LaporanSection() {
     if (filters.eselon2_id && filters.eselon2_id !== "all")
       params.append("eselon2_id", filters.eselon2_id);
 
-    const url = `http://localhost:5000/api/laporan/export/${format}-all?${params.toString()}`;
+    const url = `http://localhost:5000/api/laporan/export/${format}?${params.toString()}`;
     window.open(url, "_blank");
   };
 
-  const currentYear = new Date().getFullYear();
-  const years = [
-    "all",
-    currentYear,
-    currentYear - 1,
-    currentYear - 2,
-    currentYear - 3,
-    currentYear - 4,
-  ];
 
   return (
     <section
@@ -357,63 +357,13 @@ function LaporanSection() {
                   "0 1px 2px rgba(0, 0, 0, 0.04)";
               }}
             >
-              <option value="all">Semua Format</option>
+              <option value="">-- Pilih Format --</option>
               {formatLaporan.map((format) => (
                 <option
                   key={format.format_laporan_id}
                   value={format.format_laporan_id}
                 >
                   {format.nama_format}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Tahun */}
-          <div>
-            <label
-              style={{
-                display: "block",
-                marginBottom: "6px",
-                fontSize: "11px",
-                fontWeight: 700,
-                color: "#475569",
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Tahun
-            </label>
-            <select
-              value={filters.tahun}
-              onChange={(e) => handleFilterChange("tahun", e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                border: "1.5px solid #e2e8f0",
-                fontSize: "12px",
-                fontWeight: 500,
-                color: "#1e293b",
-                backgroundColor: "#ffffff",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#6366f1";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(99, 102, 241, 0.1)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
-                e.currentTarget.style.boxShadow =
-                  "0 1px 2px rgba(0, 0, 0, 0.04)";
-              }}
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year === "all" ? "Semua Tahun" : year}
                 </option>
               ))}
             </select>
@@ -811,48 +761,7 @@ function LaporanSection() {
           </div>
         )}
 
-        {filters.format_laporan_id === "all" ? (
-          <div
-            style={{
-              padding: "40px 20px",
-              textAlign: "center",
-              background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-              borderRadius: "10px",
-              border: "2px dashed #cbd5e1",
-            }}
-          >
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#94a3b8"
-              strokeWidth="1.5"
-              style={{ marginBottom: "12px", margin: "0 auto" }}
-            >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-            <p
-              style={{
-                margin: 0,
-                marginTop: "12px",
-                fontSize: "13px",
-                color: "#64748b",
-                lineHeight: "1.6",
-                fontWeight: 500,
-              }}
-            >
-              Preview tidak tersedia untuk "Semua Format".
-              <br />
-              Pilih format spesifik untuk melihat preview, atau langsung export
-              untuk mendapatkan semua format.
-            </p>
-          </div>
-        ) : loading ? (
+        {loading ? (
           <div style={{ padding: "50px", textAlign: "center" }}>
             <div
               style={{
@@ -879,6 +788,52 @@ function LaporanSection() {
               />
               Memuat data...
             </div>
+          </div>
+        ) : !filters.format_laporan_id ? (
+          <div
+            style={{
+              padding: "50px 20px",
+              textAlign: "center",
+              background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+              borderRadius: "10px",
+              border: "2px dashed #fbbf24",
+            }}
+          >
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#f59e0b"
+              strokeWidth="1.5"
+              style={{ marginBottom: "12px", margin: "0 auto" }}
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p
+              style={{
+                margin: 0,
+                marginTop: "12px",
+                fontSize: "13px",
+                color: "#92400e",
+                fontWeight: 600,
+              }}
+            >
+              Silakan pilih format laporan terlebih dahulu
+            </p>
+            <p
+              style={{
+                margin: 0,
+                marginTop: "6px",
+                fontSize: "12px",
+                color: "#b45309",
+                fontWeight: 500,
+              }}
+            >
+              Preview data akan ditampilkan setelah Anda memilih format
+            </p>
           </div>
         ) : previewData.length === 0 ? (
           <div
@@ -927,6 +882,7 @@ function LaporanSection() {
               >
                 <thead>
                   <tr>
+                    {/* Always show basic columns first */}
                     <th
                       style={{
                         padding: "10px 12px",
@@ -955,7 +911,7 @@ function LaporanSection() {
                         borderBottom: "none",
                       }}
                     >
-                      UNIT
+                      ESELON 1
                     </th>
                     <th
                       style={{
@@ -970,38 +926,35 @@ function LaporanSection() {
                         borderBottom: "none",
                       }}
                     >
-                      PIC
+                      ESELON 2
                     </th>
-                    <th
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "9px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        background: "transparent",
-                        borderBottom: "none",
-                      }}
-                    >
-                      STATUS APLIKASI
-                    </th>
-                    <th
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "9px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        background: "transparent",
-                        borderBottom: "none",
-                      }}
-                    >
-                      TANGGAL
-                    </th>
+
+                    {/* Dynamic columns from format fields */}
+                    {formatFields.map((field, idx) => {
+                      // Skip header-only fields (is_header = 1)
+                      if (field.is_header === 1 || !field.kode_field) {
+                        return null;
+                      }
+
+                      return (
+                        <th
+                          key={`header_${idx}`}
+                          style={{
+                            padding: "10px 12px",
+                            textAlign: "left",
+                            fontWeight: 700,
+                            color: "#475569",
+                            fontSize: "9px",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            background: "transparent",
+                            borderBottom: "none",
+                          }}
+                        >
+                          {field.nama_field || field.kode_field}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
@@ -1028,6 +981,7 @@ function LaporanSection() {
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
+                      {/* Basic columns */}
                       <td
                         style={{
                           padding: "10px 12px",
@@ -1053,7 +1007,7 @@ function LaporanSection() {
                           borderBottom: "1px solid #e2e8f0",
                         }}
                       >
-                        {item.unit || item.nama_eselon1 || "-"}
+                        {item.nama_eselon1 || "-"}
                       </td>
                       <td
                         style={{
@@ -1065,100 +1019,73 @@ function LaporanSection() {
                           borderBottom: "1px solid #e2e8f0",
                         }}
                       >
-                        {item.pic || "-"}
+                        {item.nama_eselon2 || "-"}
                       </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          borderTop: "1px solid #e2e8f0",
-                          borderBottom: "1px solid #e2e8f0",
-                        }}
-                      >
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            padding: "4px 10px",
-                            borderRadius: "16px",
-                            fontSize: "9px",
-                            fontWeight: 700,
-                            background:
-                              item.status_aplikasi
-                                ?.toLowerCase()
-                                .includes("aktif") &&
-                              !item.status_aplikasi
-                                ?.toLowerCase()
-                                .includes("tidak")
-                                ? "#d1fae5"
-                                : "#fee2e2",
-                            color:
-                              item.status_aplikasi
-                                ?.toLowerCase()
-                                .includes("aktif") &&
-                              !item.status_aplikasi
-                                ?.toLowerCase()
-                                .includes("tidak")
-                                ? "#065f46"
-                                : "#991b1b",
-                            border: `1.5px solid ${item.status_aplikasi?.toLowerCase().includes("aktif") && !item.status_aplikasi?.toLowerCase().includes("tidak") ? "#065f4620" : "#991b1b20"}`,
-                            letterSpacing: "0.03em",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {item.status_aplikasi || "Aktif"}
-                        </span>
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          color: "#64748b",
-                          fontSize: "10px",
-                          fontWeight: 500,
-                          borderTopRightRadius: "8px",
-                          borderBottomRightRadius: "8px",
-                          borderTop: "1px solid #e2e8f0",
-                          borderBottom: "1px solid #e2e8f0",
-                          borderRight: "1px solid #e2e8f0",
-                        }}
-                      >
-                        {item.tanggal_ditambahkan || "-"}
-                      </td>
+
+                      {/* Dynamic columns from format fields */}
+                      {formatFields.map((field, idx) => {
+                        // Skip header-only fields
+                        if (field.is_header === 1 || !field.kode_field) {
+                          return null;
+                        }
+
+                        const isLastField = idx === formatFields.length - 1;
+
+                        return (
+                          <td
+                            key={`data_${idx}`}
+                            style={{
+                              padding: "10px 12px",
+                              color: "#64748b",
+                              fontSize: "10px",
+                              fontWeight: 500,
+                              borderTop: "1px solid #e2e8f0",
+                              borderBottom: "1px solid #e2e8f0",
+                              borderRight: isLastField ? "1px solid #e2e8f0" : "none",
+                              borderTopRightRadius: isLastField ? "8px" : "0",
+                              borderBottomRightRadius: isLastField ? "8px" : "0",
+                            }}
+                          >
+                            {item[field.kode_field] || "-"}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
+            {/* Data count */}
             <div
               style={{
                 marginTop: "16px",
-                padding: "12px 16px",
-                background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+                padding: "10px 14px",
+                background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
                 borderRadius: "8px",
-                border: "1.5px solid #bfdbfe",
-                display: "flex",
+                border: "1px solid #e2e8f0",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "8px",
+                fontSize: "11px",
+                fontWeight: 600,
+                color: "#475569",
               }}
             >
               <svg
-                width="16"
-                height="16"
+                width="14"
+                height="14"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#1e40af"
+                stroke="currentColor"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
               </svg>
-              <span
-                style={{ color: "#1e40af", fontSize: "12px", fontWeight: 700 }}
-              >
-                Total: {previewData.length} aplikasi
-              </span>
+              Total: {previewData.length} aplikasi
             </div>
           </>
         )}
