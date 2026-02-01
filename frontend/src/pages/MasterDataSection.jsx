@@ -648,6 +648,14 @@ function MasterDataSection() {
   ]);
   const [hierarchicalFields, setHierarchicalFields] = useState([]);
   const [selectedFieldIds, setSelectedFieldIds] = useState([]);
+  // Click order tracking for individual fields (fields without parent)
+  const [individualFieldClickOrder, setIndividualFieldClickOrder] = useState({});
+  const [clickCounter, setClickCounter] = useState(0);
+
+  const [selectedEselon1, setSelectedEselon1] = useState("");
+  const [selectedEselon2, setSelectedEselon2] = useState("");
+  const [selectedUPT, setSelectedUPT] = useState("");
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [hierSearchTerm, setHierSearchTerm] = useState("");
@@ -1057,26 +1065,66 @@ function MasterDataSection() {
         selectedValues = [];
       }
 
-      const selectedItems = DATA_FIELD_OPTIONS.filter((opt) =>
-        selectedValues.includes(opt.value),
-      );
-      setSelectedDataFields(selectedItems);
-
-      const availableItems = DATA_FIELD_OPTIONS.filter(
-        (opt) => !selectedValues.includes(opt.value),
-      );
-      setAvailableDataFields(availableItems);
-
-      // Handle hierarchical fields from extra API data if available
-      // Fetch details for the specific item
+      // Fetch details FIRST to get order_index for correct sorting
       fetch(`${API_BASE}/${getRowId(item)}?type=format_laporan`)
         .then((res) => res.json())
         .then((result) => {
-          if (result.success && result.data.field_ids) {
-            setSelectedFieldIds(result.data.field_ids);
+          if (result.success) {
+            const fieldMap = {};
+            let maxOrder = 0;
+
+            if (result.data.field_details) {
+              result.data.field_details.forEach(d => {
+                if (d.order_index) {
+                  fieldMap[d.field_id] = d.order_index;
+                  if (d.order_index > maxOrder) maxOrder = d.order_index;
+                }
+              });
+            }
+
+            // Restore State
+            setIndividualFieldClickOrder(fieldMap);
+            setClickCounter(maxOrder);
+            if (result.data.field_ids) setSelectedFieldIds(result.data.field_ids);
+
+            // Generate options from Hierarchical Fields (Source of Truth)
+            const getAllOptions = (nodes) => {
+              let options = [];
+              nodes.forEach(node => {
+                options.push({ value: node.field_id, label: node.nama_field });
+                if (node.children && node.children.length > 0) {
+                  options = [...options, ...getAllOptions(node.children)];
+                }
+              });
+              return options;
+            };
+            const flatOptions = getAllOptions(hierarchicalFields);
+
+            // Set Selected Data Fields with SORTING based on restored order
+            const selectedItems = flatOptions.filter((opt) =>
+              selectedValues.includes(opt.value)
+            );
+
+            selectedItems.sort((a, b) => {
+              const orderA = fieldMap[a.value] || 999999;
+              const orderB = fieldMap[b.value] || 999999;
+              return orderA - orderB;
+            });
+
+            setSelectedDataFields(selectedItems);
+
+            const availableItems = flatOptions.filter(
+              (opt) => !selectedValues.includes(opt.value)
+            );
+            setAvailableDataFields(availableItems);
           }
         })
-        .catch((err) => console.error("Error fetching format details:", err));
+        .catch((err) => {
+          console.error("Error fetching format details:", err);
+          // Fallback
+          const selectedItems = []; // Safe fallback
+          setSelectedDataFields(selectedItems);
+        });
     }
 
     setShowModal(true);
@@ -1115,6 +1163,15 @@ function MasterDataSection() {
       setSelectedFieldIds((prev) =>
         prev.filter((id) => id !== node.field_id && !targetIds.includes(id)),
       );
+
+      // Remove from click order tracking for ALL fields
+      setIndividualFieldClickOrder((prev) => {
+        const newOrder = { ...prev };
+        delete newOrder[node.field_id];
+        // Also remove descendants
+        targetIds.forEach(id => delete newOrder[id]);
+        return newOrder;
+      });
     } else {
       // Select current node AND all descendants
       setSelectedFieldIds((prev) => {
@@ -1124,6 +1181,22 @@ function MasterDataSection() {
           if (!newIds.includes(id)) newIds.push(id);
         });
         return newIds;
+      });
+
+      // Track click order for ALL fields (including grouped fields)
+      // Backend will use this to position groups at first field's click order
+      setClickCounter((prev) => prev + 1);
+      setIndividualFieldClickOrder((prev) => {
+        const newOrder = { ...prev };
+        const newCount = clickCounter + 1;
+        newOrder[node.field_id] = newCount;
+
+        // Add all descendants too
+        targetIds.forEach(id => {
+          newOrder[id] = newCount;
+        });
+
+        return newOrder;
       });
     }
   };
@@ -1252,6 +1325,9 @@ function MasterDataSection() {
         const keys = selectedDataFields.map((f) => f.value);
         processedData.selected_fields = JSON.stringify(keys);
         processedData.field_ids = selectedFieldIds;
+        // Include click order for individual fields (fields without parent)
+        processedData.field_click_order = individualFieldClickOrder;
+        console.log('Submitting with click order:', individualFieldClickOrder);
       }
 
       // Inject user ID for audit
@@ -1905,288 +1981,288 @@ function MasterDataSection() {
             <tbody>
               {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
               {(activeTab === "eselon2" || activeTab === "upt") &&
-              !selectedEselon1Filter
+                !selectedEselon1Filter
                 ? (() => {
-                    // Group data
-                    const grouped = {};
-                    filteredData.forEach((item) => {
-                      const e1Id = item.eselon1_id;
-                      if (!grouped[e1Id]) grouped[e1Id] = [];
-                      grouped[e1Id].push(item);
-                    });
+                  // Group data
+                  const grouped = {};
+                  filteredData.forEach((item) => {
+                    const e1Id = item.eselon1_id;
+                    if (!grouped[e1Id]) grouped[e1Id] = [];
+                    grouped[e1Id].push(item);
+                  });
 
-                    // Render groups
-                    return Object.keys(grouped).map((e1Id) => {
-                      // Find Eselon 1 Name
-                      const e1Name =
-                        eselon1Options.find(
-                          (opt) => opt.value === parseInt(e1Id),
-                        )?.label || `Eselon 1 ID: ${e1Id}`;
+                  // Render groups
+                  return Object.keys(grouped).map((e1Id) => {
+                    // Find Eselon 1 Name
+                    const e1Name =
+                      eselon1Options.find(
+                        (opt) => opt.value === parseInt(e1Id),
+                      )?.label || `Eselon 1 ID: ${e1Id}`;
 
-                      return (
-                        <>
-                          {/* Group Header */}
-                          <tr
-                            key={`group-${e1Id}`}
+                    return (
+                      <>
+                        {/* Group Header */}
+                        <tr
+                          key={`group-${e1Id}`}
+                          style={{
+                            backgroundColor: "#e0e7ff",
+                            borderBottom: "1px solid #c7d2fe",
+                          }}
+                        >
+                          <td
+                            colSpan={columns.length + 1}
                             style={{
-                              backgroundColor: "#e0e7ff",
-                              borderBottom: "1px solid #c7d2fe",
+                              padding: "10px 14px",
+                              fontWeight: 700,
+                              color: "#3730a3",
+                              fontSize: "13px",
                             }}
                           >
-                            <td
-                              colSpan={columns.length + 1}
-                              style={{
-                                padding: "10px 14px",
-                                fontWeight: 700,
-                                color: "#3730a3",
-                                fontSize: "13px",
-                              }}
-                            >
-                              {e1Name}
-                            </td>
-                          </tr>
-                          {/* Items in group */}
-                          {grouped[e1Id].map((item, index) => (
-                            <tr
-                              key={getRowId(item) ?? index}
-                              style={{
-                                borderBottom: "1px solid #f1f5f9",
-                                backgroundColor: "#ffffff",
-                                transition: "all 0.2s",
-                                height: "50px",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "#f0f9ff";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "#ffffff";
-                              }}
-                            >
-                              {columns.map((col) => (
-                                <td
-                                  key={`${getRowId(item)}-${col}`}
-                                  className={
-                                    col === "email_pic" ? "allow-lowercase" : ""
-                                  }
-                                  style={{
-                                    padding: "10px 14px",
-                                    color: "#334155",
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {col === "status_aktif" ? (
-                                    <span
-                                      onClick={() => {
-                                        // Toggle status logic
-                                        const currentStatus =
-                                          item.status_aktif === 1 ||
-                                          item.status_aktif === true;
-                                        handleToggleStatus(
-                                          item,
-                                          !currentStatus,
-                                        );
-                                      }}
-                                      style={{
-                                        backgroundColor: getStatusColor(
-                                          item[col],
-                                        ).bg,
-                                        color: getStatusColor(item[col]).text,
-                                        padding: "4px 10px",
-                                        borderRadius: "6px",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                        display: "inline-block",
-                                      }}
-                                    >
-                                      {getStatusColor(item[col]).label}
-                                    </span>
-                                  ) : (
-                                    item[col]
-                                  )}
-                                </td>
-                              ))}
-                              <td
-                                style={{
-                                  padding: "10px 14px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: "8px",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <button
-                                    onClick={() => handleEdit(item)}
-                                    style={{
-                                      padding: "6px 14px",
-                                      background:
-                                        "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                                      color: "#ffffff",
-                                      border: "none",
-                                      borderRadius: "6px",
-                                      fontSize: "11px",
-                                      fontWeight: 700,
-                                      cursor: "pointer",
-                                      transition: "all 0.2s",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "5px",
-                                      boxShadow:
-                                        "0 2px 6px rgba(245, 158, 11, 0.25)",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.target.style.transform =
-                                        "translateY(-1px)";
-                                      e.target.style.boxShadow =
-                                        "0 4px 10px rgba(245, 158, 11, 0.35)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.target.style.transform =
-                                        "translateY(0)";
-                                      e.target.style.boxShadow =
-                                        "0 2px 6px rgba(245, 158, 11, 0.25)";
-                                    }}
-                                  >
-                                    <svg
-                                      width="12"
-                                      height="12"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                    Edit
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </>
-                      );
-                    });
-                  })()
-                : filteredData.map((item, index) => (
-                    <tr
-                      key={getRowId(item) ?? index}
-                      style={{
-                        borderBottom: "1px solid #f1f5f9",
-                        backgroundColor:
-                          index % 2 === 0 ? "#ffffff" : "#fafbfc",
-                        transition: "all 0.2s",
-                        height: "50px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f0f9ff";
-                        e.currentTarget.style.transform = "scale(1.001)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          index % 2 === 0 ? "#ffffff" : "#fafbfc";
-                        e.currentTarget.style.transform = "scale(1)";
-                      }}
-                    >
-                      {columns.map((col) => (
-                        <td
-                          key={`${getRowId(item)}-${col}`}
-                          className={
-                            col === "email_pic" ? "allow-lowercase" : ""
-                          }
-                          style={{
-                            padding: "10px 14px",
-                            color: "#334155",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {col === "status_aktif" ? (
-                            <span
-                              style={{
-                                backgroundColor: getStatusColor(item[col]).bg,
-                                color: getStatusColor(item[col]).text,
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "11px",
-                                fontWeight: 600,
-                                display: "inline-block",
-                              }}
-                            >
-                              {getStatusColor(item[col]).label}
-                            </span>
-                          ) : fkDropdownData[col] ? (
-                            fkDropdownData[col].find(
-                              (opt) => String(opt.value) === String(item[col]),
-                            )?.label || item[col]
-                          ) : (
-                            item[col]
-                          )}
-                        </td>
-                      ))}
-                      <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <button
-                            onClick={() => handleEdit(item)}
+                            {e1Name}
+                          </td>
+                        </tr>
+                        {/* Items in group */}
+                        {grouped[e1Id].map((item, index) => (
+                          <tr
+                            key={getRowId(item) ?? index}
                             style={{
-                              padding: "6px 14px",
-                              background:
-                                "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                              color: "#ffffff",
-                              border: "none",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: 700,
-                              cursor: "pointer",
+                              borderBottom: "1px solid #f1f5f9",
+                              backgroundColor: "#ffffff",
                               transition: "all 0.2s",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                              height: "50px",
                             }}
                             onMouseEnter={(e) => {
-                              e.target.style.transform = "translateY(-1px)";
-                              e.target.style.boxShadow =
-                                "0 4px 10px rgba(245, 158, 11, 0.35)";
+                              e.currentTarget.style.backgroundColor =
+                                "#f0f9ff";
                             }}
                             onMouseLeave={(e) => {
-                              e.target.style.transform = "translateY(0)";
-                              e.target.style.boxShadow =
-                                "0 2px 6px rgba(245, 158, 11, 0.25)";
+                              e.currentTarget.style.backgroundColor =
+                                "#ffffff";
                             }}
                           >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                            {columns.map((col) => (
+                              <td
+                                key={`${getRowId(item)}-${col}`}
+                                className={
+                                  col === "email_pic" ? "allow-lowercase" : ""
+                                }
+                                style={{
+                                  padding: "10px 14px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {col === "status_aktif" ? (
+                                  <span
+                                    onClick={() => {
+                                      // Toggle status logic
+                                      const currentStatus =
+                                        item.status_aktif === 1 ||
+                                        item.status_aktif === true;
+                                      handleToggleStatus(
+                                        item,
+                                        !currentStatus,
+                                      );
+                                    }}
+                                    style={{
+                                      backgroundColor: getStatusColor(
+                                        item[col],
+                                      ).bg,
+                                      color: getStatusColor(item[col]).text,
+                                      padding: "4px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      display: "inline-block",
+                                    }}
+                                  >
+                                    {getStatusColor(item[col]).label}
+                                  </span>
+                                ) : (
+                                  item[col]
+                                )}
+                              </td>
+                            ))}
+                            <td
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "center",
+                              }}
                             >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Edit
-                          </button>
-                        </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  style={{
+                                    padding: "6px 14px",
+                                    background:
+                                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow:
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.transform =
+                                      "translateY(-1px)";
+                                    e.target.style.boxShadow =
+                                      "0 4px 10px rgba(245, 158, 11, 0.35)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.transform =
+                                      "translateY(0)";
+                                    e.target.style.boxShadow =
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                  }}
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                  Edit
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
+                    );
+                  });
+                })()
+                : filteredData.map((item, index) => (
+                  <tr
+                    key={getRowId(item) ?? index}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      backgroundColor:
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc",
+                      transition: "all 0.2s",
+                      height: "50px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f0f9ff";
+                      e.currentTarget.style.transform = "scale(1.001)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor =
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={`${getRowId(item)}-${col}`}
+                        className={
+                          col === "email_pic" ? "allow-lowercase" : ""
+                        }
+                        style={{
+                          padding: "10px 14px",
+                          color: "#334155",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {col === "status_aktif" ? (
+                          <span
+                            style={{
+                              backgroundColor: getStatusColor(item[col]).bg,
+                              color: getStatusColor(item[col]).text,
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              display: "inline-block",
+                            }}
+                          >
+                            {getStatusColor(item[col]).label}
+                          </span>
+                        ) : fkDropdownData[col] ? (
+                          fkDropdownData[col].find(
+                            (opt) => String(opt.value) === String(item[col]),
+                          )?.label || item[col]
+                        ) : (
+                          item[col]
+                        )}
                       </td>
-                    </tr>
-                  ))}
+                    ))}
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleEdit(item)}
+                          style={{
+                            padding: "6px 14px",
+                            background:
+                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow =
+                              "0 4px 10px rgba(245, 158, 11, 0.35)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow =
+                              "0 2px 6px rgba(245, 158, 11, 0.25)";
+                          }}
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
