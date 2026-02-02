@@ -1,15 +1,38 @@
 import { useState, useEffect } from 'react';
 
+// Add CSS for fade animation
+const style = document.createElement("style");
+style.textContent = `
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+document.head.appendChild(style);
+
 function OperatorEselon1Dashboard() {
   const [stats, setStats] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [recentUpdates, setRecentUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [hoveredBar, setHoveredBar] = useState(null);
 
-  // Get eselon1_id from localStorage (set during login)
+  // Get eselon1_id and name from localStorage
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const eselon1_id = userInfo.eselon1_id;
+  const eselon1_id = localStorage.getItem('eselon1_id') || userInfo.eselon1_id;
+
+  const nama_eselon1 = localStorage.getItem('namaEselon1') ||
+    userInfo.nama_eselon1 ||
+    userInfo.nama_unit || // Fallback
+    '';
 
   useEffect(() => {
     if (eselon1_id) {
@@ -23,6 +46,7 @@ function OperatorEselon1Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // Fetch all dashboard data in parallel
       const [statsRes, chartRes, updatesRes] = await Promise.all([
@@ -49,41 +73,90 @@ function OperatorEselon1Dashboard() {
     }
   };
 
-  const StatCard = ({ title, value, bgColor, textColor }) => (
-    <div style={{
-      backgroundColor: bgColor,
-      borderRadius: '12px',
-      padding: '24px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.3s ease',
-      cursor: 'pointer',
-      minHeight: '120px',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between'
-    }}
+  const StatCard = ({ title, value, icon, gradient }) => (
+    <div
+      style={{
+        background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+        borderRadius: "12px",
+        padding: "18px",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+        border: "1px solid #e2e8f0",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        cursor: "pointer",
+        minHeight: "110px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        position: "relative",
+        overflow: "hidden",
+      }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0, 0, 0, 0.15)';
+        e.currentTarget.style.transform = "translateY(-4px)";
+        e.currentTarget.style.boxShadow = "0 8px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04)";
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+        e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)";
       }}
     >
-      <div style={{
-        fontSize: '48px',
-        fontWeight: '700',
-        color: textColor,
-        lineHeight: 1
-      }}>{value || '0'}</div>
-      <p style={{
-        margin: 0,
-        color: textColor,
-        fontSize: '14px',
-        fontWeight: 500,
-        marginTop: '8px'
-      }}>{title}</p>
+      {/* Icon Container */}
+      <div
+        style={{
+          width: "44px",
+          height: "44px",
+          background: gradient,
+          borderRadius: "10px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+          marginBottom: "12px",
+        }}
+      >
+        {icon}
+      </div>
+
+      {/* Value */}
+      <div
+        style={{
+          fontSize: "28px",
+          fontWeight: "700",
+          background: gradient,
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          lineHeight: 1.2,
+          marginBottom: "6px",
+        }}
+      >
+        {value || "0"}
+      </div>
+
+      {/* Title */}
+      <p
+        style={{
+          margin: 0,
+          color: "#64748b",
+          fontSize: "12px",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {title}
+      </p>
+
+      {/* Decorative element */}
+      <div
+        style={{
+          position: "absolute",
+          right: -20,
+          bottom: -20,
+          width: 100,
+          height: 100,
+          background: gradient,
+          opacity: 0.05,
+          borderRadius: "50%",
+        }}
+      />
     </div>
   );
 
@@ -113,8 +186,8 @@ function OperatorEselon1Dashboard() {
     if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'long',
+      day: 'numeric',
+      month: 'short',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -122,156 +195,265 @@ function OperatorEselon1Dashboard() {
   };
 
   return (
-    <section className="page-section" style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ margin: 0, marginBottom: '8px', fontSize: '28px', fontWeight: 600, color: '#1e293b' }}>
-          Dashboard Operator Eselon 1
-        </h1>
-        <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-          Ringkasan statistik dan monitoring aplikasi unit {userInfo.nama_eselon1 || 'Anda'}
-        </p>
+    <section className="page-section" style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      {/* Header Section */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "28px",
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+          border: "1px solid #e2e8f0",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              borderRadius: "10px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ color: "#fff" }}>
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <polyline points="9 22 9 12 15 12 15 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                marginBottom: "2px",
+                fontSize: "18px",
+                fontWeight: 700,
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.2,
+                textTransform: "uppercase"
+              }}
+            >
+              DASHBOARD OPERATOR ESELON 1
+            </h1>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "14px", fontWeight: 500, lineHeight: 1.4, marginTop: "4px" }}>
+              Unit: <span style={{ fontWeight: 700, color: "#334155", fontSize: "15px" }}>{nama_eselon1 || 'Loading...'}</span>
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={fetchDashboardData}
+          disabled={loading}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e2e8f0",
+            borderRadius: "8px",
+            cursor: loading ? "wait" : "pointer",
+            fontSize: "12px",
+            color: "#475569",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.2s",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+            height: "36px"
+          }}
+          onMouseEnter={e => !loading && (e.currentTarget.style.borderColor = "#cbd5e1")}
+          onMouseLeave={e => !loading && (e.currentTarget.style.borderColor = "#e2e8f0")}
+        >
+          {loading ? (
+            <>
+              <div style={{
+                width: "14px", height: "14px", border: "2px solid #cbd5e1",
+                borderTopColor: "#475569", borderRadius: "50%",
+                animation: "spin 1s linear infinite"
+              }} />
+              <span>Memuat...</span>
+            </>
+          ) : (
+            <>
+              <span>↻ Refresh</span>
+            </>
+          )}
+        </button>
       </div>
 
       {error && (
         <div style={{
-          padding: '12px 16px',
-          backgroundColor: '#fee2e2',
-          border: '1px solid #fecaca',
-          borderRadius: '6px',
-          color: '#991b1b',
-          marginBottom: '24px',
-          fontSize: '14px'
+          padding: "14px 18px",
+          background: "linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%)",
+          border: "1.5px solid #fecaca",
+          borderRadius: "12px",
+          color: "#991b1b",
+          marginBottom: "24px",
+          fontSize: "13px",
+          fontWeight: 500,
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          boxShadow: "0 2px 8px rgba(239, 68, 68, 0.1)",
         }}>
-          ⚠️ {error}
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          {error}
         </div>
       )}
 
       {loading ? (
         <div style={{
-          padding: '60px 40px',
-          textAlign: 'center',
-          color: '#64748b',
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0'
+          padding: "80px 40px",
+          textAlign: "center",
+          color: "#64748b",
+          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+          borderRadius: "14px",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
         }}>
           <div style={{
-            display: 'inline-block',
-            padding: '12px 24px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '6px',
-            border: '1px solid #e2e8f0'
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "14px 28px",
+            background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)",
+            borderRadius: "10px",
+            border: "1px solid #e2e8f0",
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.05)",
           }}>
-            ⟳ Memuat data dashboard...
+            <div style={{
+              width: "20px", height: "20px", border: "3px solid #e2e8f0",
+              borderTopColor: "#4f46e5", borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            <span style={{ fontSize: "14px", fontWeight: 500, color: "#475569" }}>
+              Memuat data dashboard...
+            </span>
           </div>
         </div>
       ) : (
         <>
           {/* Stat Cards */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '20px',
-            marginBottom: '32px'
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+            gap: "14px",
+            marginBottom: "20px",
           }}>
             <StatCard
               title="Aplikasi Aktif"
               value={stats?.aplikasiAktif || 0}
-              bgColor="#6366f1"
-              textColor="#ffffff"
+              gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)"
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>}
             />
             <StatCard
               title="Aplikasi Tidak Aktif"
               value={stats?.aplikasiTidakAktif || 0}
-              bgColor="#06b6d4"
-              textColor="#ffffff"
+              gradient="linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>}
             />
             <StatCard
               title="Dalam Pengembangan"
               value={stats?.aplikasiDalamPengembangan || 0}
-              bgColor="#84cc16"
-              textColor="#ffffff"
+              gradient="linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" /></svg>}
             />
             <StatCard
               title="Total Aplikasi"
               value={stats?.totalAplikasi || 0}
-              bgColor="#eab308"
-              textColor="#ffffff"
+              gradient="linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)"
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>}
             />
           </div>
 
           {/* Bar Chart - Jumlah Aplikasi per Eselon2 */}
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #e2e8f0',
-            marginBottom: '32px'
+            background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+            borderRadius: "12px",
+            padding: "18px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+            border: "1px solid #e2e8f0",
+            marginBottom: "20px",
           }}>
-            <h2 style={{ margin: 0, marginBottom: '20px', fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>
-              Jumlah Aplikasi per Unit Eselon 2
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+              <div style={{
+                width: "36px", height: "36px",
+                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                borderRadius: "9px", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
+                  <line x1="12" y1="20" x2="12" y2="10" />
+                  <line x1="18" y1="20" x2="18" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="16" />
+                </svg>
+              </div>
+              <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#1e293b", letterSpacing: "-0.01em" }}>
+                Jumlah Aplikasi per Unit Eselon 2
+              </h2>
+            </div>
 
             {chartData.length === 0 ? (
-              <p style={{ color: '#64748b', fontSize: '14px' }}>Tidak ada data</p>
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "13px", fontWeight: 500 }}>
+                <svg style={{ marginBottom: "12px", opacity: 0.5 }} width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <line x1="12" y1="20" x2="12" y2="10" />
+                  <line x1="18" y1="20" x2="18" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="16" />
+                </svg>
+                <div>Tidak ada data</div>
+              </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {chartData.map((item, index) => {
                   return (
-                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{
-                        minWidth: '200px',
-                        fontSize: '13px',
-                        color: '#475569',
-                        fontWeight: 500
-                      }}>
-                        {item.nama} ({item.singkatan || ''})
+                    <div key={index}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "6px 10px", borderRadius: "8px",
+                        transition: "all 0.2s ease", cursor: "pointer", position: "relative"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)";
+                        e.currentTarget.style.transform = "translateX(4px)";
+                        setHoveredIndex(index);
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.transform = "translateX(0)";
+                        setHoveredIndex(null);
+                      }}
+                    >
+                      <div style={{ width: "220px", flexShrink: 0, fontSize: "11px", color: "#1e293b", fontWeight: 700, lineHeight: 1.3 }}>
+                        <div>{item.nama}</div>
                       </div>
 
-                      <div style={{ flex: 1, position: 'relative', height: '32px', backgroundColor: '#f1f5f9', borderRadius: '6px', overflow: 'hidden' }}>
-                        {/* Stacked bars */}
+                      <div style={{ flex: 1, position: 'relative', height: '26px', background: '#f8fafc', borderRadius: '6px', overflow: 'hidden', border: "1.5px solid #e2e8f0" }}>
                         <div style={{ display: 'flex', height: '100%', width: '100%' }}>
                           {item.aktif > 0 && (
-                            <div
-                              style={{
-                                width: `${(item.aktif / item.total) * 100}%`,
-                                backgroundColor: 'rgb(16, 185, 129)',
-                                transition: 'width 0.3s ease'
-                              }}
-                              title={`Aktif: ${item.aktif}`}
-                            />
+                            <div style={{ width: `${(item.aktif / item.total) * 100}%`, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }} title={`Aktif: ${item.aktif}`} />
                           )}
                           {item.tidak_aktif > 0 && (
-                            <div
-                              style={{
-                                width: `${(item.tidak_aktif / item.total) * 100}%`,
-                                backgroundColor: 'rgb(239, 68, 68)',
-                                transition: 'width 0.3s ease'
-                              }}
-                              title={`Tidak Aktif: ${item.tidak_aktif}`}
-                            />
+                            <div style={{ width: `${(item.tidak_aktif / item.total) * 100}%`, background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)" }} title={`Tidak Aktif: ${item.tidak_aktif}`} />
                           )}
                           {item.dalam_pengembangan > 0 && (
-                            <div
-                              style={{
-                                width: `${(item.dalam_pengembangan / item.total) * 100}%`,
-                                backgroundColor: 'rgb(156, 163, 175)',
-                                transition: 'width 0.3s ease'
-                              }}
-                              title={`Dalam Pengembangan: ${item.dalam_pengembangan}`}
-                            />
+                            <div style={{ width: `${(item.dalam_pengembangan / item.total) * 100}%`, background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)" }} title={`Dalam Pengembangan: ${item.dalam_pengembangan}`} />
                           )}
                         </div>
                       </div>
 
-                      <div style={{
-                        minWidth: '50px',
-                        textAlign: 'right',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#1e293b'
-                      }}>
+                      <div style={{ minWidth: '40px', textAlign: 'right', fontSize: '11px', fontWeight: 700, color: '#1e293b' }}>
                         {item.total}
                       </div>
                     </div>
@@ -283,25 +465,21 @@ function OperatorEselon1Dashboard() {
 
           {/* Recent Updates */}
           <div style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #e2e8f0'
+            background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+            borderRadius: "12px",
+            padding: "18px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+            border: "1px solid #e2e8f0",
           }}>
-            <h2 style={{ margin: 0, marginBottom: '20px', fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>
+            <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "15px", fontWeight: 700, color: "#1e293b" }}>
               Update Aplikasi Terbaru
             </h2>
 
             {recentUpdates.length === 0 ? (
-              <p style={{ color: '#64748b', fontSize: '14px' }}>Tidak ada update terbaru</p>
+              <p style={{ color: '#64748b', fontSize: '13px' }}>Tidak ada update terbaru</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  fontSize: '13px'
-                }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
                       <th style={{ padding: '12px 8px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Nama Aplikasi</th>
@@ -315,23 +493,17 @@ function OperatorEselon1Dashboard() {
                     {recentUpdates.map((update, index) => {
                       const statusColors = getStatusColor(update.nama_status);
                       return (
-                        <tr key={index} style={{
-                          borderBottom: '1px solid #f1f5f9',
-                          transition: 'background-color 0.2s'
-                        }}
+                        <tr key={index} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.2s' }}
                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
-                          <td style={{ padding: '12px 8px', color: '#1e293b', fontWeight: 500 }}>{update.nama_aplikasi}</td>
+                          <td style={{ padding: '12px 8px', color: '#1e293b', fontWeight: 600 }}>{update.nama_aplikasi}</td>
                           <td style={{ padding: '12px 8px', color: '#64748b' }}>{update.domain || '-'}</td>
                           <td style={{ padding: '12px 8px' }}>
                             <span style={{
-                              padding: '4px 8px',
-                              borderRadius: '4px',
-                              fontSize: '12px',
-                              fontWeight: 500,
-                              backgroundColor: statusColors.bg,
-                              color: statusColors.text
+                              padding: '4px 10px', borderRadius: '12px', fontSize: '10px',
+                              fontWeight: 600, backgroundColor: statusColors.bg, color: statusColors.text,
+                              textTransform: "uppercase", letterSpacing: "0.02em"
                             }}>
                               {update.nama_status}
                             </span>

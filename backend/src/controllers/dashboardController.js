@@ -184,8 +184,6 @@ exports.getOperatorChart = async (req, res) => {
       query = `
         SELECT 
           e2.nama_eselon2 as nama,
-          e2.singkatan,
-          e2.no,
           COUNT(CASE WHEN da.status_aplikasi = 2 THEN 1 END) as aktif,
           COUNT(CASE WHEN da.status_aplikasi = 3 THEN 1 END) as tidak_aktif,
           COUNT(CASE WHEN da.status_aplikasi = 6 THEN 1 END) as dalam_pengembangan,
@@ -193,8 +191,8 @@ exports.getOperatorChart = async (req, res) => {
         FROM master_eselon2 e2
         LEFT JOIN data_aplikasi da ON e2.eselon2_id = da.eselon2_id AND da.eselon1_id = ?
         WHERE e2.eselon1_id = ? AND e2.status_aktif = 1
-        GROUP BY e2.eselon2_id, e2.nama_eselon2, e2.singkatan, e2.no
-        ORDER BY e2.no ASC
+        GROUP BY e2.eselon2_id, e2.nama_eselon2
+        ORDER BY e2.nama_eselon2 ASC
       `;
       params = [eselon1_id, eselon1_id];
     } else if (eselon2_id) {
