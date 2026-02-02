@@ -53,7 +53,6 @@ const FORM_FIELDS = {
     },
   ],
   eselon2: [
-
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -80,7 +79,6 @@ const FORM_FIELDS = {
     },
   ],
   upt: [
-
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -348,8 +346,25 @@ const TABLE_COLUMNS = {
   cara_akses: ["nama_cara_akses", "status_aktif"],
   pdn: ["kode_pdn", "status_aktif"],
   format_laporan: ["nama_format", "status_aktif"],
-  pic_internal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
-  pic_eksternal: ["nama_eselon1", "nama_eselon2", "nama_upt", "nama_pic_eksternal", "keterangan", "email_pic", "kontak_pic_eksternal", "status_aktif"],
+  pic_internal: [
+    "nama_eselon1",
+    "nama_eselon2",
+    "nama_upt",
+    "nama_pic_internal",
+    "email_pic",
+    "kontak_pic_internal",
+    "status_aktif",
+  ],
+  pic_eksternal: [
+    "nama_eselon1",
+    "nama_eselon2",
+    "nama_upt",
+    "nama_pic_eksternal",
+    "keterangan",
+    "email_pic",
+    "kontak_pic_eksternal",
+    "status_aktif",
+  ],
 };
 
 // ID field per type
@@ -451,7 +466,8 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
   const leafDescendants = getLeafDescendants(node);
   // Individual selection state
   const isSelected = selectedIds.includes(node.field_id);
-  const isPartiallySelected = !isSelected && leafDescendants.some((id) => selectedIds.includes(id));
+  const isPartiallySelected =
+    !isSelected && leafDescendants.some((id) => selectedIds.includes(id));
 
   // Determine text color based on level
   let textColor = "#475569"; // default (Level 3)
@@ -632,11 +648,17 @@ function MasterDataSection() {
   ]);
   const [hierarchicalFields, setHierarchicalFields] = useState([]);
   const [selectedFieldIds, setSelectedFieldIds] = useState([]);
+  // Click order tracking for individual fields (fields without parent)
+  const [individualFieldClickOrder, setIndividualFieldClickOrder] = useState({});
+  const [clickCounter, setClickCounter] = useState(0);
+
+  const [selectedEselon1, setSelectedEselon1] = useState("");
+  const [selectedEselon2, setSelectedEselon2] = useState("");
+  const [selectedUPT, setSelectedUPT] = useState("");
+
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [hierSearchTerm, setHierSearchTerm] = useState("");
-
-
 
   const [selectedEselon1Filter, setSelectedEselon1Filter] = useState("");
 
@@ -655,11 +677,13 @@ function MasterDataSection() {
           .filter((item) => item.status_aktif === 1)
           .map((item) => ({
             value: item.eselon1_id,
-            label: item.nama_eselon1
+            label: item.nama_eselon1,
           }));
         setEselon1Options(opts);
       }
-    } catch (e) { console.error("Failed to fetch Eselon 1 options", e); }
+    } catch (e) {
+      console.error("Failed to fetch Eselon 1 options", e);
+    }
   };
 
   const fetchEselon2Options = async (e1Id) => {
@@ -673,7 +697,9 @@ function MasterDataSection() {
         }));
         setEselon2Options(opts);
       }
-    } catch (e) { console.error("Failed to fetch Eselon 2 options", e); }
+    } catch (e) {
+      console.error("Failed to fetch Eselon 2 options", e);
+    }
   };
 
   const fetchUptOptions = async (e1Id) => {
@@ -687,11 +713,16 @@ function MasterDataSection() {
         }));
         setUptOptions(opts);
       }
-    } catch (e) { console.error("Failed to fetch UPT options", e); }
+    } catch (e) {
+      console.error("Failed to fetch UPT options", e);
+    }
   };
 
   useEffect(() => {
-    if ((activeTab === "pic_internal" || activeTab === "pic_eksternal") && formData.eselon1_id) {
+    if (
+      (activeTab === "pic_internal" || activeTab === "pic_eksternal") &&
+      formData.eselon1_id
+    ) {
       fetchEselon2Options(formData.eselon1_id);
       fetchUptOptions(formData.eselon1_id);
     }
@@ -847,13 +878,15 @@ function MasterDataSection() {
               if (refData.success && refData.data) {
                 // Map data to dropdown options
                 // Smartly find the label column (contains 'nama', 'jenis', 'judul', 'kode', or use 2nd column)
-                const labelField = Object.keys(refData.data[0]).find(k =>
-                  k !== fkInfo.referencedColumn &&
-                  k !== 'created_at' &&
-                  k !== 'updated_at' &&
-                  k !== 'status_aktif' &&
-                  /nama|jenis|judul|kode|email/i.test(k)
-                ) || Object.keys(refData.data[0])[1];
+                const labelField =
+                  Object.keys(refData.data[0]).find(
+                    (k) =>
+                      k !== fkInfo.referencedColumn &&
+                      k !== "created_at" &&
+                      k !== "updated_at" &&
+                      k !== "status_aktif" &&
+                      /nama|jenis|judul|kode|email/i.test(k),
+                  ) || Object.keys(refData.data[0])[1];
 
                 const options = refData.data.map((row) => ({
                   value: row[fkInfo.referencedColumn],
@@ -929,7 +962,10 @@ function MasterDataSection() {
       let url = `${API_BASE}?type=${activeTab}`;
 
       // Filter logic
-      if ((activeTab === "eselon2" || activeTab === "upt") && selectedEselon1Filter) {
+      if (
+        (activeTab === "eselon2" || activeTab === "upt") &&
+        selectedEselon1Filter
+      ) {
         url += `&eselon1_id=${selectedEselon1Filter}`;
       }
       console.log("Fetching Master Data URL:", url);
@@ -944,8 +980,6 @@ function MasterDataSection() {
       setLoading(false);
     }
   };
-
-
 
   const fetchHierarchicalFields = async () => {
     try {
@@ -1031,26 +1065,66 @@ function MasterDataSection() {
         selectedValues = [];
       }
 
-      const selectedItems = DATA_FIELD_OPTIONS.filter((opt) =>
-        selectedValues.includes(opt.value),
-      );
-      setSelectedDataFields(selectedItems);
-
-      const availableItems = DATA_FIELD_OPTIONS.filter(
-        (opt) => !selectedValues.includes(opt.value),
-      );
-      setAvailableDataFields(availableItems);
-
-      // Handle hierarchical fields from extra API data if available
-      // Fetch details for the specific item
+      // Fetch details FIRST to get order_index for correct sorting
       fetch(`${API_BASE}/${getRowId(item)}?type=format_laporan`)
         .then((res) => res.json())
         .then((result) => {
-          if (result.success && result.data.field_ids) {
-            setSelectedFieldIds(result.data.field_ids);
+          if (result.success) {
+            const fieldMap = {};
+            let maxOrder = 0;
+
+            if (result.data.field_details) {
+              result.data.field_details.forEach(d => {
+                if (d.order_index) {
+                  fieldMap[d.field_id] = d.order_index;
+                  if (d.order_index > maxOrder) maxOrder = d.order_index;
+                }
+              });
+            }
+
+            // Restore State
+            setIndividualFieldClickOrder(fieldMap);
+            setClickCounter(maxOrder);
+            if (result.data.field_ids) setSelectedFieldIds(result.data.field_ids);
+
+            // Generate options from Hierarchical Fields (Source of Truth)
+            const getAllOptions = (nodes) => {
+              let options = [];
+              nodes.forEach(node => {
+                options.push({ value: node.field_id, label: node.nama_field });
+                if (node.children && node.children.length > 0) {
+                  options = [...options, ...getAllOptions(node.children)];
+                }
+              });
+              return options;
+            };
+            const flatOptions = getAllOptions(hierarchicalFields);
+
+            // Set Selected Data Fields with SORTING based on restored order
+            const selectedItems = flatOptions.filter((opt) =>
+              selectedValues.includes(opt.value)
+            );
+
+            selectedItems.sort((a, b) => {
+              const orderA = fieldMap[a.value] || 999999;
+              const orderB = fieldMap[b.value] || 999999;
+              return orderA - orderB;
+            });
+
+            setSelectedDataFields(selectedItems);
+
+            const availableItems = flatOptions.filter(
+              (opt) => !selectedValues.includes(opt.value)
+            );
+            setAvailableDataFields(availableItems);
           }
         })
-        .catch((err) => console.error("Error fetching format details:", err));
+        .catch((err) => {
+          console.error("Error fetching format details:", err);
+          // Fallback
+          const selectedItems = []; // Safe fallback
+          setSelectedDataFields(selectedItems);
+        });
     }
 
     setShowModal(true);
@@ -1089,6 +1163,15 @@ function MasterDataSection() {
       setSelectedFieldIds((prev) =>
         prev.filter((id) => id !== node.field_id && !targetIds.includes(id)),
       );
+
+      // Remove from click order tracking for ALL fields
+      setIndividualFieldClickOrder((prev) => {
+        const newOrder = { ...prev };
+        delete newOrder[node.field_id];
+        // Also remove descendants
+        targetIds.forEach(id => delete newOrder[id]);
+        return newOrder;
+      });
     } else {
       // Select current node AND all descendants
       setSelectedFieldIds((prev) => {
@@ -1098,6 +1181,22 @@ function MasterDataSection() {
           if (!newIds.includes(id)) newIds.push(id);
         });
         return newIds;
+      });
+
+      // Track click order for ALL fields (including grouped fields)
+      // Backend will use this to position groups at first field's click order
+      setClickCounter((prev) => prev + 1);
+      setIndividualFieldClickOrder((prev) => {
+        const newOrder = { ...prev };
+        const newCount = clickCounter + 1;
+        newOrder[node.field_id] = newCount;
+
+        // Add all descendants too
+        targetIds.forEach(id => {
+          newOrder[id] = newCount;
+        });
+
+        return newOrder;
       });
     }
   };
@@ -1139,8 +1238,10 @@ function MasterDataSection() {
 
   // Derived states for Select All checkbox
   const allLeafIds = getAllLeafIds(hierarchicalFields);
-  const isAllSelected = allLeafIds.length > 0 && allLeafIds.every(id => selectedFieldIds.includes(id));
-  const isAnySelected = allLeafIds.some(id => selectedFieldIds.includes(id));
+  const isAllSelected =
+    allLeafIds.length > 0 &&
+    allLeafIds.every((id) => selectedFieldIds.includes(id));
+  const isAnySelected = allLeafIds.some((id) => selectedFieldIds.includes(id));
   const isIndeterminate = isAnySelected && !isAllSelected;
 
   const toggleSelectAllHierarchicalFields = () => {
@@ -1224,6 +1325,9 @@ function MasterDataSection() {
         const keys = selectedDataFields.map((f) => f.value);
         processedData.selected_fields = JSON.stringify(keys);
         processedData.field_ids = selectedFieldIds;
+        // Include click order for individual fields (fields without parent)
+        processedData.field_click_order = individualFieldClickOrder;
+        console.log('Submitting with click order:', individualFieldClickOrder);
       }
 
       // Inject user ID for audit
@@ -1234,7 +1338,9 @@ function MasterDataSection() {
           const u = JSON.parse(userStr);
           if (u.user_id) currentUserId = u.user_id;
           else if (u.id) currentUserId = u.id;
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       if (currentUserId) {
@@ -1324,9 +1430,7 @@ function MasterDataSection() {
         // Get from form fields definition to ensure it matches the form exactly
         return dynamicFormFields
           .map((f) => f.name)
-          .filter(
-            (name) => name !== "created_by" && name !== "updated_by",
-          );
+          .filter((name) => name !== "created_by" && name !== "updated_by");
       }
       // Fallback if form fields not loaded yet but data is
       if (data.length > 0) {
@@ -1363,19 +1467,19 @@ function MasterDataSection() {
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
               style={{
-                width: "48px",
-                height: "48px",
+                width: "40px",
+                height: "40px",
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                borderRadius: "12px",
+                borderRadius: "10px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
               }}
             >
               <svg
-                width="24"
-                height="24"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#ffffff"
@@ -1392,10 +1496,15 @@ function MasterDataSection() {
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "28px",
+                  marginBottom: "2px",
+                  fontSize: "18px",
                   fontWeight: 700,
-                  color: "#1e293b",
-                  letterSpacing: "-0.02em",
+                  background:
+                    "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  letterSpacing: "-0.01em",
+                  lineHeight: 1.2,
                 }}
               >
                 Master Data
@@ -1404,8 +1513,9 @@ function MasterDataSection() {
                 style={{
                   margin: 0,
                   color: "#64748b",
-                  fontSize: "14px",
-                  marginTop: "2px",
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  lineHeight: 1.3,
                 }}
               >
                 Kelola data referensi sistem
@@ -1830,8 +1940,12 @@ function MasterDataSection() {
                 }}
               >
                 {columns.map((col) => {
-                  const fieldDef = dynamicFormFields.find((f) => f.name === col);
-                  const label = fieldDef ? fieldDef.label : formatColumnHeader(col);
+                  const fieldDef = dynamicFormFields.find(
+                    (f) => f.name === col,
+                  );
+                  const label = fieldDef
+                    ? fieldDef.label
+                    : formatColumnHeader(col);
                   return (
                     <th
                       key={col}
@@ -1866,8 +1980,9 @@ function MasterDataSection() {
             </thead>
             <tbody>
               {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
-              {(activeTab === "eselon2" || activeTab === "upt") && !selectedEselon1Filter ? (
-                (() => {
+              {(activeTab === "eselon2" || activeTab === "upt") &&
+                !selectedEselon1Filter
+                ? (() => {
                   // Group data
                   const grouped = {};
                   filteredData.forEach((item) => {
@@ -1880,8 +1995,9 @@ function MasterDataSection() {
                   return Object.keys(grouped).map((e1Id) => {
                     // Find Eselon 1 Name
                     const e1Name =
-                      eselon1Options.find((opt) => opt.value === parseInt(e1Id))
-                        ?.label || `Eselon 1 ID: ${e1Id}`;
+                      eselon1Options.find(
+                        (opt) => opt.value === parseInt(e1Id),
+                      )?.label || `Eselon 1 ID: ${e1Id}`;
 
                     return (
                       <>
@@ -1916,16 +2032,20 @@ function MasterDataSection() {
                               height: "50px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f0f9ff";
+                              e.currentTarget.style.backgroundColor =
+                                "#f0f9ff";
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#ffffff";
+                              e.currentTarget.style.backgroundColor =
+                                "#ffffff";
                             }}
                           >
                             {columns.map((col) => (
                               <td
                                 key={`${getRowId(item)}-${col}`}
-                                className={col === "email_pic" ? "allow-lowercase" : ""}
+                                className={
+                                  col === "email_pic" ? "allow-lowercase" : ""
+                                }
                                 style={{
                                   padding: "10px 14px",
                                   color: "#334155",
@@ -1936,8 +2056,13 @@ function MasterDataSection() {
                                   <span
                                     onClick={() => {
                                       // Toggle status logic
-                                      const currentStatus = item.status_aktif === 1 || item.status_aktif === true;
-                                      handleToggleStatus(item, !currentStatus);
+                                      const currentStatus =
+                                        item.status_aktif === 1 ||
+                                        item.status_aktif === true;
+                                      handleToggleStatus(
+                                        item,
+                                        !currentStatus,
+                                      );
                                     }}
                                     style={{
                                       backgroundColor: getStatusColor(
@@ -1959,7 +2084,12 @@ function MasterDataSection() {
                                 )}
                               </td>
                             ))}
-                            <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                            <td
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "center",
+                              }}
+                            >
                               <div
                                 style={{
                                   display: "flex",
@@ -1983,15 +2113,18 @@ function MasterDataSection() {
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "5px",
-                                    boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                    boxShadow:
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)",
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.target.style.transform = "translateY(-1px)";
+                                    e.target.style.transform =
+                                      "translateY(-1px)";
                                     e.target.style.boxShadow =
                                       "0 4px 10px rgba(245, 158, 11, 0.35)";
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.target.style.transform = "translateY(0)";
+                                    e.target.style.transform =
+                                      "translateY(0)";
                                     e.target.style.boxShadow =
                                       "0 2px 6px rgba(245, 158, 11, 0.25)";
                                   }}
@@ -2019,13 +2152,13 @@ function MasterDataSection() {
                     );
                   });
                 })()
-              ) : (
-                filteredData.map((item, index) => (
+                : filteredData.map((item, index) => (
                   <tr
                     key={getRowId(item) ?? index}
                     style={{
                       borderBottom: "1px solid #f1f5f9",
-                      backgroundColor: index % 2 === 0 ? "#ffffff" : "#fafbfc",
+                      backgroundColor:
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc",
                       transition: "all 0.2s",
                       height: "50px",
                     }}
@@ -2042,7 +2175,9 @@ function MasterDataSection() {
                     {columns.map((col) => (
                       <td
                         key={`${getRowId(item)}-${col}`}
-                        className={col === "email_pic" ? "allow-lowercase" : ""}
+                        className={
+                          col === "email_pic" ? "allow-lowercase" : ""
+                        }
                         style={{
                           padding: "10px 14px",
                           color: "#334155",
@@ -2065,8 +2200,7 @@ function MasterDataSection() {
                           </span>
                         ) : fkDropdownData[col] ? (
                           fkDropdownData[col].find(
-                            (opt) =>
-                              String(opt.value) === String(item[col]),
+                            (opt) => String(opt.value) === String(item[col]),
                           )?.label || item[col]
                         ) : (
                           item[col]
@@ -2128,7 +2262,7 @@ function MasterDataSection() {
                       </div>
                     </td>
                   </tr>
-                )))}
+                ))}
             </tbody>
           </table>
         </div>
@@ -2303,11 +2437,19 @@ function MasterDataSection() {
                         >
                           Daftar Data
                         </label>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                          }}
+                        >
                           <input
                             type="checkbox"
                             checked={isAllSelected}
-                            ref={(el) => el && (el.indeterminate = isIndeterminate)}
+                            ref={(el) =>
+                              el && (el.indeterminate = isIndeterminate)
+                            }
                             onChange={toggleSelectAllHierarchicalFields}
                             style={{
                               cursor: "pointer",
@@ -2557,8 +2699,9 @@ function MasterDataSection() {
               ) : (
                 // Standard Dynamic Form
                 (() => {
-                  const isDynamic = tabs.find((t) => t.key === activeTab)
-                    ?.isDynamic;
+                  const isDynamic = tabs.find(
+                    (t) => t.key === activeTab,
+                  )?.isDynamic;
                   const fields = isDynamic
                     ? dynamicFormFields
                     : FORM_FIELDS[activeTab] || [];
@@ -2758,246 +2901,245 @@ function MasterDataSection() {
                 </button>
               </div>
             </form>
-          </div >
-        </div >
-      )
-      }
+          </div>
+        </div>
+      )}
       {/* Confirmation Modal */}
-      {
-        showConfirm && (
+      {showConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1100,
+            animation: "fadeIn 0.2s ease",
+          }}
+        >
           <div
             style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
-              backdropFilter: "blur(4px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 1100,
-              animation: "fadeIn 0.2s ease",
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              padding: "32px",
+              width: "100%",
+              maxWidth: "400px",
+              textAlign: "center",
+              boxShadow:
+                "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              animation: "slideUp 0.3s ease",
             }}
           >
             <div
               style={{
-                backgroundColor: "#fff",
-                borderRadius: "16px",
-                padding: "32px",
-                width: "100%",
-                maxWidth: "400px",
-                textAlign: "center",
-                boxShadow:
-                  "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-                animation: "slideUp 0.3s ease",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor: "#fef3c7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 20px",
               }}
             >
-              <div
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  borderRadius: "50%",
-                  backgroundColor: "#fef3c7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 20px",
-                }}
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#d97706"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  width="30"
-                  height="30"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#d97706"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </div>
-              <h3
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#1e293b",
+              }}
+            >
+              Konfirmasi
+            </h3>
+            <p
+              style={{
+                margin: "0 0 28px",
+                color: "#64748b",
+                fontSize: "15px",
+                lineHeight: "1.5",
+              }}
+            >
+              {editingItem
+                ? "Apakah anda yakin ingin memperbarui data?"
+                : "Apakah data yang diisi sudah benar?"}
+            </p>
+            <div style={{ display: "flex", gap: "12px" }}>
+              <button
+                onClick={handleConfirmSave}
                 style={{
-                  margin: "0 0 12px",
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#1e293b",
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#4f46e5",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#4338ca")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#4f46e5")
+                }
               >
-                Konfirmasi
-              </h3>
-              <p
+                Ya
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
                 style={{
-                  margin: "0 0 28px",
+                  flex: 1,
+                  padding: "12px",
+                  backgroundColor: "#f1f5f9",
                   color: "#64748b",
-                  fontSize: "15px",
-                  lineHeight: "1.5",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
                 }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#e2e8f0")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#f1f5f9")
+                }
               >
-                {editingItem
-                  ? "Apakah anda yakin ingin memperbarui data?"
-                  : "Apakah data yang diisi sudah benar?"}
-              </p>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button
-                  onClick={handleConfirmSave}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    backgroundColor: "#4f46e5",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#4338ca")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#4f46e5")
-                  }
-                >
-                  Ya
-                </button>
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    backgroundColor: "#f1f5f9",
-                    color: "#64748b",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.backgroundColor = "#e2e8f0")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.target.style.backgroundColor = "#f1f5f9")
-                  }
-                >
-                  Tidak
-                </button>
-              </div>
+                Tidak
+              </button>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
 
       {/* --- Success Popup matching Image --- */}
-      {
-        showSuccess && (
+      {showSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
           <div
             style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
+              backgroundColor: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "450px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
             }}
           >
+            {/* Green Checkmark Icon */}
             <div
               style={{
-                backgroundColor: "white",
-                padding: "40px",
-                borderRadius: "12px",
-                width: "100%",
-                maxWidth: "450px",
-                textAlign: "center",
-                boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-                position: "relative",
+                width: "80px",
+                height: "80px",
+                backgroundColor: "#f0fdf4",
+                borderRadius: "50%",
+                border: "2px solid #dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 24px",
               }}
             >
-              {/* Green Checkmark Icon */}
-              <div
-                style={{
-                  width: "80px",
-                  height: "80px",
-                  backgroundColor: "#f0fdf4",
-                  borderRadius: "50%",
-                  border: "2px solid #dcfce7",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 24px",
-                }}
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  width="40"
-                  height="40"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </div>
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
 
-              <h2
-                style={{
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  color: "#475569",
-                  margin: "0 0 12px",
-                }}
-              >
-                Berhasil!
-              </h2>
-              <p
-                style={{
-                  fontSize: "16px",
-                  color: "#94a3b8",
-                  margin: "0 0 32px",
-                  lineHeight: "1.5",
-                }}
-              >
-                {successMessage}
-              </p>
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+                color: "#475569",
+                margin: "0 0 12px",
+              }}
+            >
+              Berhasil!
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#94a3b8",
+                margin: "0 0 32px",
+                lineHeight: "1.5",
+              }}
+            >
+              {successMessage}
+            </p>
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  onClick={() => setShowSuccess(false)}
-                  style={{
-                    padding: "10px 28px",
-                    backgroundColor: "#7dd3fc",
-                    color: "white",
-                    border: "2px solid #bae6fd",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
-                  }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = "#38bdf8")}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = "#7dd3fc")}
-                >
-                  OK
-                </button>
-              </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSuccess(false)}
+                style={{
+                  padding: "10px 28px",
+                  backgroundColor: "#7dd3fc",
+                  color: "white",
+                  border: "2px solid #bae6fd",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#38bdf8")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#7dd3fc")
+                }
+              >
+                OK
+              </button>
             </div>
           </div>
-        )
-      }
-    </section >
+        </div>
+      )}
+    </section>
   );
 }
 

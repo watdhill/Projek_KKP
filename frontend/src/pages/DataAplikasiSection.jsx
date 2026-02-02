@@ -35,12 +35,18 @@ function DataAplikasiSection() {
   const messageTimerRef = useRef(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [filterEselon1, setFilterEselon1] = useState("");
+  const [filterEselon2, setFilterEselon2] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
   const [master, setMaster] = useState({});
+  const [dynamicTables, setDynamicTables] = useState([]);
+  const [dynamicMasterData, setDynamicMasterData] = useState({});
   const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -72,6 +78,8 @@ function DataAplikasiSection() {
     perangkat_lunak: "",
     cloud: "",
     ssl: "",
+
+    ssl_expired: "",
     alamat_ip_publik: "",
     keterangan: "",
     status_bmn: "",
@@ -139,6 +147,17 @@ function DataAplikasiSection() {
       const status = (a.nama_status || "").toLowerCase();
       if (status !== statusFilter) return false;
     }
+
+    // Filter by Eselon 1
+    if (filterEselon1) {
+      if (a.eselon1_id !== parseInt(filterEselon1)) return false;
+    }
+
+    // Filter by Eselon 2
+    if (filterEselon2) {
+      if (a.eselon2_id !== parseInt(filterEselon2)) return false;
+    }
+
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -177,15 +196,52 @@ function DataAplikasiSection() {
     } catch (e) {
       console.error("Failed to fetch master dropdowns", e);
     }
+
+    // Fetch dynamic master tables
+    try {
+      const dynRes = await fetch(
+        "http://localhost:5000/api/dynamic-master/tables",
+      );
+      if (!dynRes.ok) return;
+      const dynResult = await dynRes.json();
+      if (dynResult.success && dynResult.data) {
+        const activeTables = dynResult.data.filter(
+          (t) => t.status_aktif === 1 || t.status_aktif === true,
+        );
+        setDynamicTables(activeTables);
+
+        // Fetch data untuk setiap dynamic table
+        const dynamicData = {};
+        for (const table of activeTables) {
+          try {
+            const dataRes = await fetch(
+              `http://localhost:5000/api/master-data?type=${table.table_name}`,
+            );
+            if (dataRes.ok) {
+              const dataResult = await dataRes.json();
+              if (dataResult.success && dataResult.data) {
+                dynamicData[table.table_name] = dataResult.data;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to fetch data for ${table.table_name}:`, err);
+          }
+        }
+        setDynamicMasterData(dynamicData);
+      }
+    } catch (e) {
+      console.error("Failed to fetch dynamic master tables", e);
+    }
   };
 
   // Open modal and load master data
-  const openModal = () => {
-    fetchMasterDropdowns();
+  const openModal = async () => {
+    await fetchMasterDropdowns();
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
-    setFormData({
+
+    const baseFormData = {
       nama_aplikasi: "",
       domain: "",
       deskripsi_fungsi: "",
@@ -214,6 +270,7 @@ function DataAplikasiSection() {
       perangkat_lunak: "",
       cloud: "",
       ssl: "",
+      ssl_expired: "",
       alamat_ip_publik: "",
       keterangan: "",
       status_bmn: "",
@@ -225,14 +282,24 @@ function DataAplikasiSection() {
       va_pt_status: "",
       va_pt_waktu: "",
       antivirus: "",
+      kontak_pic_internal: "",
+      kontak_pic_eksternal: "",
+    };
+
+    // Add dynamic fields
+    dynamicTables.forEach((table) => {
+      const fieldName = `${table.table_name}_id`;
+      baseFormData[fieldName] = "";
     });
+
+    setFormData(baseFormData);
     setShowModal(true);
   };
 
   // Open edit modal with pre-filled data
   const openEditModal = async (appName) => {
     try {
-      fetchMasterDropdowns();
+      await fetchMasterDropdowns();
       setFieldErrors({});
       const res = await fetch(
         `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`,
@@ -242,7 +309,7 @@ function DataAplikasiSection() {
       const app = result.data;
 
       // Pre-fill form with existing data
-      setFormData({
+      const baseFormData = {
         nama_aplikasi: app.nama_aplikasi || "",
         domain: app.domain || "",
         deskripsi_fungsi: app.deskripsi_fungsi || "",
@@ -269,7 +336,7 @@ function DataAplikasiSection() {
           : "",
         status_aplikasi: app.status_aplikasi ? String(app.status_aplikasi) : "",
         pdn_id: app.pdn_id ? String(app.pdn_id) : "",
-        pdn_backup: app.kode_pdn || "",
+        pdn_backup: app.pdn_backup || "",
         environment_id: app.environment_id ? String(app.environment_id) : "",
         pic_internal: app.pic_internal || "",
         pic_eksternal: app.pic_eksternal || "",
@@ -287,6 +354,15 @@ function DataAplikasiSection() {
         perangkat_lunak: app.perangkat_lunak || "",
         cloud: app.cloud || "",
         ssl: app.ssl || "",
+        ssl_expired: app.ssl_expired
+          ? (() => {
+              const date = new Date(app.ssl_expired);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              return `${year}-${month}-${day}`;
+            })()
+          : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
         status_bmn: app.status_bmn || "",
@@ -298,7 +374,20 @@ function DataAplikasiSection() {
         va_pt_status: app.va_pt_status || "",
         va_pt_waktu: app.va_pt_waktu || "",
         antivirus: app.antivirus || "",
+      };
+
+      // Add dynamic fields with prefill from database
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        baseFormData[fieldName] = app[fieldName] ? String(app[fieldName]) : "";
       });
+
+      setFormData(baseFormData);
+
+      // Fetch PIC berdasarkan eselon2_id jika ada
+      if (app.eselon2_id) {
+        await fetchPICByEselon2(String(app.eselon2_id));
+      }
 
       setEditMode(true);
       setOriginalAppName(appName);
@@ -308,8 +397,119 @@ function DataAplikasiSection() {
     }
   };
 
+  // Fetch PIC based on eselon2_id
+  const fetchPICByEselon2 = async (eselon2_id) => {
+    if (!eselon2_id) {
+      // Reset PIC data jika eselon2_id kosong
+      setMaster((prev) => ({
+        ...prev,
+        pic_internal: [],
+        pic_eksternal: [],
+      }));
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/master-data/dropdown?eselon2_id=${eselon2_id}`,
+      );
+      if (!res.ok) return;
+      const result = await res.json();
+      if (result.success && result.data) {
+        // Update hanya pic_internal dan pic_eksternal
+        setMaster((prev) => ({
+          ...prev,
+          pic_internal: result.data.pic_internal || [],
+          pic_eksternal: result.data.pic_eksternal || [],
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to fetch PIC by eselon2", e);
+    }
+  };
+
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+
+    // Jika pic_internal berubah, auto-fill kontak dari master
+    if (k === "pic_internal") {
+      if (v && v !== "Tidak Ada" && v !== "") {
+        const selectedPIC = (master.pic_internal || []).find(
+          (pic) => pic.nama_pic_internal === v,
+        );
+        if (selectedPIC && selectedPIC.kontak_pic_internal) {
+          setFormData((prev) => ({
+            ...prev,
+            [k]: v,
+            kontak_pic_internal: selectedPIC.kontak_pic_internal,
+          }));
+        }
+      } else {
+        // Reset kontak jika "Tidak Ada" atau kosong
+        setFormData((prev) => ({
+          ...prev,
+          [k]: v,
+          kontak_pic_internal: "",
+        }));
+      }
+    }
+
+    // Jika pic_eksternal berubah, auto-fill kontak dari master
+    if (k === "pic_eksternal") {
+      if (v && v !== "Tidak Ada" && v !== "") {
+        const selectedPIC = (master.pic_eksternal || []).find(
+          (pic) => pic.nama_pic_eksternal === v,
+        );
+        if (selectedPIC && selectedPIC.kontak_pic_eksternal) {
+          setFormData((prev) => ({
+            ...prev,
+            [k]: v,
+            kontak_pic_eksternal: selectedPIC.kontak_pic_eksternal,
+          }));
+        }
+      } else {
+        // Reset kontak jika "Tidak Ada" atau kosong
+        setFormData((prev) => ({
+          ...prev,
+          [k]: v,
+          kontak_pic_eksternal: "",
+        }));
+      }
+    }
+
+    // Jika eselon2_id berubah, fetch PIC yang sesuai dan reset PIC fields
+    if (k === "eselon2_id") {
+      fetchPICByEselon2(v);
+      // Reset PIC fields ketika eselon2 berubah
+      setFormData((prev) => ({
+        ...prev,
+        [k]: v,
+        pic_internal: "",
+        pic_eksternal: "",
+        kontak_pic_internal: "",
+        kontak_pic_eksternal: "",
+      }));
+    }
+
+    // Jika eselon1_id berubah, reset eselon2 dan PIC
+    if (k === "eselon1_id") {
+      setFormData((prev) => ({
+        ...prev,
+        [k]: v,
+        eselon2_id: "",
+        pic_internal: "",
+        pic_eksternal: "",
+        kontak_pic_internal: "",
+        kontak_pic_eksternal: "",
+      }));
+      // Reset PIC data
+      setMaster((prev) => ({
+        ...prev,
+        pic_internal: [],
+        pic_eksternal: [],
+      }));
+    }
+
     setFieldErrors((prev) => {
       if (!prev || Object.keys(prev).length === 0) return prev;
 
@@ -404,6 +604,7 @@ function DataAplikasiSection() {
         frekuensi_pemakaian: "Frekuensi Pemakaian",
         status_aplikasi: "Status Aplikasi",
         pdn_id: "PDN Utama",
+        pdn_backup: "PDN Backup",
         environment_id: "Environment",
         pic_internal: "PIC Internal",
         pic_eksternal: "PIC Eksternal",
@@ -419,6 +620,7 @@ function DataAplikasiSection() {
         perangkat_lunak: "Perangkat Lunak",
         cloud: "Cloud",
         ssl: "SSL",
+        ssl_expired: "Tanggal Expired SSL",
         alamat_ip_publik: "Alamat IP Publik",
         keterangan: "Keterangan",
         status_bmn: "Status BMN",
@@ -431,6 +633,12 @@ function DataAplikasiSection() {
         va_pt_waktu: "VA/PT - Waktu",
         antivirus: "Antivirus",
       };
+
+      // Tambahkan dynamic fields ke fieldLabels
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        fieldLabels[fieldName] = table.display_name;
+      });
 
       const fieldOrder = Object.keys(fieldLabels);
 
@@ -474,6 +682,30 @@ function DataAplikasiSection() {
           missing.push(fieldLabels["va_pt_waktu"]);
           missingErrors.va_pt_waktu = true;
         }
+      }
+
+      // Validasi PIC: Minimal salah satu harus ada (tidak boleh keduanya "Tidak Ada")
+      const picInternalEmpty =
+        !formData.pic_internal ||
+        formData.pic_internal.trim() === "" ||
+        formData.pic_internal === "Tidak Ada";
+      const picEksternalEmpty =
+        !formData.pic_eksternal ||
+        formData.pic_eksternal.trim() === "" ||
+        formData.pic_eksternal === "Tidak Ada";
+
+      if (picInternalEmpty && picEksternalEmpty) {
+        setFieldErrors({
+          ...missingErrors,
+          pic_internal: true,
+          pic_eksternal: true,
+        });
+        showMessage(
+          "error",
+          "Minimal salah satu PIC (Internal atau Eksternal) harus diisi dengan PIC yang valid, tidak boleh keduanya 'Tidak Ada'",
+          6000,
+        );
+        return false;
       }
 
       if (missing.length > 0) {
@@ -564,6 +796,7 @@ function DataAplikasiSection() {
         frekuensi_pemakaian: formData.frekuensi_pemakaian || null,
         status_aplikasi: formData.status_aplikasi || null,
         pdn_id: formData.pdn_id || null,
+        pdn_backup: formData.pdn_backup || null,
         environment_id: formData.environment_id || null,
         pic_internal: formData.pic_internal || null,
         pic_eksternal: formData.pic_eksternal || null,
@@ -582,6 +815,7 @@ function DataAplikasiSection() {
         perangkat_lunak: formData.perangkat_lunak || null,
         cloud: formData.cloud || null,
         ssl: formData.ssl || null,
+        ssl_expired: formData.ssl_expired || null,
         alamat_ip_publik: formData.alamat_ip_publik || null,
         keterangan: formData.keterangan || null,
         status_bmn: formData.status_bmn || null,
@@ -598,10 +832,16 @@ function DataAplikasiSection() {
           formData.va_pt_status === "ya" ? formData.va_pt_waktu : null,
       };
 
+      // Add dynamic fields to payload
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        payload[fieldName] = formData[fieldName] || null;
+      });
+
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-          originalAppName,
-        )}`
+            originalAppName,
+          )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -639,7 +879,7 @@ function DataAplikasiSection() {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
           7000,
         );
       } else {
@@ -744,21 +984,21 @@ function DataAplikasiSection() {
           alignItems: "center",
           justifyContent: "space-between",
           marginBottom: "20px",
-          padding: "18px 22px",
+          padding: "14px 18px",
           background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-          borderRadius: "14px",
+          borderRadius: "12px",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <div
             style={{
-              width: "48px",
-              height: "48px",
+              width: "40px",
+              height: "40px",
               background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-              borderRadius: "12px",
+              borderRadius: "10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -766,8 +1006,8 @@ function DataAplikasiSection() {
             }}
           >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -815,13 +1055,13 @@ function DataAplikasiSection() {
             <h1
               style={{
                 margin: 0,
-                marginBottom: "3px",
-                fontSize: "20px",
+                marginBottom: "2px",
+                fontSize: "18px",
                 fontWeight: 700,
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                letterSpacing: "-0.02em",
+                letterSpacing: "-0.01em",
                 lineHeight: 1.2,
               }}
             >
@@ -831,7 +1071,7 @@ function DataAplikasiSection() {
               style={{
                 margin: 0,
                 color: "#64748b",
-                fontSize: "12.5px",
+                fontSize: "11px",
                 fontWeight: 500,
                 lineHeight: 1.3,
               }}
@@ -974,6 +1214,100 @@ function DataAplikasiSection() {
           </div>
 
           <select
+            value={filterEselon1}
+            onChange={(e) => {
+              setFilterEselon1(e.target.value);
+              setFilterEselon2(""); // Reset eselon 2 when eselon 1 changes
+            }}
+            style={{
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: "#fafbfc",
+              cursor: "pointer",
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "#4f46e5";
+              e.currentTarget.style.backgroundColor = "#fff";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = "#fafbfc";
+            }}
+          >
+            <option value="">Semua Eselon 1</option>
+            {(master.eselon1 || [])
+              .filter((e1) => e1.status_aktif === 1 || e1.status_aktif === true)
+              .map((e1) => (
+                <option key={e1.eselon1_id} value={e1.eselon1_id}>
+                  {e1.nama_eselon1}
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={filterEselon2}
+            onChange={(e) => setFilterEselon2(e.target.value)}
+            disabled={!filterEselon1}
+            style={{
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: !filterEselon1 ? "#f1f5f9" : "#fafbfc",
+              cursor: !filterEselon1 ? "not-allowed" : "pointer",
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (filterEselon1) {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = !filterEselon1
+                ? "#f1f5f9"
+                : "#fafbfc";
+            }}
+          >
+            <option value="">
+              {!filterEselon1 ? "Eselon 2" : "Semua Eselon 2"}
+            </option>
+            {(master.eselon2 || [])
+              .filter(
+                (e2) =>
+                  (e2.status_aktif === 1 || e2.status_aktif === true) &&
+                  (!filterEselon1 || e2.eselon1_id === parseInt(filterEselon1)),
+              )
+              .map((e2) => (
+                <option key={e2.eselon2_id} value={e2.eselon2_id}>
+                  {e2.nama_eselon2}
+                </option>
+              ))}
+          </select>
+
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
@@ -1014,7 +1348,10 @@ function DataAplikasiSection() {
             ))}
           </select>
 
-          {(search || statusFilter !== "all") && (
+          {(search ||
+            statusFilter !== "all" ||
+            filterEselon1 ||
+            filterEselon2) && (
             <div
               style={{
                 padding: "7px 12px",
@@ -1224,12 +1561,14 @@ function DataAplikasiSection() {
             border: "1px solid #e2e8f0",
           }}
         >
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", overflowY: "visible" }}>
             <table
               style={{
                 width: "100%",
+                minWidth: "1200px",
                 borderCollapse: "collapse",
                 fontSize: "14px",
+                tableLayout: "fixed",
               }}
             >
               <thead>
@@ -1242,6 +1581,7 @@ function DataAplikasiSection() {
                 >
                   <th
                     style={{
+                      width: "60px",
                       padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1255,6 +1595,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
+                      width: "250px",
                       padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1268,6 +1609,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
+                      width: "220px",
                       padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1281,6 +1623,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
+                      width: "150px",
                       padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1294,6 +1637,7 @@ function DataAplikasiSection() {
                   </th>
                   <th
                     style={{
+                      width: "140px",
                       padding: "10px 14px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1303,10 +1647,39 @@ function DataAplikasiSection() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Status
+                    Status Aplikasi
                   </th>
                   <th
                     style={{
+                      width: "160px",
+                      padding: "10px 14px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      color: "#475569",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Tanggal Expired SSL
+                  </th>
+                  <th
+                    style={{
+                      width: "130px",
+                      padding: "10px 14px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      color: "#475569",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Status SSL
+                  </th>
+                  <th
+                    style={{
+                      width: "100px",
                       padding: "10px 14px",
                       textAlign: "center",
                       fontWeight: 700,
@@ -1324,15 +1697,45 @@ function DataAplikasiSection() {
                 {filtered.map((app, i) => {
                   const badge = getStatusBadge(app);
                   const unit = app.nama_eselon1 || app.nama_eselon2 || "-";
-                  const pic =
-                    app.nama_pic_internal || app.nama_pic_eksternal || "-";
+
+                  // Prioritas PIC Internal, jika tidak ada maka PIC Eksternal
+                  let pic = "-";
+                  if (
+                    app.nama_pic_internal &&
+                    app.nama_pic_internal !== "Tidak Ada"
+                  ) {
+                    pic = app.nama_pic_internal;
+                  } else if (
+                    app.nama_pic_eksternal &&
+                    app.nama_pic_eksternal !== "Tidak Ada"
+                  ) {
+                    pic = app.nama_pic_eksternal;
+                  }
                   return (
                     <tr
                       key={app.nama_aplikasi ?? i}
+                      onClick={() => {
+                        console.log("Selected App Data:", app);
+                        console.log(
+                          "PIC Internal:",
+                          app.nama_pic_internal,
+                          "ID:",
+                          app.pic_internal_id,
+                        );
+                        console.log(
+                          "PIC Eksternal:",
+                          app.nama_pic_eksternal,
+                          "ID:",
+                          app.pic_eksternal_id,
+                        );
+                        setSelectedApp(app);
+                        setShowDetailModal(true);
+                      }}
                       style={{
                         borderBottom: "1px solid #e2e8f0",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                        height: "80px",
+                        height: "70px",
+                        cursor: "pointer",
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.backgroundColor = "#f8fafc";
@@ -1345,10 +1748,10 @@ function DataAplikasiSection() {
                     >
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           fontWeight: 600,
                           color: "#94a3b8",
-                          fontSize: "13px",
+                          fontSize: "12px",
                           verticalAlign: "middle",
                         }}
                       >
@@ -1356,7 +1759,7 @@ function DataAplikasiSection() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           verticalAlign: "middle",
                         }}
                       >
@@ -1364,15 +1767,17 @@ function DataAplikasiSection() {
                           style={{
                             fontWeight: 700,
                             color: "#0f172a",
-                            fontSize: "13px",
-                            marginBottom: "3px",
+                            fontSize: "12px",
+                            marginBottom: "2px",
                             letterSpacing: "-0.01em",
+                            wordWrap: "break-word",
+                            lineHeight: "1.3",
                           }}
                         >
                           {app.nama_aplikasi || "-"}
                         </div>
                         {app.domain && (
-                          <div style={{ fontSize: "12px", marginTop: "6px" }}>
+                          <div style={{ fontSize: "11px", marginTop: "2px" }}>
                             <a
                               className="allow-lowercase"
                               href={
@@ -1389,10 +1794,12 @@ function DataAplikasiSection() {
                                 alignItems: "center",
                                 gap: "4px",
                                 textTransform: "none",
+                                wordBreak: "break-all",
+                                lineHeight: "1.3",
                               }}
                               onMouseOver={(e) =>
-                              (e.currentTarget.style.textDecoration =
-                                "underline")
+                                (e.currentTarget.style.textDecoration =
+                                  "underline")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.textDecoration = "none")
@@ -1432,29 +1839,33 @@ function DataAplikasiSection() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           color: "#475569",
-                          fontSize: "13px",
+                          fontSize: "12px",
                           fontWeight: 500,
                           verticalAlign: "middle",
+                          wordWrap: "break-word",
+                          lineHeight: "1.3",
                         }}
                       >
                         {unit}
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           color: "#475569",
-                          fontSize: "13px",
+                          fontSize: "12px",
                           fontWeight: 500,
                           verticalAlign: "middle",
+                          wordWrap: "break-word",
+                          lineHeight: "1.3",
                         }}
                       >
                         {pic}
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           verticalAlign: "middle",
                         }}
                       >
@@ -1462,21 +1873,21 @@ function DataAplikasiSection() {
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "6px",
-                            padding: "4px 10px",
-                            borderRadius: "12px",
+                            gap: "4px",
+                            padding: "3px 8px",
+                            borderRadius: "10px",
                             backgroundColor: badge.bg,
                             color: badge.color,
                             fontWeight: 700,
-                            fontSize: "11px",
+                            fontSize: "10px",
                             letterSpacing: "0.01em",
                             textTransform: "uppercase",
                           }}
                         >
                           <span
                             style={{
-                              width: "5px",
-                              height: "5px",
+                              width: "4px",
+                              height: "4px",
                               borderRadius: "50%",
                               backgroundColor: badge.color,
                               display: "inline-block",
@@ -1487,28 +1898,127 @@ function DataAplikasiSection() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
+                          color: "#475569",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          verticalAlign: "middle",
+                          lineHeight: "1.3",
+                        }}
+                      >
+                        {app.ssl_expired
+                          ? new Date(app.ssl_expired).toLocaleDateString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              },
+                            )
+                          : "-"}
+                      </td>
+                      <td
+                        style={{
+                          padding: "8px 10px",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {(() => {
+                          if (!app.ssl_expired)
+                            return (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "3px 8px",
+                                  borderRadius: "10px",
+                                  backgroundColor: "#f1f5f9",
+                                  color: "#64748b",
+                                  fontWeight: 700,
+                                  fontSize: "10px",
+                                  letterSpacing: "0.01em",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: "4px",
+                                    height: "4px",
+                                    borderRadius: "50%",
+                                    backgroundColor: "#64748b",
+                                    display: "inline-block",
+                                  }}
+                                />
+                                -
+                              </span>
+                            );
+
+                          const today = new Date();
+                          const expiredDate = new Date(app.ssl_expired);
+                          const isExpired = expiredDate < today;
+
+                          return (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "3px 8px",
+                                borderRadius: "10px",
+                                backgroundColor: isExpired
+                                  ? "#fee2e2"
+                                  : "#d1fae5",
+                                color: isExpired ? "#dc2626" : "#059669",
+                                fontWeight: 700,
+                                fontSize: "10px",
+                                letterSpacing: "0.01em",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: isExpired
+                                    ? "#dc2626"
+                                    : "#059669",
+                                  display: "inline-block",
+                                }}
+                              />
+                              {isExpired ? "Non Aktif" : "Aktif"}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td
+                        style={{
+                          padding: "8px 10px",
                           textAlign: "center",
                           verticalAlign: "middle",
                         }}
                       >
                         <button
-                          onClick={() => openEditModal(app.nama_aplikasi)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditModal(app.nama_aplikasi);
+                          }}
                           title="Edit Aplikasi"
                           style={{
-                            padding: "6px 12px",
+                            padding: "5px 10px",
                             background:
                               "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
                             border: "none",
-                            borderRadius: "8px",
+                            borderRadius: "6px",
                             cursor: "pointer",
-                            fontSize: "12px",
+                            fontSize: "11px",
                             fontWeight: 600,
                             color: "#fff",
                             transition: "all 0.2s ease",
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
+                            gap: "4px",
                             boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
                           }}
                           onMouseOver={(e) => {
@@ -2157,7 +2667,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                String(formData.eselon1_id)),
+                                  String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -2236,8 +2746,9 @@ function DataAplikasiSection() {
                           }}
                         >
                           {(formData.cara_akses_id || []).length > 0
-                            ? `${(formData.cara_akses_id || []).length
-                            } cara akses dipilih`
+                            ? `${
+                                (formData.cara_akses_id || []).length
+                              } cara akses dipilih`
                             : "-Pilih-"}
                         </span>
                         <svg
@@ -2339,8 +2850,8 @@ function DataAplikasiSection() {
                                         const updated = e.target.checked
                                           ? [...current, id]
                                           : current.filter(
-                                            (item) => item !== id,
-                                          );
+                                              (item) => item !== id,
+                                            );
                                         handleFormChange(
                                           "cara_akses_id",
                                           updated,
@@ -2373,17 +2884,17 @@ function DataAplikasiSection() {
                                   x.status_aktif === 1 ||
                                   x.status_aktif === true,
                               ).length === 0) && (
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#94a3b8",
-                                    textAlign: "center",
-                                    padding: "12px",
-                                  }}
-                                >
-                                  Tidak ada data Cara Akses
-                                </div>
-                              )}
+                              <div
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#94a3b8",
+                                  textAlign: "center",
+                                  padding: "12px",
+                                }}
+                              >
+                                Tidak ada data Cara Akses
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
@@ -2591,17 +3102,8 @@ function DataAplikasiSection() {
                         value={formData.pdn_id}
                         onChange={(e) => {
                           const id = e.target.value;
+                          // only set pdn_id; do NOT auto-fill pdn_backup
                           handleFormChange("pdn_id", id);
-                          const pdnObj = (master.pdn || [])
-                            .filter(
-                              (p) =>
-                                p.status_aktif === 1 || p.status_aktif === true,
-                            )
-                            .find((p) => String(p.pdn_id) === String(id));
-                          handleFormChange(
-                            "pdn_backup",
-                            pdnObj ? pdnObj.kode_pdn : "",
-                          );
                         }}
                         style={{
                           width: "100%",
@@ -2637,19 +3139,34 @@ function DataAplikasiSection() {
                       >
                         PDN Backup
                       </label>
-                      <input
+                      <select
+                        data-field="pdn_backup"
                         value={formData.pdn_backup}
-                        readOnly
-                        placeholder="Auto-fill dari PDN Utama"
+                        onChange={(e) =>
+                          handleFormChange("pdn_backup", e.target.value)
+                        }
                         style={{
                           width: "100%",
                           padding: "10px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          backgroundColor: "#f8fafc",
-                          cursor: "not-allowed",
+                          border: fieldErrors.pdn_backup
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e6eef6",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <option value="">-- Pilih PDN Backup --</option>
+                        {(master.pdn || [])
+                          .filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          )
+                          .map((x) => (
+                            <option key={x.pdn_id} value={x.kode_pdn}>
+                              {x.kode_pdn}
+                            </option>
+                          ))}
+                      </select>
                     </div>
                   </div>
 
@@ -2671,13 +3188,13 @@ function DataAplikasiSection() {
                       >
                         PIC Internal
                       </label>
-                      <input
+                      <select
                         data-field="pic_internal"
                         value={formData.pic_internal}
                         onChange={(e) =>
                           handleFormChange("pic_internal", e.target.value)
                         }
-                        placeholder="Contoh: Budi Santoso"
+                        disabled={!formData.eselon1_id || !formData.eselon2_id}
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2686,8 +3203,39 @@ function DataAplikasiSection() {
                           borderColor: fieldErrors.pic_internal
                             ? errorBorderColor
                             : "#e6eef6",
+                          boxShadow: fieldErrors.pic_internal
+                            ? errorBoxShadow
+                            : "none",
+                          backgroundColor:
+                            !formData.eselon1_id || !formData.eselon2_id
+                              ? "#f3f4f6"
+                              : "#fff",
+                          cursor:
+                            !formData.eselon1_id || !formData.eselon2_id
+                              ? "not-allowed"
+                              : "pointer",
                         }}
-                      />
+                      >
+                        <option value="">
+                          {!formData.eselon1_id || !formData.eselon2_id
+                            ? "Pilih Eselon 1 & 2 terlebih dahulu"
+                            : "-Pilih-"}
+                        </option>
+                        <option value="Tidak Ada">Tidak Ada</option>
+                        {(master.pic_internal || [])
+                          .filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          )
+                          .map((x) => (
+                            <option
+                              key={x.pic_internal_id}
+                              value={x.nama_pic_internal}
+                            >
+                              {x.nama_pic_internal}
+                            </option>
+                          ))}
+                      </select>
                     </div>
 
                     <div>
@@ -2700,13 +3248,13 @@ function DataAplikasiSection() {
                       >
                         PIC Eksternal
                       </label>
-                      <input
+                      <select
                         data-field="pic_eksternal"
                         value={formData.pic_eksternal}
                         onChange={(e) =>
                           handleFormChange("pic_eksternal", e.target.value)
                         }
-                        placeholder="Contoh: PT Telkom Indonesia"
+                        disabled={!formData.eselon1_id || !formData.eselon2_id}
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2715,8 +3263,39 @@ function DataAplikasiSection() {
                           borderColor: fieldErrors.pic_eksternal
                             ? errorBorderColor
                             : "#e6eef6",
+                          boxShadow: fieldErrors.pic_eksternal
+                            ? errorBoxShadow
+                            : "none",
+                          backgroundColor:
+                            !formData.eselon1_id || !formData.eselon2_id
+                              ? "#f3f4f6"
+                              : "#fff",
+                          cursor:
+                            !formData.eselon1_id || !formData.eselon2_id
+                              ? "not-allowed"
+                              : "pointer",
                         }}
-                      />
+                      >
+                        <option value="">
+                          {!formData.eselon1_id || !formData.eselon2_id
+                            ? "Pilih Eselon 1 & 2 terlebih dahulu"
+                            : "-Pilih-"}
+                        </option>
+                        <option value="Tidak Ada">Tidak Ada</option>
+                        {(master.pic_eksternal || [])
+                          .filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          )
+                          .map((x) => (
+                            <option
+                              key={x.pic_eksternal_id}
+                              value={x.nama_pic_eksternal}
+                            >
+                              {x.nama_pic_eksternal}
+                            </option>
+                          ))}
+                      </select>
                     </div>
                   </div>
 
@@ -2743,26 +3322,19 @@ function DataAplikasiSection() {
                         data-field="kontak_pic_internal"
                         type="tel"
                         value={formData.kontak_pic_internal}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 13);
-                          handleFormChange("kontak_pic_internal", value);
-                        }}
-                        placeholder="Contoh: 08123456789"
+                        readOnly
+                        disabled
+                        placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.kontak_pic_internal
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          backgroundColor: "#f3f4f6",
+                          cursor: "not-allowed",
+                          color: "#6b7280",
                         }}
                       />
-                      {fieldErrors.kontak_pic_internal && (
-                        <div style={{ color: errorBorderColor, fontSize: "12px", marginTop: "4px" }}>
-                          {fieldErrors.kontak_pic_internal}
-                        </div>
-                      )}
                     </div>
 
                     <div>
@@ -2779,26 +3351,19 @@ function DataAplikasiSection() {
                         data-field="kontak_pic_eksternal"
                         type="tel"
                         value={formData.kontak_pic_eksternal}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '').slice(0, 13);
-                          handleFormChange("kontak_pic_eksternal", value);
-                        }}
-                        placeholder="Contoh: 08123456789"
+                        readOnly
+                        disabled
+                        placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
                           padding: "10px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.kontak_pic_eksternal
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          backgroundColor: "#f3f4f6",
+                          cursor: "not-allowed",
+                          color: "#6b7280",
                         }}
                       />
-                      {fieldErrors.kontak_pic_eksternal && (
-                        <div style={{ color: errorBorderColor, fontSize: "12px", marginTop: "4px" }}>
-                          {fieldErrors.kontak_pic_eksternal}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -3363,6 +3928,47 @@ function DataAplikasiSection() {
                           fontWeight: 600,
                         }}
                       >
+                        Tanggal Expired SSL
+                      </label>
+                      <input
+                        type="date"
+                        data-field="ssl_expired"
+                        value={formData.ssl_expired}
+                        onChange={(e) =>
+                          handleFormChange("ssl_expired", e.target.value)
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.ssl_expired
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.ssl_expired
+                            ? errorBoxShadow
+                            : "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
                         Antivirus
                       </label>
                       <input
@@ -3761,6 +4367,129 @@ function DataAplikasiSection() {
                   </div>
                 </div>
 
+                {/* Section Informasi Tambahan (Dynamic Fields) */}
+                {dynamicTables.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: "20px",
+                      paddingTop: "20px",
+                      borderTop: "2px solid #e2e8f0",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        marginBottom: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#4f46e5"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 4v16m8-8H4" />
+                      </svg>
+                      Informasi Tambahan
+                    </h3>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "12px",
+                      }}
+                    >
+                      {dynamicTables.map((table) => {
+                        const fieldName = `${table.table_name}_id`;
+                        const data = dynamicMasterData[table.table_name] || [];
+                        const idField = table.id_field_name;
+
+                        // Cari kolom pertama yang bukan ID untuk ditampilkan sebagai label
+                        let displayField = null;
+                        try {
+                          const schema = JSON.parse(table.table_schema || "[]");
+                          if (schema.length > 0) {
+                            displayField = schema[0].column_name;
+                          }
+                        } catch (e) {
+                          // Fallback: ambil key pertama dari data (selain id)
+                          if (data.length > 0) {
+                            const keys = Object.keys(data[0]).filter(
+                              (k) =>
+                                k !== idField &&
+                                !k.includes("_at") &&
+                                !k.includes("_by") &&
+                                k !== "status_aktif",
+                            );
+                            if (keys.length > 0) displayField = keys[0];
+                          }
+                        }
+
+                        return (
+                          <div key={table.registry_id}>
+                            <label
+                              style={{
+                                display: "block",
+                                marginBottom: "6px",
+                                fontWeight: 600,
+                                fontSize: "13px",
+                              }}
+                            >
+                              {table.display_name}
+                            </label>
+                            <select
+                              data-field={fieldName}
+                              value={formData[fieldName] || ""}
+                              onChange={(e) =>
+                                handleFormChange(fieldName, e.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors[fieldName]
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors[fieldName]
+                                  ? errorBoxShadow
+                                  : "none",
+                              }}
+                            >
+                              <option value="">
+                                -- Pilih {table.display_name} --
+                              </option>
+                              {data
+                                .filter(
+                                  (item) =>
+                                    item.status_aktif === 1 ||
+                                    item.status_aktif === true,
+                                )
+                                .map((item) => (
+                                  <option
+                                    key={item[idField]}
+                                    value={item[idField]}
+                                  >
+                                    {displayField && item[displayField]
+                                      ? item[displayField]
+                                      : item[idField]}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div
                   style={{
                     display: "flex",
@@ -4011,7 +4740,812 @@ function DataAplikasiSection() {
           </div>
         </div>
       )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedApp && (
+        <div
+          onClick={() => setShowDetailModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+            animation: "fadeIn 0.2s ease-out",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "900px",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              animation: "slideUp 0.3s ease-out",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "18px 24px",
+                borderBottom: "none",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "0",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      background: "rgba(255,255,255,0.2)",
+                      backdropFilter: "blur(10px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                        marginBottom: "2px",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      {selectedApp.nama_aplikasi}
+                    </h2>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "11px",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Informasi lengkap aplikasi
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  border: "none",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  backdropFilter: "blur(10px)",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.3)";
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div
+              style={{
+                padding: "20px 24px",
+                overflowY: "auto",
+                flex: 1,
+                backgroundColor: "#f9fafb",
+              }}
+            >
+              {/* Basic Info */}
+              <DetailSection title="Informasi Umum">
+                <DetailField
+                  label="Nama Aplikasi"
+                  value={selectedApp.nama_aplikasi}
+                />
+                <DetailField
+                  label="Domain"
+                  value={selectedApp.domain}
+                  isLink={true}
+                />
+                <DetailField
+                  label="Status"
+                  value={selectedApp.nama_status}
+                  isBadge={true}
+                />
+                <DetailField
+                  label="Frekuensi Pemakaian"
+                  value={selectedApp.frekuensi_pemakaian}
+                />
+              </DetailSection>
+
+              {/* Description */}
+              <DetailSection title="Deskripsi & Fungsi">
+                <DetailField
+                  label="Deskripsi/Fungsi"
+                  value={selectedApp.deskripsi_fungsi}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="User/Pengguna"
+                  value={selectedApp.user_pengguna}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="Data yang Digunakan"
+                  value={selectedApp.data_digunakan}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="Luaran/Output"
+                  value={selectedApp.luaran_output}
+                  isTextarea={true}
+                />
+              </DetailSection>
+
+              {/* Organization */}
+              <DetailSection title="Unit & PIC">
+                <DetailField
+                  label="Eselon 1"
+                  value={selectedApp.nama_eselon1}
+                />
+                <DetailField
+                  label="Eselon 2"
+                  value={selectedApp.nama_eselon2}
+                />
+                <DetailField
+                  label="PIC Internal"
+                  value={selectedApp.nama_pic_internal}
+                />
+                <DetailField
+                  label="Kontak PIC Internal"
+                  value={selectedApp.kontak_pic_internal}
+                />
+                <DetailField
+                  label="PIC Eksternal"
+                  value={selectedApp.nama_pic_eksternal}
+                />
+                <DetailField
+                  label="Kontak PIC Eksternal"
+                  value={selectedApp.kontak_pic_eksternal}
+                />
+              </DetailSection>
+
+              {/* Technical Info */}
+              <DetailSection title="Informasi Teknis">
+                <DetailField
+                  label="Bahasa Pemrograman"
+                  value={selectedApp.bahasa_pemrograman}
+                />
+                <DetailField
+                  label="Basis Data"
+                  value={selectedApp.basis_data}
+                />
+                <DetailField
+                  label="Kerangka Pengembangan"
+                  value={selectedApp.kerangka_pengembangan}
+                />
+                <DetailField
+                  label="Environment"
+                  value={selectedApp.nama_environment}
+                />
+                <DetailField
+                  label="Cara Akses"
+                  value={(() => {
+                    if (selectedApp.nama_cara_akses) {
+                      try {
+                        const parsed = JSON.parse(selectedApp.nama_cara_akses);
+                        return Array.isArray(parsed)
+                          ? parsed.join(", ")
+                          : selectedApp.nama_cara_akses;
+                      } catch {
+                        return selectedApp.nama_cara_akses;
+                      }
+                    }
+                    return null;
+                  })()}
+                />
+                <DetailField
+                  label="Alamat IP Publik"
+                  value={selectedApp.alamat_ip_publik}
+                />
+                <DetailField
+                  label="Server Aplikasi"
+                  value={selectedApp.server_aplikasi}
+                />
+                <DetailField label="Cloud" value={selectedApp.cloud} />
+                <DetailField
+                  label="Perangkat Lunak"
+                  value={selectedApp.perangkat_lunak}
+                />
+                <DetailField
+                  label="Tipe Lisensi Bahasa"
+                  value={selectedApp.tipe_lisensi_bahasa}
+                />
+              </DetailSection>
+
+              {/* Security */}
+              <DetailSection title="Keamanan">
+                <DetailField label="SSL" value={selectedApp.ssl} />
+                <DetailField
+                  label="Tanggal Expired SSL"
+                  value={
+                    selectedApp.ssl_expired
+                      ? new Date(selectedApp.ssl_expired).toLocaleDateString(
+                          "id-ID",
+                          { year: "numeric", month: "long", day: "numeric" },
+                        )
+                      : null
+                  }
+                />
+                <DetailField label="WAF" value={selectedApp.waf} />
+                <DetailField
+                  label="WAF Lainnya"
+                  value={selectedApp.waf_lainnya}
+                />
+                <DetailField label="Antivirus" value={selectedApp.antivirus} />
+                <DetailField
+                  label="VA/PT Status"
+                  value={selectedApp.va_pt_status}
+                />
+                <DetailField
+                  label="VA/PT Waktu"
+                  value={selectedApp.va_pt_waktu}
+                />
+                <DetailField
+                  label="API Internal"
+                  value={selectedApp.api_internal_status}
+                />
+              </DetailSection>
+
+              {/* Infrastructure */}
+              <DetailSection title="Infrastruktur & Operasional">
+                <DetailField label="PDN Utama" value={selectedApp.nama_pdn} />
+                <DetailField
+                  label="PDN Backup"
+                  value={selectedApp.pdn_backup}
+                />
+                <DetailField
+                  label="Pusat Komputasi Utama"
+                  value={selectedApp.pusat_komputasi_utama}
+                />
+                <DetailField
+                  label="Pusat Komputasi Backup"
+                  value={selectedApp.pusat_komputasi_backup}
+                />
+                <DetailField
+                  label="Mandiri Komputasi Backup"
+                  value={selectedApp.mandiri_komputasi_backup}
+                />
+                <DetailField
+                  label="Unit Pengembang"
+                  value={selectedApp.unit_pengembang}
+                />
+                <DetailField
+                  label="Unit Operasional Teknologi"
+                  value={selectedApp.unit_operasional_teknologi}
+                />
+                <DetailField
+                  label="Status BMN"
+                  value={selectedApp.status_bmn}
+                />
+                <DetailField
+                  label="Nilai Pengembangan"
+                  value={
+                    selectedApp.nilai_pengembangan_aplikasi
+                      ? `Rp ${Number(selectedApp.nilai_pengembangan_aplikasi).toLocaleString("id-ID")}`
+                      : null
+                  }
+                />
+              </DetailSection>
+
+              {/* Additional Info */}
+              {selectedApp.keterangan && (
+                <DetailSection title="Keterangan Tambahan">
+                  <DetailField
+                    label="Keterangan"
+                    value={selectedApp.keterangan}
+                    isTextarea={true}
+                  />
+                </DetailSection>
+              )}
+
+              {/* Dynamic Fields / Informasi Tambahan */}
+              {dynamicTables.length > 0 &&
+                (() => {
+                  const dynamicFields = dynamicTables.filter((table) => {
+                    const fieldName = `${table.table_name}_id`;
+                    return selectedApp[fieldName];
+                  });
+
+                  if (dynamicFields.length === 0) return null;
+
+                  return (
+                    <DetailSection title="Informasi Tambahan">
+                      {dynamicFields.map((table) => {
+                        const fieldName = `${table.table_name}_id`;
+                        const fieldValue = selectedApp[fieldName];
+                        const data = dynamicMasterData[table.table_name] || [];
+                        const idField = table.id_field_name;
+
+                        // Cari display value dari master data
+                        let displayValue = fieldValue;
+                        if (data.length > 0) {
+                          const item = data.find(
+                            (d) => String(d[idField]) === String(fieldValue),
+                          );
+                          if (item) {
+                            // Cari kolom pertama yang bukan ID untuk ditampilkan
+                            try {
+                              const schema = JSON.parse(
+                                table.table_schema || "[]",
+                              );
+                              if (schema.length > 0) {
+                                const displayField = schema[0].column_name;
+                                displayValue = item[displayField] || fieldValue;
+                              }
+                            } catch (e) {
+                              // Fallback: ambil key pertama selain id
+                              const keys = Object.keys(item).filter(
+                                (k) =>
+                                  k !== idField &&
+                                  !k.includes("_at") &&
+                                  !k.includes("_by") &&
+                                  k !== "status_aktif",
+                              );
+                              if (keys.length > 0) {
+                                displayValue = item[keys[0]] || fieldValue;
+                              }
+                            }
+                          }
+                        }
+
+                        return (
+                          <DetailField
+                            key={table.registry_id}
+                            label={table.display_name}
+                            value={displayValue}
+                          />
+                        );
+                      })}
+                    </DetailSection>
+                  );
+                })()}
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #e5e7eb",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                background: "linear-gradient(to top, #f9fafb 0%, #ffffff 100%)",
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  openEditModal(selectedApp.nama_aplikasi);
+                }}
+                style={{
+                  padding: "10px 20px",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 20px rgba(102, 126, 234, 0.5)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(102, 126, 234, 0.4)";
+                }}
+              >
+                <svg
+                  width="14"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Aplikasi
+              </button>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#ffffff",
+                  color: "#6b7280",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f9fafb";
+                  e.currentTarget.style.borderColor = "#d1d5db";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+// Helper component for detail section
+function DetailSection({ title, children }) {
+  const getSectionIcon = (title) => {
+    if (title.includes("Umum"))
+      return <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />;
+    if (title.includes("Deskripsi") || title.includes("Fungsi"))
+      return (
+        <>
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M9 9h6M9 13h6M9 17h6" />
+        </>
+      );
+    if (title.includes("Unit") || title.includes("PIC"))
+      return (
+        <>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </>
+      );
+    if (title.includes("Teknis"))
+      return (
+        <>
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </>
+      );
+    if (title.includes("Keamanan"))
+      return (
+        <>
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </>
+      );
+    if (title.includes("Infrastruktur"))
+      return (
+        <>
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </>
+      );
+    if (title.includes("Tambahan"))
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" />
+        </>
+      );
+    return <path d="M12 2L3 14h9l-1 8 10-12h-9l1-8z" />;
+  };
+
+  return (
+    <div
+      style={{
+        marginBottom: "16px",
+        padding: "0",
+        backgroundColor: "transparent",
+        borderRadius: "12px",
+        border: "none",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: "10px 16px",
+          borderRadius: "12px 12px 0 0",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <div
+          style={{
+            width: "24px",
+            height: "24px",
+            borderRadius: "6px",
+            background: "rgba(255,255,255,0.2)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {getSectionIcon(title)}
+          </svg>
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            fontWeight: 700,
+            color: "#ffffff",
+            letterSpacing: "0.3px",
+          }}
+        >
+          {title}
+        </h3>
+      </div>
+      <div
+        style={{
+          padding: "16px",
+          backgroundColor: "#ffffff",
+          borderRadius: "0 0 12px 12px",
+          border: "1px solid #e5e7eb",
+          borderTop: "none",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "14px",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for detail field
+function DetailField({ label, value, isLink, isBadge, isTextarea }) {
+  const displayValue = value || "-";
+
+  if (isLink && value) {
+    return (
+      <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#6b7280",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "8px",
+          }}
+        >
+          {label}
+        </div>
+        <a
+          href={value.startsWith("http") ? value : `https://${value}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            color: "#667eea",
+            fontSize: "14px",
+            fontWeight: 500,
+            textDecoration: "none",
+            wordBreak: "break-all",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.2s",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.color = "#764ba2";
+            e.currentTarget.style.gap = "8px";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.color = "#667eea";
+            e.currentTarget.style.gap = "6px";
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+          </svg>
+          {value}
+        </a>
+      </div>
+    );
+  }
+
+  if (isBadge && value) {
+    const status = value.toLowerCase();
+    let bg = "#d1fae5";
+    let color = "#065f46";
+    let borderColor = "#6ee7b7";
+    if (status.includes("pengembang") || status.includes("pengembangan")) {
+      bg = "#fed7aa";
+      color = "#92400e";
+      borderColor = "#fbbf24";
+    } else if (status.includes("tidak")) {
+      bg = "#fecaca";
+      color = "#991b1b";
+      borderColor = "#f87171";
+    }
+
+    return (
+      <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#6b7280",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "8px",
+          }}
+        >
+          {label}
+        </div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 12px",
+            borderRadius: "10px",
+            backgroundColor: bg,
+            color: color,
+            fontWeight: 600,
+            fontSize: "12px",
+            letterSpacing: "0.3px",
+            border: `2px solid ${borderColor}`,
+          }}
+        >
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              backgroundColor: color,
+              boxShadow: `0 0 0 2px ${bg}`,
+            }}
+          />
+          {value}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+      <div
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "#6b7280",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "8px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "14px",
+          color: displayValue === "-" ? "#9ca3af" : "#1f2937",
+          fontWeight: displayValue === "-" ? 400 : 500,
+          lineHeight: "1.6",
+          wordBreak: "break-word",
+          whiteSpace: isTextarea ? "pre-wrap" : "normal",
+          padding: isTextarea ? "12px" : "0",
+          backgroundColor: isTextarea ? "#f9fafb" : "transparent",
+          borderRadius: isTextarea ? "8px" : "0",
+          border: isTextarea ? "1px solid #e5e7eb" : "none",
+        }}
+      >
+        {displayValue}
+      </div>
+    </div>
   );
 }
 

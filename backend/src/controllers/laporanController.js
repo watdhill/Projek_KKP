@@ -83,20 +83,26 @@ async function buildHierarchyFromMasterField(formatDetails) {
     return structure;
   }
 
-  // Query master_laporan_field to get only selected fields
+  // Create Order Map from format details
+  const orderMap = new Map();
+  formatDetails.forEach(d => {
+    if (d.field_id) orderMap.set(d.field_id, d.order_index);
+  });
+
+  // Query ALL master_laporan_field to ensure parents/hierarchy exists
   const [allFields] = await pool.query(`
     SELECT field_id, nama_field, kode_field, parent_id, level, urutan
     FROM master_laporan_field
-    WHERE field_id IN (?)
-    ORDER BY level, urutan
-  `, [fieldIds]);
+  `);
 
   // Build tree structure
   const fieldMap = new Map();
   allFields.forEach(field => {
     fieldMap.set(field.field_id, {
       ...field,
-      children: []
+      children: [],
+      // Set own order
+      ownOrder: orderMap.has(field.field_id) ? orderMap.get(field.field_id) : 999999
     });
   });
 
@@ -110,6 +116,25 @@ async function buildHierarchyFromMasterField(formatDetails) {
       roots.push(node);
     }
   });
+
+  // Calculate Effective Order and Sort Tree
+  function processAndSortNode(node) {
+    let minOrder = node.ownOrder;
+
+    if (node.children && node.children.length > 0) {
+      const childOrders = node.children.map(child => processAndSortNode(child));
+      const minChildOrder = Math.min(...childOrders);
+      if (minChildOrder < minOrder) minOrder = minChildOrder;
+
+      node.children.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
+    }
+
+    node.effectiveOrder = minOrder;
+    return minOrder;
+  }
+
+  roots.forEach(root => processAndSortNode(root));
+  roots.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
 
   // Convert tree to export structure
   function convertToExportStructure(nodes) {
@@ -194,23 +219,6 @@ async function buildHierarchyFromMasterField(formatDetails) {
       }
     });
 
-    // Prioritize key fields to appear first
-    const priorityFields = ['nama_aplikasi', 'domain', 'deskripsi_fungsi'];
-
-    result.sort((a, b) => {
-      const aIsPriority = a.type === 'field' && priorityFields.includes(a.fieldName);
-      const bIsPriority = b.type === 'field' && priorityFields.includes(b.fieldName);
-
-      if (aIsPriority && !bIsPriority) return -1;
-      if (!aIsPriority && bIsPriority) return 1;
-
-      if (aIsPriority && bIsPriority) {
-        return priorityFields.indexOf(a.fieldName) - priorityFields.indexOf(b.fieldName);
-      }
-
-      return 0;
-    });
-
     return result;
   }
 
@@ -231,11 +239,12 @@ async function getFormatDetails(formatId) {
       mlf.kode_field as field_name,
       mlf.nama_field as label_tampilan,
       fld.field_id,
+      fld.order_index,
       COALESCE(mlf.urutan, 999) as urutan
     FROM format_laporan_detail fld
     LEFT JOIN master_laporan_field mlf ON fld.field_id = mlf.field_id
     WHERE fld.format_laporan_id = ?
-    ORDER BY urutan
+    ORDER BY fld.order_index ASC
   `, [formatId]);
 
   return details;
@@ -263,10 +272,52 @@ exports.getAllFormatLaporan = async (req, res) => {
   }
 };
 
+// Get format fields for preview (new endpoint)
+exports.getFormatFieldsForPreview = async (req, res) => {
+  try {
+    const { format_laporan_id } = req.query;
+
+    if (!format_laporan_id) {
+      return res.status(400).json({
+        success: false,
+        message: 'format_laporan_id required'
+      });
+    }
+
+    const [fields] = await pool.query(`
+      SELECT 
+        fld.id,
+        fld.parent_id,
+        fld.judul,
+        fld.is_header,
+        mlf.kode_field,
+        mlf.nama_field,
+        mlf.urutan,
+        fld.field_id,
+        fld.order_index
+      FROM format_laporan_detail fld
+      LEFT JOIN master_laporan_field mlf ON fld.field_id = mlf.field_id
+      WHERE fld.format_laporan_id = ?
+      ORDER BY fld.order_index ASC
+    `, [format_laporan_id]);
+
+    res.json({
+      success: true,
+      data: fields
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching format fields',
+      error: error.message
+    });
+  }
+};
+
 // Get preview data with filters
 exports.getPreviewData = async (req, res) => {
   try {
-    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
+    const { format_laporan_id, status, eselon1_id, eselon2_id } = req.query;
 
     let query = `
       SELECT 
@@ -314,11 +365,6 @@ exports.getPreviewData = async (req, res) => {
 
     const params = [];
 
-    if (tahun && tahun !== 'all') {
-      query += ` AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?`;
-      params.push(tahun);
-    }
-
     if (status && status !== 'all') {
       query += ` AND da.status_aplikasi = ?`;
       params.push(status);
@@ -334,7 +380,8 @@ exports.getPreviewData = async (req, res) => {
       params.push(eselon2_id);
     }
 
-    query += ` ORDER BY da.nama_aplikasi`;
+    // Order by Eselon hierarchy (Setjen first), then by application name
+    query += ` ORDER BY e1.no ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
 
     const [rows] = await pool.query(query, params);
 
@@ -654,45 +701,45 @@ async function createFormatSheet(workbook, format, filters) {
   });
 }
 
-// Helper: Get filtered data
+/**
+ * Get filtered data for exports
+ */
 async function getFilteredData(filters) {
-  const { tahun, status, eselon1_id, eselon2_id } = filters;
+  const { status, eselon1_id, eselon2_id } = filters;
 
   let query = `
     SELECT 
       da.*,
-      e1.singkatan as unit,
-      sa.nama_status as status_aplikasi,
-      YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan
+      e1.nama_eselon1,
+      e1.singkatan as unit_eselon1,
+      e2.nama_eselon2,
+      sa.nama_status
     FROM data_aplikasi da
     LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
+    LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
     LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
     WHERE 1=1
   `;
 
   const params = [];
 
-  if (tahun && tahun !== 'all') {
-    query += ' AND YEAR(COALESCE(da.updated_at, da.created_at)) = ?';
-    params.push(tahun);
-  }
-
   if (status && status !== 'all') {
-    query += ' AND da.status_aplikasi = ?';
+    query += ` AND da.status_aplikasi = ?`;
     params.push(status);
   }
 
   if (eselon1_id && eselon1_id !== 'all') {
-    query += ' AND da.eselon1_id = ?';
+    query += ` AND da.eselon1_id = ?`;
     params.push(eselon1_id);
   }
 
   if (eselon2_id && eselon2_id !== 'all') {
-    query += ' AND da.eselon2_id = ?';
+    query += ` AND da.eselon2_id = ?`;
     params.push(eselon2_id);
   }
 
-  query += ' ORDER BY da.nama_aplikasi';
+  // Order by Eselon hierarchy (Setjen first), then by application name
+  query += ` ORDER BY e1.no ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
 
   const [rows] = await pool.query(query, params);
   return rows;
@@ -718,7 +765,7 @@ exports.exportPDF = async (req, res) => {
       }
 
       const [details] = await pool.query(`
-        SELECT field_id FROM format_laporan_detail 
+        SELECT field_id, order_index FROM format_laporan_detail 
         WHERE format_laporan_id = ?
       `, [format_laporan_id]);
 
@@ -990,7 +1037,7 @@ exports.exportPDFAll = async (req, res) => {
 
       // Get format details
       const [formatDetails] = await pool.query(`
-        SELECT field_id 
+        SELECT field_id, order_index 
         FROM format_laporan_detail 
         WHERE format_laporan_id = ?
       `, [format.format_laporan_id]);

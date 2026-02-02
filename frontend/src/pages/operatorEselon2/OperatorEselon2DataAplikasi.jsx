@@ -8,12 +8,21 @@ function OperatorEselon2DataAplikasi() {
   const messageTimerRef = useRef(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [filterEselon1, setFilterEselon1] = useState("");
+  const [filterEselon2, setFilterEselon2] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
   const [master, setMaster] = useState({});
+  const [dynamicTables, setDynamicTables] = useState([]);
+  const [dynamicMasterData, setDynamicMasterData] = useState({});
   const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  // Get operator's eselon1_id and eselon2_id from localStorage
+  const userEselon1Id = localStorage.getItem("eselon1_id");
+  const userEselon2Id = localStorage.getItem("eselon2_id");
+  const isUnitLocked = Boolean(userEselon2Id);
+
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -21,8 +30,8 @@ function OperatorEselon2DataAplikasi() {
     user_pengguna: "",
     data_digunakan: "",
     luaran_output: "",
-    eselon1_id: "",
-    eselon2_id: "",
+    eselon1_id: userEselon1Id || "",
+    eselon2_id: userEselon2Id || "",
     cara_akses_id: [],
     frekuensi_pemakaian: "",
     status_aplikasi: "",
@@ -31,6 +40,8 @@ function OperatorEselon2DataAplikasi() {
     environment_id: "",
     pic_internal: "",
     pic_eksternal: "",
+    kontak_pic_internal: "",
+    kontak_pic_eksternal: "",
     bahasa_pemrograman: "",
     basis_data: "",
     kerangka_pengembangan: "",
@@ -43,6 +54,7 @@ function OperatorEselon2DataAplikasi() {
     perangkat_lunak: "",
     cloud: "",
     ssl: "",
+    ssl_expired: "",
     alamat_ip_publik: "",
     keterangan: "",
     status_bmn: "",
@@ -57,10 +69,10 @@ function OperatorEselon2DataAplikasi() {
   });
 
   const [submitting, setSubmitting] = useState(false);
-
   const [fieldErrors, setFieldErrors] = useState({});
-  const errorBorderColor = "#dc2626";
-  const errorRing = "0 0 0 3px rgba(220, 38, 38, 0.25)";
+
+  const errorBorderColor = "#ef4444";
+  const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
   const errorBoxShadow = errorRing;
 
   const showMessage = (type, text, timeoutMs = 3500) => {
@@ -79,9 +91,59 @@ function OperatorEselon2DataAplikasi() {
     }
   };
 
-  // Get operator's eselon1_id and eselon2_id from localStorage
-  const userEselon1Id = localStorage.getItem("eselon1_id");
-  const userEselon2Id = localStorage.getItem("eselon2_id");
+  useEffect(() => {
+    if (userEselon1Id) setFilterEselon1(String(userEselon1Id));
+    if (userEselon2Id) setFilterEselon2(String(userEselon2Id));
+
+    // keep formData in sync with logged-in operator unit
+    if (userEselon1Id || userEselon2Id) {
+      setFormData((prev) => ({
+        ...prev,
+        eselon1_id: userEselon1Id ? String(userEselon1Id) : prev.eselon1_id,
+        eselon2_id: userEselon2Id ? String(userEselon2Id) : prev.eselon2_id,
+      }));
+    }
+  }, [userEselon1Id, userEselon2Id]);
+
+  // If eselon1_id is missing from localStorage, derive it from the user's eselon2_id
+  useEffect(() => {
+    if (!userEselon2Id) return;
+    if (userEselon1Id) return;
+
+    const eselon2List = master.eselon2 || [];
+    if (!Array.isArray(eselon2List) || eselon2List.length === 0) return;
+
+    const match = eselon2List.find(
+      (e2) => String(e2.eselon2_id) === String(userEselon2Id),
+    );
+    if (!match?.eselon1_id) return;
+
+    const derivedEselon1Id = String(match.eselon1_id);
+    if (!filterEselon1) setFilterEselon1(derivedEselon1Id);
+
+    setFormData((prev) => ({
+      ...prev,
+      eselon1_id: derivedEselon1Id,
+      eselon2_id: String(userEselon2Id),
+    }));
+  }, [master.eselon2, userEselon2Id, userEselon1Id, filterEselon1]);
+
+  // Guardrail: keep filters pinned to the logged-in operator's unit
+  useEffect(() => {
+    if (!isUnitLocked) return;
+    if (userEselon1Id && String(filterEselon1) !== String(userEselon1Id)) {
+      setFilterEselon1(String(userEselon1Id));
+    }
+    if (userEselon2Id && String(filterEselon2) !== String(userEselon2Id)) {
+      setFilterEselon2(String(userEselon2Id));
+    }
+  }, [
+    isUnitLocked,
+    userEselon1Id,
+    userEselon2Id,
+    filterEselon1,
+    filterEselon2,
+  ]);
 
   // fetch apps function (reusable)
   const fetchApps = async () => {
@@ -118,6 +180,15 @@ function OperatorEselon2DataAplikasi() {
       const status = (a.nama_status || "").toLowerCase();
       if (status !== statusFilter) return false;
     }
+
+    if (filterEselon1) {
+      if (String(a.eselon1_id) !== String(filterEselon1)) return false;
+    }
+
+    if (filterEselon2) {
+      if (String(a.eselon2_id) !== String(filterEselon2)) return false;
+    }
+
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -156,16 +227,83 @@ function OperatorEselon2DataAplikasi() {
     } catch (e) {
       console.error("Failed to fetch master dropdowns", e);
     }
+
+    // Fetch dynamic master tables
+    try {
+      const dynRes = await fetch(
+        "http://localhost:5000/api/dynamic-master/tables",
+      );
+      if (!dynRes.ok) return;
+      const dynResult = await dynRes.json();
+      if (dynResult.success && dynResult.data) {
+        const activeTables = dynResult.data.filter(
+          (t) => t.status_aktif === 1 || t.status_aktif === true,
+        );
+        setDynamicTables(activeTables);
+
+        // Fetch data untuk setiap dynamic table
+        const dynamicData = {};
+        for (const table of activeTables) {
+          try {
+            const dataRes = await fetch(
+              `http://localhost:5000/api/master-data?type=${table.table_name}`,
+            );
+            if (dataRes.ok) {
+              const dataResult = await dataRes.json();
+              if (dataResult.success && dataResult.data) {
+                dynamicData[table.table_name] = dataResult.data;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to fetch data for ${table.table_name}:`, err);
+          }
+        }
+        setDynamicMasterData(dynamicData);
+      }
+    } catch (e) {
+      console.error("Failed to fetch dynamic master tables", e);
+    }
+  };
+
+  // Fetch PIC based on eselon2_id
+  const fetchPICByEselon2 = async (eselon2_id) => {
+    if (!eselon2_id) {
+      // Reset PIC data jika eselon2_id kosong
+      setMaster((prev) => ({
+        ...prev,
+        pic_internal: [],
+        pic_eksternal: [],
+      }));
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/master-data/dropdown?eselon2_id=${eselon2_id}`,
+      );
+      if (!res.ok) return;
+      const result = await res.json();
+      if (result.success && result.data) {
+        // Update hanya pic_internal dan pic_eksternal
+        setMaster((prev) => ({
+          ...prev,
+          pic_internal: result.data.pic_internal || [],
+          pic_eksternal: result.data.pic_eksternal || [],
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to fetch PIC by eselon2", e);
+    }
   };
 
   // Open modal and load master data
-  const openModal = () => {
-    fetchMasterDropdowns();
+  const openModal = async () => {
+    await fetchMasterDropdowns();
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
     // Auto-set eselon1_id dan eselon2_id dari operator
-    setFormData({
+    const baseFormData = {
       nama_aplikasi: "",
       domain: "",
       deskripsi_fungsi: "",
@@ -182,6 +320,8 @@ function OperatorEselon2DataAplikasi() {
       environment_id: "",
       pic_internal: "",
       pic_eksternal: "",
+      kontak_pic_internal: "",
+      kontak_pic_eksternal: "",
       bahasa_pemrograman: "",
       basis_data: "",
       kerangka_pengembangan: "",
@@ -194,6 +334,7 @@ function OperatorEselon2DataAplikasi() {
       perangkat_lunak: "",
       cloud: "",
       ssl: "",
+      ssl_expired: "",
       alamat_ip_publik: "",
       keterangan: "",
       status_bmn: "",
@@ -205,14 +346,22 @@ function OperatorEselon2DataAplikasi() {
       va_pt_status: "",
       va_pt_waktu: "",
       antivirus: "",
+    };
+
+    // Add dynamic fields
+    dynamicTables.forEach((table) => {
+      const fieldName = `${table.table_name}_id`;
+      baseFormData[fieldName] = "";
     });
+
+    setFormData(baseFormData);
     setShowModal(true);
   };
 
   // Open edit modal with pre-filled data
   const openEditModal = async (appName) => {
     try {
-      fetchMasterDropdowns();
+      await fetchMasterDropdowns();
       setFieldErrors({});
       const res = await fetch(
         `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`,
@@ -222,7 +371,7 @@ function OperatorEselon2DataAplikasi() {
       const app = result.data;
 
       // Pre-fill form with existing data
-      setFormData({
+      const baseFormData = {
         nama_aplikasi: app.nama_aplikasi || "",
         domain: app.domain || "",
         deskripsi_fungsi: app.deskripsi_fungsi || "",
@@ -249,10 +398,12 @@ function OperatorEselon2DataAplikasi() {
           : "",
         status_aplikasi: app.status_aplikasi ? String(app.status_aplikasi) : "",
         pdn_id: app.pdn_id ? String(app.pdn_id) : "",
-        pdn_backup: app.kode_pdn || "",
+        pdn_backup: app.pdn_backup || "",
         environment_id: app.environment_id ? String(app.environment_id) : "",
         pic_internal: app.pic_internal || "",
         pic_eksternal: app.pic_eksternal || "",
+        kontak_pic_internal: app.kontak_pic_internal || "",
+        kontak_pic_eksternal: app.kontak_pic_eksternal || "",
         bahasa_pemrograman: app.bahasa_pemrograman || "",
         basis_data: app.basis_data || "",
         kerangka_pengembangan: app.kerangka_pengembangan || "",
@@ -265,6 +416,15 @@ function OperatorEselon2DataAplikasi() {
         perangkat_lunak: app.perangkat_lunak || "",
         cloud: app.cloud || "",
         ssl: app.ssl || "",
+        ssl_expired: app.ssl_expired
+          ? (() => {
+              const date = new Date(app.ssl_expired);
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, "0");
+              const day = String(date.getDate()).padStart(2, "0");
+              return `${year}-${month}-${day}`;
+            })()
+          : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
         status_bmn: app.status_bmn || "",
@@ -276,7 +436,20 @@ function OperatorEselon2DataAplikasi() {
         va_pt_status: app.va_pt_status || "",
         va_pt_waktu: app.va_pt_waktu || "",
         antivirus: app.antivirus || "",
+      };
+
+      // Add dynamic fields with prefill from database
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        baseFormData[fieldName] = app[fieldName] ? String(app[fieldName]) : "";
       });
+
+      setFormData(baseFormData);
+
+      // Fetch PIC berdasarkan eselon2_id jika ada
+      if (app.eselon2_id) {
+        await fetchPICByEselon2(String(app.eselon2_id));
+      }
 
       setEditMode(true);
       setOriginalAppName(appName);
@@ -288,6 +461,67 @@ function OperatorEselon2DataAplikasi() {
 
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+
+    // Jika eselon2_id berubah, fetch PIC yang sesuai dan reset PIC fields
+    if (k === "eselon2_id") {
+      fetchPICByEselon2(v);
+      // Reset PIC fields ketika eselon2 berubah
+      setFormData((prev) => ({
+        ...prev,
+        [k]: v,
+        pic_internal: "",
+        pic_eksternal: "",
+        kontak_pic_internal: "",
+        kontak_pic_eksternal: "",
+      }));
+    }
+
+    // Jika pic_internal berubah, auto-fill kontak dari master
+    if (k === "pic_internal") {
+      if (v && v !== "Tidak Ada" && v !== "") {
+        const selectedPIC = (master.pic_internal || []).find(
+          (pic) => pic.nama_pic_internal === v,
+        );
+        if (selectedPIC && selectedPIC.kontak_pic_internal) {
+          setFormData((prev) => ({
+            ...prev,
+            [k]: v,
+            kontak_pic_internal: selectedPIC.kontak_pic_internal,
+          }));
+        }
+      } else {
+        // Reset kontak jika "Tidak Ada" atau kosong
+        setFormData((prev) => ({
+          ...prev,
+          [k]: v,
+          kontak_pic_internal: "",
+        }));
+      }
+    }
+
+    // Jika pic_eksternal berubah, auto-fill kontak dari master
+    if (k === "pic_eksternal") {
+      if (v && v !== "Tidak Ada" && v !== "") {
+        const selectedPIC = (master.pic_eksternal || []).find(
+          (pic) => pic.nama_pic_eksternal === v,
+        );
+        if (selectedPIC && selectedPIC.kontak_pic_eksternal) {
+          setFormData((prev) => ({
+            ...prev,
+            [k]: v,
+            kontak_pic_eksternal: selectedPIC.kontak_pic_eksternal,
+          }));
+        }
+      } else {
+        // Reset kontak jika "Tidak Ada" atau kosong
+        setFormData((prev) => ({
+          ...prev,
+          [k]: v,
+          kontak_pic_eksternal: "",
+        }));
+      }
+    }
+
     setFieldErrors((prev) => {
       if (!prev?.[k]) return prev;
       const next = { ...prev };
@@ -419,6 +653,7 @@ function OperatorEselon2DataAplikasi() {
         perangkat_lunak: "Perangkat Lunak",
         cloud: "Cloud",
         ssl: "SSL",
+        ssl_expired: "Tanggal Expired SSL",
         alamat_ip_publik: "Alamat IP Publik",
         keterangan: "Keterangan",
         status_bmn: "Status BMN",
@@ -431,6 +666,12 @@ function OperatorEselon2DataAplikasi() {
         va_pt_waktu: "VA/PT - Waktu",
         antivirus: "Antivirus",
       };
+
+      // Add dynamic fields to validation
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        fieldLabels[fieldName] = table.display_name;
+      });
 
       const missing = [];
       const missingErrors = {};
@@ -664,9 +905,12 @@ function OperatorEselon2DataAplikasi() {
         frekuensi_pemakaian: formData.frekuensi_pemakaian || null,
         status_aplikasi: formData.status_aplikasi || null,
         pdn_id: formData.pdn_id || null,
+        pdn_backup: formData.pdn_backup || null,
         environment_id: formData.environment_id || null,
         pic_internal: formData.pic_internal || null,
         pic_eksternal: formData.pic_eksternal || null,
+        kontak_pic_internal: formData.kontak_pic_internal || null,
+        kontak_pic_eksternal: formData.kontak_pic_eksternal || null,
         bahasa_pemrograman: formData.bahasa_pemrograman || null,
         basis_data: formData.basis_data || null,
         kerangka_pengembangan: formData.kerangka_pengembangan || null,
@@ -680,6 +924,7 @@ function OperatorEselon2DataAplikasi() {
         perangkat_lunak: formData.perangkat_lunak || null,
         cloud: formData.cloud || null,
         ssl: formData.ssl || null,
+        ssl_expired: formData.ssl_expired || null,
         alamat_ip_publik: formData.alamat_ip_publik || null,
         keterangan: formData.keterangan || null,
         status_bmn: formData.status_bmn || null,
@@ -695,6 +940,12 @@ function OperatorEselon2DataAplikasi() {
         va_pt_waktu:
           formData.va_pt_status === "ya" ? formData.va_pt_waktu : null,
       };
+
+      // Add dynamic fields to payload
+      dynamicTables.forEach((table) => {
+        const fieldName = `${table.table_name}_id`;
+        payload[fieldName] = formData[fieldName] || null;
+      });
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
@@ -1013,18 +1264,22 @@ function OperatorEselon2DataAplikasi() {
       {/* Filters */}
       <div
         style={{
-          background: "#fff",
-          borderRadius: "14px",
+          backgroundColor: "#fff",
           padding: "16px 20px",
+          borderRadius: "14px",
           marginBottom: "20px",
-          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+          boxShadow:
+            "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
           display: "flex",
           gap: "12px",
           alignItems: "center",
+          flexWrap: "wrap",
         }}
       >
-        <div style={{ position: "relative", flex: 1, maxWidth: "400px" }}>
+        <div
+          style={{ position: "relative", flex: "1 1 360px", minWidth: "250px" }}
+        >
           <div
             style={{
               position: "absolute",
@@ -1067,44 +1322,165 @@ function OperatorEselon2DataAplikasi() {
               borderRadius: "10px",
               border: "1.5px solid #e2e8f0",
               fontSize: "12.5px",
+              fontWeight: 500,
+              color: "#1e293b",
+              backgroundColor: "#fafbfc",
               outline: "none",
-              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "#4f46e5";
+              e.currentTarget.style.backgroundColor = "#fff";
               e.currentTarget.style.boxShadow =
-                "0 0 0 3px rgba(79, 70, 229, 0.08)";
+                "0 0 0 3px rgba(79, 70, 229, 0.1)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = "#fafbfc";
               e.currentTarget.style.boxShadow = "none";
             }}
           />
         </div>
 
         <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          value={filterEselon1}
+          onChange={(e) => {
+            if (isUnitLocked) return;
+            setFilterEselon1(e.target.value);
+            setFilterEselon2("");
+          }}
+          disabled={isUnitLocked}
           style={{
-            padding: "9px 36px 9px 14px",
+            padding: "9px 34px 9px 12px",
             borderRadius: "10px",
             border: "1.5px solid #e2e8f0",
             fontSize: "12.5px",
             fontWeight: 600,
-            cursor: "pointer",
+            color: "#475569",
+            backgroundColor: isUnitLocked ? "#f1f5f9" : "#fafbfc",
+            cursor: isUnitLocked ? "not-allowed" : "pointer",
             outline: "none",
             appearance: "none",
-            background: `url('data:image/svg+xml,%3Csvg width=\'12\' height=\'8\' viewBox=\'0 0 12 8\' fill=\'none\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M1 1L6 6L11 1\' stroke=\'%2364748b\' stroke-width=\'2\' stroke-linecap=\'round\'/%3E%3C/svg%3E') no-repeat right 14px center, #fff`,
-            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+            backgroundPosition: "right 8px center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "18px",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            flex: "2 1 520px",
+            minWidth: "260px",
           }}
           onFocus={(e) => {
+            if (isUnitLocked) return;
             e.currentTarget.style.borderColor = "#4f46e5";
-            e.currentTarget.style.boxShadow =
-              "0 0 0 3px rgba(79, 70, 229, 0.08)";
+            e.currentTarget.style.backgroundColor = "#fff";
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = "#e2e8f0";
-            e.currentTarget.style.boxShadow = "none";
+            e.currentTarget.style.backgroundColor = isUnitLocked
+              ? "#f1f5f9"
+              : "#fafbfc";
+          }}
+        >
+          <option value="">Semua Eselon 1</option>
+          {(master.eselon1 || [])
+            .filter((e1) => e1.status_aktif === 1 || e1.status_aktif === true)
+            .map((e1) => (
+              <option key={e1.eselon1_id} value={e1.eselon1_id}>
+                {e1.nama_eselon1}
+              </option>
+            ))}
+        </select>
+
+        {/* Force next row like admin layout (search + eselon1 on first row) */}
+        <div style={{ flexBasis: "100%", height: 0 }} />
+
+        <select
+          value={filterEselon2}
+          onChange={(e) => {
+            if (isUnitLocked) return;
+            setFilterEselon2(e.target.value);
+          }}
+          disabled={isUnitLocked || !filterEselon1}
+          style={{
+            padding: "9px 34px 9px 12px",
+            borderRadius: "10px",
+            border: "1.5px solid #e2e8f0",
+            fontSize: "12.5px",
+            fontWeight: 600,
+            color: "#475569",
+            backgroundColor:
+              isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc",
+            cursor: isUnitLocked || !filterEselon1 ? "not-allowed" : "pointer",
+            outline: "none",
+            appearance: "none",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+            backgroundPosition: "right 8px center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "18px",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            flex: "1 1 420px",
+            minWidth: "260px",
+          }}
+          onFocus={(e) => {
+            if (!isUnitLocked && filterEselon1) {
+              e.currentTarget.style.borderColor = "#4f46e5";
+              e.currentTarget.style.backgroundColor = "#fff";
+            }
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#e2e8f0";
+            e.currentTarget.style.backgroundColor =
+              isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc";
+          }}
+        >
+          <option value="">
+            {!filterEselon1 ? "Eselon 2" : "Semua Eselon 2"}
+          </option>
+          {(master.eselon2 || [])
+            .filter((e2) => {
+              const aktif = e2.status_aktif === 1 || e2.status_aktif === true;
+              if (!aktif) return false;
+              if (!filterEselon1) return true;
+              return e2.eselon1_id === parseInt(filterEselon1);
+            })
+            .map((e2) => (
+              <option key={e2.eselon2_id} value={e2.eselon2_id}>
+                {e2.nama_eselon2}
+              </option>
+            ))}
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{
+            padding: "9px 34px 9px 12px",
+            borderRadius: "10px",
+            border: "1.5px solid #e2e8f0",
+            fontSize: "12.5px",
+            fontWeight: 600,
+            color: "#475569",
+            backgroundColor: "#fafbfc",
+            cursor: "pointer",
+            outline: "none",
+            appearance: "none",
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+            backgroundPosition: "right 8px center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "18px",
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            minWidth: "220px",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#4f46e5";
+            e.currentTarget.style.backgroundColor = "#fff";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#e2e8f0";
+            e.currentTarget.style.backgroundColor = "#fafbfc";
           }}
         >
           <option value="all">Semua Status</option>
@@ -1224,12 +1600,14 @@ function OperatorEselon2DataAplikasi() {
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ overflowX: "auto", overflowY: "visible" }}>
             <table
               style={{
                 width: "100%",
+                minWidth: "1200px",
                 borderCollapse: "collapse",
                 fontSize: "13px",
+                tableLayout: "fixed",
               }}
             >
               <thead>
@@ -1242,6 +1620,7 @@ function OperatorEselon2DataAplikasi() {
                 >
                   <th
                     style={{
+                      width: "60px",
                       padding: "12px 16px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1255,6 +1634,7 @@ function OperatorEselon2DataAplikasi() {
                   </th>
                   <th
                     style={{
+                      width: "250px",
                       padding: "12px 16px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1268,6 +1648,7 @@ function OperatorEselon2DataAplikasi() {
                   </th>
                   <th
                     style={{
+                      width: "220px",
                       padding: "12px 16px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1281,6 +1662,7 @@ function OperatorEselon2DataAplikasi() {
                   </th>
                   <th
                     style={{
+                      width: "150px",
                       padding: "12px 16px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1294,6 +1676,7 @@ function OperatorEselon2DataAplikasi() {
                   </th>
                   <th
                     style={{
+                      width: "140px",
                       padding: "12px 16px",
                       textAlign: "left",
                       fontWeight: 700,
@@ -1303,10 +1686,39 @@ function OperatorEselon2DataAplikasi() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Status
+                    Status Aplikasi
                   </th>
                   <th
                     style={{
+                      width: "160px",
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      color: "#475569",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Tanggal Expired SSL
+                  </th>
+                  <th
+                    style={{
+                      width: "130px",
+                      padding: "12px 16px",
+                      textAlign: "left",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      color: "#475569",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Status SSL
+                  </th>
+                  <th
+                    style={{
+                      width: "100px",
                       padding: "12px 16px",
                       textAlign: "center",
                       fontWeight: 700,
@@ -1347,7 +1759,7 @@ function OperatorEselon2DataAplikasi() {
                         background: i % 2 === 0 ? "#ffffff" : "#fafbfc",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         cursor: "pointer",
-                        height: "80px",
+                        height: "70px",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = "#eef2ff";
@@ -1362,7 +1774,7 @@ function OperatorEselon2DataAplikasi() {
                     >
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           fontWeight: 700,
                           color: "#64748b",
                           fontSize: "12px",
@@ -1373,7 +1785,7 @@ function OperatorEselon2DataAplikasi() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           verticalAlign: "middle",
                         }}
                       >
@@ -1381,8 +1793,10 @@ function OperatorEselon2DataAplikasi() {
                           style={{
                             fontWeight: 700,
                             color: "#0f172a",
-                            fontSize: "13px",
+                            fontSize: "12px",
                             marginBottom: "2px",
+                            wordWrap: "break-word",
+                            lineHeight: "1.3",
                           }}
                         >
                           {app.nama_aplikasi || "-"}
@@ -1404,8 +1818,10 @@ function OperatorEselon2DataAplikasi() {
                               display: "flex",
                               alignItems: "center",
                               gap: "4px",
-                              marginTop: "4px",
+                              marginTop: "2px",
                               textTransform: "none",
+                              wordBreak: "break-all",
+                              lineHeight: "1.3",
                             }}
                           >
                             <svg
@@ -1433,27 +1849,31 @@ function OperatorEselon2DataAplikasi() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           color: "#475569",
-                          fontSize: "13px",
+                          fontSize: "12px",
                           verticalAlign: "middle",
+                          wordWrap: "break-word",
+                          lineHeight: "1.3",
                         }}
                       >
                         {unit}
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           color: "#475569",
-                          fontSize: "13px",
+                          fontSize: "12px",
                           verticalAlign: "middle",
+                          wordWrap: "break-word",
+                          lineHeight: "1.3",
                         }}
                       >
                         {pic}
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
                           verticalAlign: "middle",
                         }}
                       >
@@ -1461,21 +1881,21 @@ function OperatorEselon2DataAplikasi() {
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "6px",
-                            padding: "5px 10px",
-                            borderRadius: "12px",
+                            gap: "4px",
+                            padding: "3px 8px",
+                            borderRadius: "10px",
                             backgroundColor: badge.bg,
                             color: badge.color,
                             fontWeight: 700,
-                            fontSize: "11px",
+                            fontSize: "10px",
                             textTransform: "uppercase",
                             letterSpacing: "0.03em",
                           }}
                         >
                           <span
                             style={{
-                              width: "5px",
-                              height: "5px",
+                              width: "4px",
+                              height: "4px",
                               borderRadius: "50%",
                               backgroundColor: badge.color,
                               display: "inline-block",
@@ -1486,7 +1906,103 @@ function OperatorEselon2DataAplikasi() {
                       </td>
                       <td
                         style={{
-                          padding: "10px 14px",
+                          padding: "8px 10px",
+                          color: "#475569",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          verticalAlign: "middle",
+                          lineHeight: "1.3",
+                        }}
+                      >
+                        {app.ssl_expired
+                          ? new Date(app.ssl_expired).toLocaleDateString(
+                              "id-ID",
+                              {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              },
+                            )
+                          : "-"}
+                      </td>
+                      <td
+                        style={{
+                          padding: "8px 10px",
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        {(() => {
+                          if (!app.ssl_expired)
+                            return (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "3px 8px",
+                                  borderRadius: "10px",
+                                  backgroundColor: "#f1f5f9",
+                                  color: "#64748b",
+                                  fontWeight: 700,
+                                  fontSize: "10px",
+                                  letterSpacing: "0.01em",
+                                  textTransform: "uppercase",
+                                }}
+                              >
+                                <span
+                                  style={{
+                                    width: "4px",
+                                    height: "4px",
+                                    borderRadius: "50%",
+                                    backgroundColor: "#64748b",
+                                    display: "inline-block",
+                                  }}
+                                />
+                                -
+                              </span>
+                            );
+
+                          const today = new Date();
+                          const expiredDate = new Date(app.ssl_expired);
+                          const isExpired = expiredDate < today;
+
+                          return (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "3px 8px",
+                                borderRadius: "10px",
+                                backgroundColor: isExpired
+                                  ? "#fee2e2"
+                                  : "#d1fae5",
+                                color: isExpired ? "#dc2626" : "#059669",
+                                fontWeight: 700,
+                                fontSize: "10px",
+                                letterSpacing: "0.01em",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "4px",
+                                  height: "4px",
+                                  borderRadius: "50%",
+                                  backgroundColor: isExpired
+                                    ? "#dc2626"
+                                    : "#059669",
+                                  display: "inline-block",
+                                }}
+                              />
+                              {isExpired ? "Non Aktif" : "Aktif"}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td
+                        style={{
+                          padding: "8px 10px",
                           textAlign: "center",
                           verticalAlign: "middle",
                         }}
@@ -1502,11 +2018,11 @@ function OperatorEselon2DataAplikasi() {
                             onClick={() => openEditModal(app.nama_aplikasi)}
                             title="Edit"
                             style={{
-                              padding: "7px 9px",
+                              padding: "5px 8px",
                               background:
                                 "linear-gradient(135deg, #f59e0b 0%, #f97316 100%)",
                               border: "none",
-                              borderRadius: "8px",
+                              borderRadius: "6px",
                               cursor: "pointer",
                               transition:
                                 "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -2515,20 +3031,9 @@ function OperatorEselon2DataAplikasi() {
                       <select
                         data-field="pdn_id"
                         value={formData.pdn_id}
-                        onChange={(e) => {
-                          const id = e.target.value;
-                          handleFormChange("pdn_id", id);
-                          const pdnObj = (master.pdn || [])
-                            .filter(
-                              (p) =>
-                                p.status_aktif === 1 || p.status_aktif === true,
-                            )
-                            .find((p) => String(p.pdn_id) === String(id));
-                          handleFormChange(
-                            "pdn_backup",
-                            pdnObj ? pdnObj.kode_pdn : "",
-                          );
-                        }}
+                        onChange={(e) =>
+                          handleFormChange("pdn_id", e.target.value)
+                        }
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2566,11 +3071,12 @@ function OperatorEselon2DataAplikasi() {
                       >
                         PDN Backup
                       </label>
-                      <input
+                      <select
                         data-field="pdn_backup"
                         value={formData.pdn_backup}
-                        readOnly
-                        placeholder="Auto-fill dari PDN Utama"
+                        onChange={(e) =>
+                          handleFormChange("pdn_backup", e.target.value)
+                        }
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2582,10 +3088,20 @@ function OperatorEselon2DataAplikasi() {
                           boxShadow: fieldErrors.pdn_backup
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#f8fafc",
-                          cursor: "not-allowed",
                         }}
-                      />
+                      >
+                        <option value="">-- Pilih PDN Backup --</option>
+                        {(master.pdn || [])
+                          .filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          )
+                          .map((x) => (
+                            <option key={x.pdn_id} value={x.kode_pdn}>
+                              {x.kode_pdn}
+                            </option>
+                          ))}
+                      </select>
                     </div>
                   </div>
 
@@ -2613,6 +3129,7 @@ function OperatorEselon2DataAplikasi() {
                         onChange={(e) =>
                           handleFormChange("pic_internal", e.target.value)
                         }
+                        disabled={!formData.eselon2_id}
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2624,9 +3141,19 @@ function OperatorEselon2DataAplikasi() {
                           boxShadow: fieldErrors.pic_internal
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: !formData.eselon2_id
+                            ? "#f3f4f6"
+                            : "#fff",
+                          cursor: !formData.eselon2_id
+                            ? "not-allowed"
+                            : "pointer",
                         }}
                       >
-                        <option value="">-Pilih-</option>
+                        <option value="">
+                          {!formData.eselon2_id
+                            ? "Pilih Eselon 2 terlebih dahulu"
+                            : "-Pilih-"}
+                        </option>
                         <option value="Tidak Ada">Tidak Ada</option>
                         {(master.pic_internal || [])
                           .filter(
@@ -2660,6 +3187,7 @@ function OperatorEselon2DataAplikasi() {
                         onChange={(e) =>
                           handleFormChange("pic_eksternal", e.target.value)
                         }
+                        disabled={!formData.eselon2_id}
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -2671,9 +3199,19 @@ function OperatorEselon2DataAplikasi() {
                           boxShadow: fieldErrors.pic_eksternal
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: !formData.eselon2_id
+                            ? "#f3f4f6"
+                            : "#fff",
+                          cursor: !formData.eselon2_id
+                            ? "not-allowed"
+                            : "pointer",
                         }}
                       >
-                        <option value="">-Pilih-</option>
+                        <option value="">
+                          {!formData.eselon2_id
+                            ? "Pilih Eselon 2 terlebih dahulu"
+                            : "-Pilih-"}
+                        </option>
                         <option value="Tidak Ada">Tidak Ada</option>
                         {(master.pic_eksternal || [])
                           .filter(
@@ -2689,6 +3227,74 @@ function OperatorEselon2DataAplikasi() {
                             </option>
                           ))}
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Kontak PIC Fields */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Kontak PIC Internal
+                      </label>
+                      <input
+                        data-field="kontak_pic_internal"
+                        type="tel"
+                        value={formData.kontak_pic_internal}
+                        readOnly
+                        disabled
+                        placeholder="Otomatis terisi dari master PIC"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          backgroundColor: "#f3f4f6",
+                          cursor: "not-allowed",
+                          color: "#6b7280",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Kontak PIC Eksternal
+                      </label>
+                      <input
+                        data-field="kontak_pic_eksternal"
+                        type="tel"
+                        value={formData.kontak_pic_eksternal}
+                        readOnly
+                        disabled
+                        placeholder="Otomatis terisi dari master PIC"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          backgroundColor: "#f3f4f6",
+                          cursor: "not-allowed",
+                          color: "#6b7280",
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -3275,6 +3881,47 @@ function OperatorEselon2DataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
+                        Tanggal Expired SSL
+                      </label>
+                      <input
+                        type="date"
+                        data-field="ssl_expired"
+                        value={formData.ssl_expired}
+                        onChange={(e) =>
+                          handleFormChange("ssl_expired", e.target.value)
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.ssl_expired
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.ssl_expired
+                            ? errorBoxShadow
+                            : "none",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "12px",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
                         Antivirus
                       </label>
                       <input
@@ -3672,6 +4319,129 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
                 </div>
+
+                {/* Section Informasi Tambahan (Dynamic Fields) */}
+                {dynamicTables.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: "20px",
+                      paddingTop: "20px",
+                      borderTop: "2px solid #e2e8f0",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        marginBottom: "16px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#4f46e5"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 4v16m8-8H4" />
+                      </svg>
+                      Informasi Tambahan
+                    </h3>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: "12px",
+                      }}
+                    >
+                      {dynamicTables.map((table) => {
+                        const fieldName = `${table.table_name}_id`;
+                        const data = dynamicMasterData[table.table_name] || [];
+                        const idField = table.id_field_name;
+
+                        // Cari kolom pertama yang bukan ID untuk ditampilkan sebagai label
+                        let displayField = null;
+                        try {
+                          const schema = JSON.parse(table.table_schema || "[]");
+                          if (schema.length > 0) {
+                            displayField = schema[0].column_name;
+                          }
+                        } catch (e) {
+                          // Fallback: ambil key pertama dari data (selain id)
+                          if (data.length > 0) {
+                            const keys = Object.keys(data[0]).filter(
+                              (k) =>
+                                k !== idField &&
+                                !k.includes("_at") &&
+                                !k.includes("_by") &&
+                                k !== "status_aktif",
+                            );
+                            if (keys.length > 0) displayField = keys[0];
+                          }
+                        }
+
+                        return (
+                          <div key={table.registry_id}>
+                            <label
+                              style={{
+                                display: "block",
+                                marginBottom: "6px",
+                                fontWeight: 600,
+                                fontSize: "13px",
+                              }}
+                            >
+                              {table.display_name}
+                            </label>
+                            <select
+                              data-field={fieldName}
+                              value={formData[fieldName] || ""}
+                              onChange={(e) =>
+                                handleFormChange(fieldName, e.target.value)
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors[fieldName]
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors[fieldName]
+                                  ? errorBoxShadow
+                                  : "none",
+                              }}
+                            >
+                              <option value="">
+                                -- Pilih {table.display_name} --
+                              </option>
+                              {data
+                                .filter(
+                                  (item) =>
+                                    item.status_aktif === 1 ||
+                                    item.status_aktif === true,
+                                )
+                                .map((item) => (
+                                  <option
+                                    key={item[idField]}
+                                    value={item[idField]}
+                                  >
+                                    {displayField && item[displayField]
+                                      ? item[displayField]
+                                      : item[idField]}
+                                  </option>
+                                ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 <div
                   style={{

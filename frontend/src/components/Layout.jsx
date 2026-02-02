@@ -169,6 +169,17 @@ function Layout({ navItems }) {
     }
   };
 
+  const getInitials = (name) => {
+    if (!name) return "";
+    return name
+      .split(" ")
+      .map((n) => n.charAt(0))
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
+
   return (
     <div className={`app-shell ${isCollapsed ? "sidebar-collapsed" : ""}`}>
       <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
@@ -223,8 +234,9 @@ function Layout({ navItems }) {
               <Link
                 key={item.label}
                 to={item.path}
-                className={`nav-item ${active ? "active" : ""} ${isHovered && !active ? "hover" : ""
-                  }`}
+                className={`nav-item ${active ? "active" : ""} ${
+                  isHovered && !active ? "hover" : ""
+                }`}
                 onMouseEnter={() => setHoverItem(item.label)}
                 onMouseLeave={() => setHoverItem(null)}
                 title={isCollapsed ? item.label : ""}
@@ -261,23 +273,34 @@ function Layout({ navItems }) {
             }}
           >
             <Link to={getProfilePath()} className="sidebar-profile-card">
-              <div className="sidebar-avatar">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+              <div className="sidebar-avatar sidebar-avatar--large">
+                {userName ? (
+                  <span className="avatar-initials">
+                    {getInitials(userName)}
+                  </span>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                )}
               </div>
               <div className="sidebar-info">
-                <div className="sidebar-user-name">{userName}</div>
-                <div className="sidebar-user-eselon">
+                <div className="sidebar-user-name allow-lowercase">
+                  {userName}
+                </div>
+                <div className="sidebar-user-eselon allow-lowercase">
                   {userRole === "admin"
                     ? "Administrator"
                     : eselonName || "Unit KKP"}
+                </div>
+                <div className="role-badge">
+                  {userRole === "admin" ? "ADMINISTRATOR" : "OPERATOR"}
                 </div>
               </div>
             </Link>

@@ -7,55 +7,122 @@ const tableConfig = {
   eselon1: {
     tableName: "master_eselon1",
     idField: "eselon1_id",
-    columns: ["no", "nama_eselon1", "singkatan", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "no",
+      "nama_eselon1",
+      "singkatan",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["No", "Nama Eselon 1", "Singkatan", "Status"],
   },
   eselon2: {
     tableName: "master_eselon2",
     idField: "eselon2_id",
-    columns: ["eselon1_id", "nama_eselon2", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "eselon1_id",
+      "nama_eselon2",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Eselon 1", "Nama Eselon 2", "Status"],
   },
   upt: {
     tableName: "master_upt",
     idField: "upt_id",
-    columns: ["eselon1_id", "nama_upt", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "eselon1_id",
+      "nama_upt",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Eselon 1", "Nama UPT", "Status"],
   },
   frekuensi_pemakaian: {
     tableName: "frekuensi_pemakaian",
     idField: "frekuensi_pemakaian",
-    columns: ["nama_frekuensi", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "nama_frekuensi",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Nama Frekuensi", "Status"],
   },
   status_aplikasi: {
     tableName: "status_aplikasi",
     idField: "status_aplikasi_id",
-    columns: ["nama_status", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "nama_status",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Nama Status", "Status"],
   },
   environment: {
     tableName: "environment",
     idField: "environment_id",
-    columns: ["jenis_environment", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "jenis_environment",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Jenis Ekosistem", "Status"],
   },
   cara_akses: {
     tableName: "cara_akses",
     idField: "cara_akses_id",
-    columns: ["nama_cara_akses", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "nama_cara_akses",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Nama Cara Akses", "Status"],
   },
   pdn: {
     tableName: "PDN",
     idField: "pdn_id",
-    columns: ["kode_pdn", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "kode_pdn",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Kode PDN", "Status"],
   },
   format_laporan: {
     tableName: "format_laporan",
     idField: "format_laporan_id",
-    columns: ["nama_format", "status_aktif", "created_by", "updated_by", "created_at", "updated_at"],
+    columns: [
+      "nama_format",
+      "status_aktif",
+      "created_by",
+      "updated_by",
+      "created_at",
+      "updated_at",
+    ],
     displayColumns: ["Nama Format", "Status"],
   },
   pic_eksternal: {
@@ -175,8 +242,6 @@ exports.getAllMasterData = async (req, res) => {
     let orderClause = ` ORDER BY ${config.idField} DESC`;
     if (type === "eselon1") {
       orderClause = ` ORDER BY no ASC`;
-
-
     } else if (type === "status_aplikasi") {
       orderClause = ` ORDER BY nama_status ASC`;
     } else if (type === "environment") {
@@ -223,10 +288,11 @@ exports.getMasterDataById = async (req, res) => {
     // If type is format_laporan, fetch detail field IDs
     if (type === "format_laporan") {
       const [details] = await pool.query(
-        "SELECT field_id FROM format_laporan_detail WHERE format_laporan_id = ?",
+        "SELECT field_id, order_index FROM format_laporan_detail WHERE format_laporan_id = ?",
         [req.params.id],
       );
       data.field_ids = details.map((d) => d.field_id);
+      data.field_details = details;
     }
 
     res.json({
@@ -415,16 +481,116 @@ exports.createMasterData = async (req, res) => {
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        // Insert with explicit NULL for optional columns
-        const detailValues = fieldIds.map((fid) => [
-          newId,        // format_laporan_id
-          null,         // parent_id
-          null,         // judul
-          0,            // is_header
-          fid           // field_id
+        // Get parent_id for each field to determine grouping
+        const [fieldInfo] = await pool.query(`
+          SELECT field_id, parent_id
+          FROM master_laporan_field
+          WHERE field_id IN (?)
+        `, [fieldIds]);
+
+        const fieldMap = {};
+        fieldInfo.forEach(f => {
+          fieldMap[f.field_id] = f.parent_id;
+        });
+
+        // Get click order for individual fields (optional parameter)
+        let clickOrder = {};
+        if (req.body.field_click_order) {
+          clickOrder = typeof req.body.field_click_order === 'string'
+            ? JSON.parse(req.body.field_click_order)
+            : req.body.field_click_order;
+        }
+
+        // Separate fields into groups
+        const groupedFields = {}; // {parent_id: [field_ids]}
+        const individualFields = []; // fields without parent
+
+        fieldIds.forEach(fid => {
+          const parentId = fieldMap[fid];
+          if (parentId) {
+            if (!groupedFields[parentId]) {
+              groupedFields[parentId] = [];
+            }
+            groupedFields[parentId].push(fid);
+          } else {
+            individualFields.push(fid);
+          }
+        });
+
+        // Sort individual fields by click order if available
+        if (Object.keys(clickOrder).length > 0) {
+          individualFields.sort((a, b) => {
+            const orderA = clickOrder[a] || 999999;
+            const orderB = clickOrder[b] || 999999;
+            return orderA - orderB;
+          });
+        }
+
+        // Build final ordered array
+        // Groups should appear at the position of their FIRST clicked field
+        const orderedFieldIds = [];
+        const processedParents = new Set();
+
+        // Create a combined list with click orders
+        const allItems = [];
+
+        // Add individual fields
+        individualFields.forEach(fid => {
+          allItems.push({
+            type: 'individual',
+            field_id: fid,
+            click_order: clickOrder[fid] || 999999
+          });
+        });
+
+        // Add groups (use click order of first field in group)
+        Object.keys(groupedFields).forEach(parentId => {
+          const groupFieldIds = groupedFields[parentId];
+          // Find minimum click order in this group (first clicked field)
+          let minClickOrder = 999999;
+          groupFieldIds.forEach(fid => {
+            if (clickOrder[fid] && clickOrder[fid] < minClickOrder) {
+              minClickOrder = clickOrder[fid];
+            }
+          });
+
+          allItems.push({
+            type: 'group',
+            parent_id: parentId,
+            field_ids: groupFieldIds,
+            click_order: minClickOrder
+          });
+        });
+
+        // Sort all items by click order
+        allItems.sort((a, b) => a.click_order - b.click_order);
+
+        // Build final array
+        allItems.forEach(item => {
+          if (item.type === 'individual') {
+            orderedFieldIds.push(item.field_id);
+          } else if (item.type === 'group') {
+            // Add all fields in this group (maintain tree order within group)
+            orderedFieldIds.push(...item.field_ids);
+          }
+        });
+
+        console.log('Original order:', fieldIds);
+        console.log('Click order:', clickOrder);
+        console.log('Final order:', orderedFieldIds);
+
+        // Insert with order_index
+        const detailValues = orderedFieldIds.map((fid, index) => [
+          newId, // format_laporan_id
+          null, // parent_id
+          null, // judul
+          0, // is_header
+          fid, // field_id
+          index + 1, // order_index
         ]);
+
         await pool.query(
-          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
+          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id, order_index) VALUES ?",
           [detailValues],
         );
       }
@@ -581,16 +747,116 @@ exports.updateMasterData = async (req, res) => {
       }
 
       if (Array.isArray(fieldIds) && fieldIds.length > 0) {
-        // Insert with explicit NULL for optional columns
-        const detailValues = fieldIds.map((fid) => [
+        // Get parent_id for each field to determine grouping
+        const [fieldInfo] = await pool.query(`
+          SELECT field_id, parent_id
+          FROM master_laporan_field
+          WHERE field_id IN (?)
+        `, [fieldIds]);
+
+        const fieldMap = {};
+        fieldInfo.forEach(f => {
+          fieldMap[f.field_id] = f.parent_id;
+        });
+
+        // Get click order for individual fields (optional parameter)
+        let clickOrder = {};
+        if (req.body.field_click_order) {
+          clickOrder = typeof req.body.field_click_order === 'string'
+            ? JSON.parse(req.body.field_click_order)
+            : req.body.field_click_order;
+        }
+
+        // Separate fields into groups
+        const groupedFields = {}; // {parent_id: [field_ids]}
+        const individualFields = []; // fields without parent
+
+        fieldIds.forEach(fid => {
+          const parentId = fieldMap[fid];
+          if (parentId) {
+            if (!groupedFields[parentId]) {
+              groupedFields[parentId] = [];
+            }
+            groupedFields[parentId].push(fid);
+          } else {
+            individualFields.push(fid);
+          }
+        });
+
+        // Sort individual fields by click order if available
+        if (Object.keys(clickOrder).length > 0) {
+          individualFields.sort((a, b) => {
+            const orderA = clickOrder[a] || 999999;
+            const orderB = clickOrder[b] || 999999;
+            return orderA - orderB;
+          });
+        }
+
+        // Build final ordered array
+        // Groups should appear at the position of their FIRST clicked field
+        const orderedFieldIds = [];
+        const processedParents = new Set();
+
+        // Create a combined list with click orders
+        const allItems = [];
+
+        // Add individual fields
+        individualFields.forEach(fid => {
+          allItems.push({
+            type: 'individual',
+            field_id: fid,
+            click_order: clickOrder[fid] || 999999
+          });
+        });
+
+        // Add groups (use click order of first field in group)
+        Object.keys(groupedFields).forEach(parentId => {
+          const groupFieldIds = groupedFields[parentId];
+          // Find minimum click order in this group (first clicked field)
+          let minClickOrder = 999999;
+          groupFieldIds.forEach(fid => {
+            if (clickOrder[fid] && clickOrder[fid] < minClickOrder) {
+              minClickOrder = clickOrder[fid];
+            }
+          });
+
+          allItems.push({
+            type: 'group',
+            parent_id: parentId,
+            field_ids: groupFieldIds,
+            click_order: minClickOrder
+          });
+        });
+
+        // Sort all items by click order
+        allItems.sort((a, b) => a.click_order - b.click_order);
+
+        // Build final array
+        allItems.forEach(item => {
+          if (item.type === 'individual') {
+            orderedFieldIds.push(item.field_id);
+          } else if (item.type === 'group') {
+            // Add all fields in this group (maintain tree order within group)
+            orderedFieldIds.push(...item.field_ids);
+          }
+        });
+
+        console.log('UPDATE - Original order:', fieldIds);
+        console.log('UPDATE - Click order:', clickOrder);
+        console.log('UPDATE - Final order:', orderedFieldIds);
+
+        // Insert with order_index
+        const detailValues = orderedFieldIds.map((fid, index) => [
           req.params.id, // format_laporan_id
-          null,          // parent_id
-          null,          // judul
-          0,             // is_header
-          fid            // field_id
+          null, // parent_id
+          null, // judul
+          0, // is_header
+          fid, // field_id
+          index + 1, // order_index
         ]);
+
         await pool.query(
-          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
+          "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id, order_index) VALUES ?",
           [detailValues],
         );
       }
@@ -601,21 +867,21 @@ exports.updateMasterData = async (req, res) => {
       message: "Master data berhasil diupdate",
     });
   } catch (error) {
-    console.error('=== ERROR UPDATE MASTER DATA ===');
-    console.error('Type:', req.query.type);
-    console.error('ID:', req.params.id);
-    console.error('Body:', req.body);
-    console.error('Error:', error);
-    console.error('Error Code:', error.code);
-    console.error('Error Message:', error.message);
-    console.error('SQL Message:', error.sqlMessage);
+    console.error("=== ERROR UPDATE MASTER DATA ===");
+    console.error("Type:", req.query.type);
+    console.error("ID:", req.params.id);
+    console.error("Body:", req.body);
+    console.error("Error:", error);
+    console.error("Error Code:", error.code);
+    console.error("Error Message:", error.message);
+    console.error("SQL Message:", error.sqlMessage);
 
     res.status(500).json({
       success: false,
       message: "Error mengupdate master data",
       error: error.message,
       sqlMessage: error.sqlMessage,
-      code: error.code
+      code: error.code,
     });
   }
 };
@@ -711,10 +977,11 @@ exports.getTypes = async (req, res) => {
 // Get dropdown data untuk form pengguna
 exports.getDropdownData = async (req, res) => {
   try {
-    const { eselon1_id } = req.query;
+    const { eselon1_id, eselon2_id } = req.query;
     console.log("=== GET DROPDOWN DATA ===");
     console.log("Query Params:", req.query);
     console.log("Eselon 1 ID requested:", eselon1_id);
+    console.log("Eselon 2 ID requested:", eselon2_id);
 
     const [roles] = await pool.query("SELECT * FROM roles ORDER BY role_id");
     const [eselon1] = await pool.query(
@@ -762,11 +1029,38 @@ exports.getDropdownData = async (req, res) => {
     const [environment] = await pool.query(
       "SELECT * FROM environment WHERE status_aktif = 1 ORDER BY jenis_environment",
     );
+
+    // Query PIC Internal dengan filter eselon2_id
+    let picInternalQuery = "SELECT * FROM pic_internal WHERE status_aktif = 1";
+    const picInternalParams = [];
+
+    if (eselon2_id) {
+      picInternalQuery += " AND eselon2_id = ?";
+      picInternalParams.push(eselon2_id);
+    }
+
+    picInternalQuery += " ORDER BY nama_pic_internal";
+
     const [pic_internal] = await pool.query(
-      "SELECT * FROM pic_internal WHERE status_aktif = 1 ORDER BY nama_pic_internal",
+      picInternalQuery,
+      picInternalParams,
     );
+
+    // Query PIC Eksternal dengan filter eselon2_id
+    let picEksternalQuery =
+      "SELECT * FROM pic_eksternal WHERE status_aktif = 1";
+    const picEksternalParams = [];
+
+    if (eselon2_id) {
+      picEksternalQuery += " AND eselon2_id = ?";
+      picEksternalParams.push(eselon2_id);
+    }
+
+    picEksternalQuery += " ORDER BY nama_pic_eksternal";
+
     const [pic_eksternal] = await pool.query(
-      "SELECT * FROM pic_eksternal WHERE status_aktif = 1 ORDER BY nama_pic_eksternal",
+      picEksternalQuery,
+      picEksternalParams,
     );
 
     res.json({
