@@ -1,0 +1,12 @@
+
+[2026-02-03T03:21:56.633Z] UPDATE ERROR:
+Type: format_laporan
+ID: 4
+Error: Cannot add or update a child row: a foreign key constraint fails (`kkp_db`.`format_laporan_detail`, CONSTRAINT `fk_format_field` FOREIGN KEY (`field_id`) REFERENCES `master_laporan_field` (`field_id`) ON DELETE CASCADE)
+SQL: Cannot add or update a child row: a foreign key constraint fails (`kkp_db`.`format_laporan_detail`, CONSTRAINT `fk_format_field` FOREIGN KEY (`field_id`) REFERENCES `master_laporan_field` (`field_id`) ON DELETE CASCADE)
+Stack: Error: Cannot add or update a child row: a foreign key constraint fails (`kkp_db`.`format_laporan_detail`, CONSTRAINT `fk_format_field` FOREIGN KEY (`field_id`) REFERENCES `master_laporan_field` (`field_id`) ON DELETE CASCADE)
+    at PromisePool.query (D:\FOLDER KP KKP\Projek_KKP\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at exports.updateMasterData (D:\FOLDER KP KKP\Projek_KKP\backend\src\controllers\masterDataController.js:864:20)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Body Keys: nama_format,status_aktif,selected_fields,field_ids,field_click_order
+FieldIDs Length: 37
