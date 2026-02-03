@@ -37,6 +37,7 @@ function DataAplikasiSection() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [filterEselon1, setFilterEselon1] = useState("");
   const [filterEselon2, setFilterEselon2] = useState("");
+  const [filterUpt, setFilterUpt] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
@@ -56,6 +57,7 @@ function DataAplikasiSection() {
     luaran_output: "",
     eselon1_id: "",
     eselon2_id: "",
+    upt_id: "",
     cara_akses_id: [],
     frekuensi_pemakaian: "",
     status_aplikasi: "",
@@ -158,6 +160,11 @@ function DataAplikasiSection() {
       if (a.eselon2_id !== parseInt(filterEselon2)) return false;
     }
 
+    // Filter by UPT
+    if (filterUpt) {
+      if (a.upt_id !== parseInt(filterUpt)) return false;
+    }
+
     if (!search) return true;
     const s = search.toLowerCase();
     return (
@@ -250,6 +257,7 @@ function DataAplikasiSection() {
       luaran_output: "",
       eselon1_id: "",
       eselon2_id: "",
+      upt_id: "",
       cara_akses_id: [],
       frekuensi_pemakaian: "",
       status_aplikasi: "",
@@ -299,14 +307,36 @@ function DataAplikasiSection() {
   // Open edit modal with pre-filled data
   const openEditModal = async (appName) => {
     try {
+      console.log("🔍 Opening edit modal for:", appName);
+
+      console.log("📥 Fetching master dropdowns...");
       await fetchMasterDropdowns();
+      console.log("✅ Master dropdowns loaded");
+
       setFieldErrors({});
+
+      console.log("📡 Fetching app details from API...");
       const res = await fetch(
         `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`,
       );
-      if (!res.ok) throw new Error("Gagal mengambil detail aplikasi");
+      console.log("📊 Response status:", res.status, res.statusText);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("❌ API Error Response:", errorText);
+        throw new Error(`Gagal mengambil detail aplikasi (${res.status})`);
+      }
+
       const result = await res.json();
+      console.log("📦 API Result:", result);
+
       const app = result.data;
+      console.log("📝 App Data:", {
+        nama_aplikasi: app.nama_aplikasi,
+        eselon1_id: app.eselon1_id,
+        eselon2_id: app.eselon2_id,
+        upt_id: app.upt_id,
+      });
 
       // Pre-fill form with existing data
       const baseFormData = {
@@ -318,6 +348,7 @@ function DataAplikasiSection() {
         luaran_output: app.luaran_output || "",
         eselon1_id: app.eselon1_id ? String(app.eselon1_id) : "",
         eselon2_id: app.eselon2_id ? String(app.eselon2_id) : "",
+        upt_id: app.upt_id ? String(app.upt_id) : "",
         cara_akses_id: (() => {
           try {
             // Try to parse from cara_akses_multiple first (new column)
@@ -384,9 +415,11 @@ function DataAplikasiSection() {
 
       setFormData(baseFormData);
 
-      // Fetch PIC berdasarkan eselon2_id jika ada
-      if (app.eselon2_id) {
-        await fetchPICByEselon2(String(app.eselon2_id));
+      // Fetch PIC berdasarkan eselon2_id atau upt_id (prioritas UPT)
+      if (app.upt_id) {
+        await fetchPICData("", String(app.upt_id));
+      } else if (app.eselon2_id) {
+        await fetchPICData(String(app.eselon2_id), "");
       }
 
       setEditMode(true);
@@ -397,10 +430,10 @@ function DataAplikasiSection() {
     }
   };
 
-  // Fetch PIC based on eselon2_id
-  const fetchPICByEselon2 = async (eselon2_id) => {
-    if (!eselon2_id) {
-      // Reset PIC data jika eselon2_id kosong
+  // Fetch PIC based on eselon2_id or upt_id
+  const fetchPICData = async (eselon2_id, upt_id) => {
+    // Reset PIC jika kedua parameter kosong
+    if (!eselon2_id && !upt_id) {
       setMaster((prev) => ({
         ...prev,
         pic_internal: [],
@@ -410,8 +443,13 @@ function DataAplikasiSection() {
     }
 
     try {
+      // Prioritas UPT jika keduanya ada (seharusnya tidak terjadi karena mutual exclusive)
+      const queryParam = upt_id
+        ? `upt_id=${upt_id}`
+        : `eselon2_id=${eselon2_id}`;
+
       const res = await fetch(
-        `http://localhost:5000/api/master-data/dropdown?eselon2_id=${eselon2_id}`,
+        `http://localhost:5000/api/master-data/dropdown?${queryParam}`,
       );
       if (!res.ok) return;
       const result = await res.json();
@@ -424,7 +462,7 @@ function DataAplikasiSection() {
         }));
       }
     } catch (e) {
-      console.error("Failed to fetch PIC by eselon2", e);
+      console.error("Failed to fetch PIC data", e);
     }
   };
 
@@ -477,26 +515,47 @@ function DataAplikasiSection() {
       }
     }
 
-    // Jika eselon2_id berubah, fetch PIC yang sesuai dan reset PIC fields
+    // Jika eselon2_id berubah, reset UPT (mutual exclusive) dan fetch PIC
     if (k === "eselon2_id") {
-      fetchPICByEselon2(v);
-      // Reset PIC fields ketika eselon2 berubah
+      const newEselon2 = v;
       setFormData((prev) => ({
         ...prev,
-        [k]: v,
+        eselon2_id: newEselon2,
+        upt_id: "", // Reset UPT karena mutual exclusive
         pic_internal: "",
         pic_eksternal: "",
         kontak_pic_internal: "",
         kontak_pic_eksternal: "",
       }));
+      // Fetch PIC berdasarkan eselon2
+      fetchPICData(newEselon2, "");
+      return; // Early return agar tidak double-set formData
     }
 
-    // Jika eselon1_id berubah, reset eselon2 dan PIC
+    // Jika upt_id berubah, reset Eselon2 (mutual exclusive) dan fetch PIC
+    if (k === "upt_id") {
+      const newUpt = v;
+      setFormData((prev) => ({
+        ...prev,
+        upt_id: newUpt,
+        eselon2_id: "", // Reset Eselon2 karena mutual exclusive
+        pic_internal: "",
+        pic_eksternal: "",
+        kontak_pic_internal: "",
+        kontak_pic_eksternal: "",
+      }));
+      // Fetch PIC berdasarkan UPT
+      fetchPICData("", newUpt);
+      return; // Early return
+    }
+
+    // Jika eselon1_id berubah, reset eselon2, UPT, dan PIC
     if (k === "eselon1_id") {
       setFormData((prev) => ({
         ...prev,
         [k]: v,
         eselon2_id: "",
+        upt_id: "",
         pic_internal: "",
         pic_eksternal: "",
         kontak_pic_internal: "",
@@ -599,7 +658,8 @@ function DataAplikasiSection() {
         data_digunakan: "Data yang Digunakan",
         luaran_output: "Luaran/Output",
         eselon1_id: "Eselon 1",
-        eselon2_id: "Eselon 2",
+        eselon2_id: "Eselon 2 (opsional jika UPT diisi)",
+        upt_id: "UPT (opsional jika Eselon 2 diisi)",
         cara_akses_id: "Cara Akses",
         frekuensi_pemakaian: "Frekuensi Pemakaian",
         status_aplikasi: "Status Aplikasi",
@@ -650,6 +710,8 @@ function DataAplikasiSection() {
         if (key === "waf_lainnya") continue;
         // va_pt_waktu only required when va_pt_status === 'ya'
         if (key === "va_pt_waktu") continue;
+        // eselon2_id dan upt_id akan divalidasi terpisah dengan XOR logic
+        if (key === "eselon2_id" || key === "upt_id") continue;
 
         // Special check for cara_akses_id (array)
         if (key === "cara_akses_id") {
@@ -668,6 +730,17 @@ function DataAplikasiSection() {
           missing.push(fieldLabels[key]);
           missingErrors[key] = true;
         }
+      }
+
+      // Validasi XOR: Minimal salah satu (Eselon 2 atau UPT) harus diisi
+      const hasEselon2 =
+        formData.eselon2_id && formData.eselon2_id.trim() !== "";
+      const hasUpt = formData.upt_id && formData.upt_id.trim() !== "";
+
+      if (!hasEselon2 && !hasUpt) {
+        missing.push("Eselon 2 atau UPT (minimal salah satu)");
+        missingErrors.eselon2_id = true;
+        missingErrors.upt_id = true;
       }
 
       // Conditional checks
@@ -785,6 +858,7 @@ function DataAplikasiSection() {
         luaran_output: formData.luaran_output || null,
         eselon1_id: formData.eselon1_id || null,
         eselon2_id: formData.eselon2_id || null,
+        upt_id: formData.upt_id || null,
         cara_akses_id:
           formData.cara_akses_id && formData.cara_akses_id.length > 0
             ? formData.cara_akses_id[0]
@@ -1218,6 +1292,7 @@ function DataAplikasiSection() {
             onChange={(e) => {
               setFilterEselon1(e.target.value);
               setFilterEselon2(""); // Reset eselon 2 when eselon 1 changes
+              setFilterUpt(""); // Reset UPT when eselon 1 changes
             }}
             style={{
               padding: "9px 34px 9px 12px",
@@ -1258,8 +1333,13 @@ function DataAplikasiSection() {
 
           <select
             value={filterEselon2}
-            onChange={(e) => setFilterEselon2(e.target.value)}
-            disabled={!filterEselon1}
+            onChange={(e) => {
+              setFilterEselon2(e.target.value);
+              if (e.target.value) {
+                setFilterUpt(""); // Reset UPT when Eselon 2 is selected
+              }
+            }}
+            disabled={!filterEselon1 || !!filterUpt}
             style={{
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
@@ -1267,8 +1347,10 @@ function DataAplikasiSection() {
               fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
-              backgroundColor: !filterEselon1 ? "#f1f5f9" : "#fafbfc",
-              cursor: !filterEselon1 ? "not-allowed" : "pointer",
+              backgroundColor:
+                !filterEselon1 || !!filterUpt ? "#f1f5f9" : "#fafbfc",
+              cursor: !filterEselon1 || !!filterUpt ? "not-allowed" : "pointer",
+              opacity: !!filterUpt ? 0.6 : 1,
               outline: "none",
               appearance: "none",
               backgroundImage:
@@ -1279,20 +1361,23 @@ function DataAplikasiSection() {
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onFocus={(e) => {
-              if (filterEselon1) {
+              if (filterEselon1 && !filterUpt) {
                 e.currentTarget.style.borderColor = "#4f46e5";
                 e.currentTarget.style.backgroundColor = "#fff";
               }
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = "#e2e8f0";
-              e.currentTarget.style.backgroundColor = !filterEselon1
-                ? "#f1f5f9"
-                : "#fafbfc";
+              e.currentTarget.style.backgroundColor =
+                !filterEselon1 || !!filterUpt ? "#f1f5f9" : "#fafbfc";
             }}
           >
             <option value="">
-              {!filterEselon1 ? "Eselon 2" : "Semua Eselon 2"}
+              {!filterEselon1
+                ? "Eselon 2"
+                : !!filterUpt
+                  ? "Eselon 2 (UPT dipilih)"
+                  : "Semua Eselon 2"}
             </option>
             {(master.eselon2 || [])
               .filter(
@@ -1303,6 +1388,69 @@ function DataAplikasiSection() {
               .map((e2) => (
                 <option key={e2.eselon2_id} value={e2.eselon2_id}>
                   {e2.nama_eselon2}
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={filterUpt}
+            onChange={(e) => {
+              setFilterUpt(e.target.value);
+              if (e.target.value) {
+                setFilterEselon2(""); // Reset Eselon 2 when UPT is selected
+              }
+            }}
+            disabled={!filterEselon1 || !!filterEselon2}
+            style={{
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor:
+                !filterEselon1 || !!filterEselon2 ? "#f1f5f9" : "#fafbfc",
+              cursor:
+                !filterEselon1 || !!filterEselon2 ? "not-allowed" : "pointer",
+              opacity: !!filterEselon2 ? 0.6 : 1,
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (filterEselon1 && !filterEselon2) {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor =
+                !filterEselon1 || !!filterEselon2 ? "#f1f5f9" : "#fafbfc";
+            }}
+          >
+            <option value="">
+              {!filterEselon1
+                ? "UPT"
+                : !!filterEselon2
+                  ? "UPT (Eselon 2 dipilih)"
+                  : "Semua UPT"}
+            </option>
+            {(master.upt || [])
+              .filter(
+                (upt) =>
+                  (upt.status_aktif === 1 || upt.status_aktif === true) &&
+                  (!filterEselon1 ||
+                    upt.eselon1_id === parseInt(filterEselon1)),
+              )
+              .map((upt) => (
+                <option key={upt.upt_id} value={upt.upt_id}>
+                  {upt.nama_upt}
                 </option>
               ))}
           </select>
@@ -2618,7 +2766,10 @@ function DataAplikasiSection() {
                           letterSpacing: "0.05em",
                         }}
                       >
-                        Eselon 2
+                        Eselon 2{" "}
+                        <span style={{ color: "#94a3b8", fontWeight: 400 }}>
+                          (opsional jika UPT diisi)
+                        </span>
                       </label>
                       <select
                         data-field="eselon2_id"
@@ -2626,6 +2777,7 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange("eselon2_id", e.target.value)
                         }
+                        disabled={!!formData.upt_id}
                         style={{
                           width: "100%",
                           padding: "10px 14px",
@@ -2637,24 +2789,30 @@ function DataAplikasiSection() {
                           fontSize: "13px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
-                          cursor: "pointer",
-                          backgroundColor: "#fafbfc",
+                          cursor: formData.upt_id ? "not-allowed" : "pointer",
+                          backgroundColor: formData.upt_id
+                            ? "#f8fafc"
+                            : "#fafbfc",
+                          opacity: formData.upt_id ? 0.6 : 1,
                           boxShadow: fieldErrors.eselon2_id
                             ? errorRing
                             : "none",
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
-                          e.currentTarget.style.backgroundColor = "#fff";
-                          e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                          if (!formData.upt_id) {
+                            e.currentTarget.style.borderColor = "#0ea5e9";
+                            e.currentTarget.style.backgroundColor = "#fff";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                          }
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor =
                             fieldErrors.eselon2_id
                               ? errorBorderColor
                               : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
+                          e.currentTarget.style.backgroundColor =
+                            formData.upt_id ? "#f8fafc" : "#fafbfc";
                           e.currentTarget.style.boxShadow =
                             fieldErrors.eselon2_id ? errorRing : "none";
                         }}
@@ -2672,6 +2830,87 @@ function DataAplikasiSection() {
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
                               {x.nama_eselon2}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "7px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          fontSize: "12px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        UPT{" "}
+                        <span style={{ color: "#94a3b8", fontWeight: 400 }}>
+                          (opsional jika Eselon 2 diisi)
+                        </span>
+                      </label>
+                      <select
+                        data-field="upt_id"
+                        value={formData.upt_id}
+                        onChange={(e) =>
+                          handleFormChange("upt_id", e.target.value)
+                        }
+                        disabled={!!formData.eselon2_id}
+                        style={{
+                          width: "100%",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          border: "1px solid #e2e8f0",
+                          borderColor: fieldErrors.upt_id
+                            ? errorBorderColor
+                            : "#e2e8f0",
+                          fontSize: "13px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: formData.eselon2_id
+                            ? "not-allowed"
+                            : "pointer",
+                          backgroundColor: formData.eselon2_id
+                            ? "#f8fafc"
+                            : "#fafbfc",
+                          opacity: formData.eselon2_id ? 0.6 : 1,
+                          boxShadow: fieldErrors.upt_id ? errorRing : "none",
+                        }}
+                        onFocus={(e) => {
+                          if (!formData.eselon2_id) {
+                            e.currentTarget.style.borderColor = "#0ea5e9";
+                            e.currentTarget.style.backgroundColor = "#fff";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.upt_id
+                            ? errorBorderColor
+                            : "#e2e8f0";
+                          e.currentTarget.style.backgroundColor =
+                            formData.eselon2_id ? "#f8fafc" : "#fafbfc";
+                          e.currentTarget.style.boxShadow = fieldErrors.upt_id
+                            ? errorRing
+                            : "none";
+                        }}
+                      >
+                        <option value="">-Pilih-</option>
+                        {(master.upt || [])
+                          .filter(
+                            (x) =>
+                              (x.status_aktif === 1 ||
+                                x.status_aktif === true) &&
+                              (!formData.eselon1_id ||
+                                String(x.eselon1_id) ===
+                                  String(formData.eselon1_id)),
+                          )
+                          .map((x) => (
+                            <option key={x.upt_id} value={x.upt_id}>
+                              {x.nama_upt}
                             </option>
                           ))}
                       </select>
@@ -3194,7 +3433,10 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange("pic_internal", e.target.value)
                         }
-                        disabled={!formData.eselon1_id || !formData.eselon2_id}
+                        disabled={
+                          !formData.eselon1_id ||
+                          (!formData.eselon2_id && !formData.upt_id)
+                        }
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -3207,25 +3449,35 @@ function DataAplikasiSection() {
                             ? errorBoxShadow
                             : "none",
                           backgroundColor:
-                            !formData.eselon1_id || !formData.eselon2_id
+                            !formData.eselon1_id ||
+                            (!formData.eselon2_id && !formData.upt_id)
                               ? "#f3f4f6"
                               : "#fff",
                           cursor:
-                            !formData.eselon1_id || !formData.eselon2_id
+                            !formData.eselon1_id ||
+                            (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
                         }}
                       >
                         <option value="">
-                          {!formData.eselon1_id || !formData.eselon2_id
-                            ? "Pilih Eselon 1 & 2 terlebih dahulu"
+                          {!formData.eselon1_id ||
+                          (!formData.eselon2_id && !formData.upt_id)
+                            ? "Pilih Eselon 1 & (Eselon 2 atau UPT) terlebih dahulu"
                             : "-Pilih-"}
                         </option>
                         <option value="Tidak Ada">Tidak Ada</option>
                         {(master.pic_internal || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
+                              (x.status_aktif === 1 ||
+                                x.status_aktif === true) &&
+                              (formData.eselon2_id
+                                ? String(x.eselon2_id) ===
+                                  String(formData.eselon2_id)
+                                : formData.upt_id
+                                  ? String(x.upt_id) === String(formData.upt_id)
+                                  : true),
                           )
                           .map((x) => (
                             <option
@@ -3254,7 +3506,10 @@ function DataAplikasiSection() {
                         onChange={(e) =>
                           handleFormChange("pic_eksternal", e.target.value)
                         }
-                        disabled={!formData.eselon1_id || !formData.eselon2_id}
+                        disabled={
+                          !formData.eselon1_id ||
+                          (!formData.eselon2_id && !formData.upt_id)
+                        }
                         style={{
                           width: "100%",
                           padding: "10px",
@@ -3267,25 +3522,35 @@ function DataAplikasiSection() {
                             ? errorBoxShadow
                             : "none",
                           backgroundColor:
-                            !formData.eselon1_id || !formData.eselon2_id
+                            !formData.eselon1_id ||
+                            (!formData.eselon2_id && !formData.upt_id)
                               ? "#f3f4f6"
                               : "#fff",
                           cursor:
-                            !formData.eselon1_id || !formData.eselon2_id
+                            !formData.eselon1_id ||
+                            (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
                         }}
                       >
                         <option value="">
-                          {!formData.eselon1_id || !formData.eselon2_id
-                            ? "Pilih Eselon 1 & 2 terlebih dahulu"
+                          {!formData.eselon1_id ||
+                          (!formData.eselon2_id && !formData.upt_id)
+                            ? "Pilih Eselon 1 & (Eselon 2 atau UPT) terlebih dahulu"
                             : "-Pilih-"}
                         </option>
                         <option value="Tidak Ada">Tidak Ada</option>
                         {(master.pic_eksternal || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
+                              (x.status_aktif === 1 ||
+                                x.status_aktif === true) &&
+                              (formData.eselon2_id
+                                ? String(x.eselon2_id) ===
+                                  String(formData.eselon2_id)
+                                : formData.upt_id
+                                  ? String(x.upt_id) === String(formData.upt_id)
+                                  : true),
                           )
                           .map((x) => (
                             <option
@@ -4953,6 +5218,7 @@ function DataAplikasiSection() {
                   label="Eselon 2"
                   value={selectedApp.nama_eselon2}
                 />
+                <DetailField label="UPT" value={selectedApp.nama_upt} />
                 <DetailField
                   label="PIC Internal"
                   value={selectedApp.nama_pic_internal}

@@ -18,6 +18,8 @@ function OperatorEselon2DataAplikasi() {
   const [dynamicMasterData, setDynamicMasterData] = useState({});
   const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   // Get operator's eselon1_id and eselon2_id from localStorage
   const userEselon1Id = localStorage.getItem("eselon1_id");
   const userEselon2Id = localStorage.getItem("eselon2_id");
@@ -355,6 +357,12 @@ function OperatorEselon2DataAplikasi() {
     });
 
     setFormData(baseFormData);
+
+    // Fetch PIC berdasarkan eselon2_id operator
+    if (userEselon2Id) {
+      await fetchPICByEselon2(String(userEselon2Id));
+    }
+
     setShowModal(true);
   };
 
@@ -1754,6 +1762,10 @@ function OperatorEselon2DataAplikasi() {
                   return (
                     <tr
                       key={app.nama_aplikasi ?? i}
+                      onClick={() => {
+                        setSelectedApp(app);
+                        setShowDetailModal(true);
+                      }}
                       style={{
                         borderBottom: "1.5px solid #f1f5f9",
                         background: i % 2 === 0 ? "#ffffff" : "#fafbfc",
@@ -2015,7 +2027,10 @@ function OperatorEselon2DataAplikasi() {
                           }}
                         >
                           <button
-                            onClick={() => openEditModal(app.nama_aplikasi)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(app.nama_aplikasi);
+                            }}
                             title="Edit"
                             style={{
                               padding: "5px 8px",
@@ -3158,7 +3173,11 @@ function OperatorEselon2DataAplikasi() {
                         {(master.pic_internal || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
+                              (x.status_aktif === 1 ||
+                                x.status_aktif === true) &&
+                              (!formData.eselon2_id ||
+                                String(x.eselon2_id) ===
+                                  String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -3216,7 +3235,11 @@ function OperatorEselon2DataAplikasi() {
                         {(master.pic_eksternal || [])
                           .filter(
                             (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
+                              (x.status_aktif === 1 ||
+                                x.status_aktif === true) &&
+                              (!formData.eselon2_id ||
+                                String(x.eselon2_id) ===
+                                  String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -4691,7 +4714,809 @@ function OperatorEselon2DataAplikasi() {
           </div>
         </div>
       )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedApp && (
+        <div
+          onClick={() => setShowDetailModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "20px",
+            animation: "fadeIn 0.2s ease-out",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "900px",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              animation: "slideUp 0.3s ease-out",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "18px 24px",
+                borderBottom: "none",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginBottom: "0",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      background: "rgba(255,255,255,0.2)",
+                      backdropFilter: "blur(10px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#fff"
+                      strokeWidth="2"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "16px",
+                        fontWeight: 700,
+                        color: "#ffffff",
+                        marginBottom: "2px",
+                        textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      {selectedApp.nama_aplikasi}
+                    </h2>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "11px",
+                        color: "rgba(255,255,255,0.9)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Informasi lengkap aplikasi
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  border: "none",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  backdropFilter: "blur(10px)",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.3)";
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor =
+                    "rgba(255,255,255,0.2)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div
+              style={{
+                padding: "20px 24px",
+                overflowY: "auto",
+                flex: 1,
+                backgroundColor: "#f9fafb",
+              }}
+            >
+              {/* Basic Info */}
+              <DetailSection title="Informasi Umum">
+                <DetailField
+                  label="Nama Aplikasi"
+                  value={selectedApp.nama_aplikasi}
+                />
+                <DetailField
+                  label="Domain"
+                  value={selectedApp.domain}
+                  isLink={true}
+                />
+                <DetailField
+                  label="Status"
+                  value={selectedApp.nama_status}
+                  isBadge={true}
+                />
+                <DetailField
+                  label="Frekuensi Pemakaian"
+                  value={selectedApp.frekuensi_pemakaian}
+                />
+              </DetailSection>
+
+              {/* Description */}
+              <DetailSection title="Deskripsi & Fungsi">
+                <DetailField
+                  label="Deskripsi/Fungsi"
+                  value={selectedApp.deskripsi_fungsi}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="User/Pengguna"
+                  value={selectedApp.user_pengguna}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="Data yang Digunakan"
+                  value={selectedApp.data_digunakan}
+                  isTextarea={true}
+                />
+                <DetailField
+                  label="Luaran/Output"
+                  value={selectedApp.luaran_output}
+                  isTextarea={true}
+                />
+              </DetailSection>
+
+              {/* Organization */}
+              <DetailSection title="Unit & PIC">
+                <DetailField
+                  label="Eselon 1"
+                  value={selectedApp.nama_eselon1}
+                />
+                <DetailField
+                  label="Eselon 2"
+                  value={selectedApp.nama_eselon2}
+                />
+                <DetailField label="UPT" value={selectedApp.nama_upt} />
+                <DetailField
+                  label="PIC Internal"
+                  value={selectedApp.nama_pic_internal}
+                />
+                <DetailField
+                  label="Kontak PIC Internal"
+                  value={selectedApp.kontak_pic_internal}
+                />
+                <DetailField
+                  label="PIC Eksternal"
+                  value={selectedApp.nama_pic_eksternal}
+                />
+                <DetailField
+                  label="Kontak PIC Eksternal"
+                  value={selectedApp.kontak_pic_eksternal}
+                />
+              </DetailSection>
+
+              {/* Technical Info */}
+              <DetailSection title="Informasi Teknis">
+                <DetailField
+                  label="Bahasa Pemrograman"
+                  value={selectedApp.bahasa_pemrograman}
+                />
+                <DetailField
+                  label="Basis Data"
+                  value={selectedApp.basis_data}
+                />
+                <DetailField
+                  label="Kerangka Pengembangan"
+                  value={selectedApp.kerangka_pengembangan}
+                />
+                <DetailField
+                  label="Environment"
+                  value={selectedApp.nama_environment}
+                />
+                <DetailField
+                  label="Cara Akses"
+                  value={(() => {
+                    if (selectedApp.nama_cara_akses) {
+                      try {
+                        const parsed = JSON.parse(selectedApp.nama_cara_akses);
+                        return Array.isArray(parsed)
+                          ? parsed.join(", ")
+                          : selectedApp.nama_cara_akses;
+                      } catch {
+                        return selectedApp.nama_cara_akses;
+                      }
+                    }
+                    return null;
+                  })()}
+                />
+                <DetailField
+                  label="Alamat IP Publik"
+                  value={selectedApp.alamat_ip_publik}
+                />
+                <DetailField
+                  label="Server Aplikasi"
+                  value={selectedApp.server_aplikasi}
+                />
+                <DetailField label="Cloud" value={selectedApp.cloud} />
+                <DetailField
+                  label="Perangkat Lunak"
+                  value={selectedApp.perangkat_lunak}
+                />
+                <DetailField
+                  label="Tipe Lisensi Bahasa"
+                  value={selectedApp.tipe_lisensi_bahasa}
+                />
+              </DetailSection>
+
+              {/* Security */}
+              <DetailSection title="Keamanan">
+                <DetailField label="SSL" value={selectedApp.ssl} />
+                <DetailField
+                  label="Tanggal Expired SSL"
+                  value={
+                    selectedApp.ssl_expired
+                      ? new Date(selectedApp.ssl_expired).toLocaleDateString(
+                          "id-ID",
+                          { year: "numeric", month: "long", day: "numeric" },
+                        )
+                      : null
+                  }
+                />
+                <DetailField label="WAF" value={selectedApp.waf} />
+                <DetailField
+                  label="WAF Lainnya"
+                  value={selectedApp.waf_lainnya}
+                />
+                <DetailField label="Antivirus" value={selectedApp.antivirus} />
+                <DetailField
+                  label="VA/PT Status"
+                  value={selectedApp.va_pt_status}
+                />
+                <DetailField
+                  label="VA/PT Waktu"
+                  value={selectedApp.va_pt_waktu}
+                />
+                <DetailField
+                  label="API Internal"
+                  value={selectedApp.api_internal_status}
+                />
+              </DetailSection>
+
+              {/* Infrastructure */}
+              <DetailSection title="Infrastruktur & Operasional">
+                <DetailField label="PDN Utama" value={selectedApp.nama_pdn} />
+                <DetailField
+                  label="PDN Backup"
+                  value={selectedApp.pdn_backup}
+                />
+                <DetailField
+                  label="Pusat Komputasi Utama"
+                  value={selectedApp.pusat_komputasi_utama}
+                />
+                <DetailField
+                  label="Pusat Komputasi Backup"
+                  value={selectedApp.pusat_komputasi_backup}
+                />
+                <DetailField
+                  label="Mandiri Komputasi Backup"
+                  value={selectedApp.mandiri_komputasi_backup}
+                />
+                <DetailField
+                  label="Unit Pengembang"
+                  value={selectedApp.unit_pengembang}
+                />
+                <DetailField
+                  label="Unit Operasional Teknologi"
+                  value={selectedApp.unit_operasional_teknologi}
+                />
+                <DetailField
+                  label="Status BMN"
+                  value={selectedApp.status_bmn}
+                />
+                <DetailField
+                  label="Nilai Pengembangan"
+                  value={
+                    selectedApp.nilai_pengembangan_aplikasi
+                      ? `Rp ${Number(selectedApp.nilai_pengembangan_aplikasi).toLocaleString("id-ID")}`
+                      : null
+                  }
+                />
+              </DetailSection>
+
+              {/* Additional Info */}
+              {selectedApp.keterangan && (
+                <DetailSection title="Keterangan Tambahan">
+                  <DetailField
+                    label="Keterangan"
+                    value={selectedApp.keterangan}
+                    isTextarea={true}
+                  />
+                </DetailSection>
+              )}
+
+              {/* Dynamic Fields */}
+              {dynamicTables.length > 0 &&
+                (() => {
+                  const dynamicFields = dynamicTables.filter((table) => {
+                    const fieldName = `${table.table_name}_id`;
+                    return selectedApp[fieldName];
+                  });
+
+                  if (dynamicFields.length === 0) return null;
+
+                  return (
+                    <DetailSection title="Informasi Tambahan">
+                      {dynamicFields.map((table) => {
+                        const fieldName = `${table.table_name}_id`;
+                        const fieldValue = selectedApp[fieldName];
+                        const data = dynamicMasterData[table.table_name] || [];
+                        const idField = table.id_field_name;
+
+                        let displayValue = fieldValue;
+                        if (data.length > 0) {
+                          const item = data.find(
+                            (d) => String(d[idField]) === String(fieldValue),
+                          );
+                          if (item) {
+                            try {
+                              const schema = JSON.parse(
+                                table.table_schema || "[]",
+                              );
+                              if (schema.length > 0) {
+                                const displayField = schema[0].column_name;
+                                displayValue = item[displayField] || fieldValue;
+                              }
+                            } catch (e) {
+                              const keys = Object.keys(item).filter(
+                                (k) =>
+                                  k !== idField &&
+                                  !k.includes("_at") &&
+                                  !k.includes("_by") &&
+                                  k !== "status_aktif",
+                              );
+                              if (keys.length > 0) {
+                                displayValue = item[keys[0]] || fieldValue;
+                              }
+                            }
+                          }
+                        }
+
+                        return (
+                          <DetailField
+                            key={table.registry_id}
+                            label={table.display_name}
+                            value={displayValue}
+                          />
+                        );
+                      })}
+                    </DetailSection>
+                  );
+                })()}
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #e5e7eb",
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                background: "linear-gradient(to top, #f9fafb 0%, #ffffff 100%)",
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  openEditModal(selectedApp.nama_aplikasi);
+                }}
+                style={{
+                  padding: "10px 20px",
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 20px rgba(102, 126, 234, 0.5)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(102, 126, 234, 0.4)";
+                }}
+              >
+                <svg
+                  width="14"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Edit Aplikasi
+              </button>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#ffffff",
+                  color: "#6b7280",
+                  border: "2px solid #e5e7eb",
+                  borderRadius: "12px",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f9fafb";
+                  e.currentTarget.style.borderColor = "#d1d5db";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.transform = "translateY(0)";
+                }}
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
+  );
+}
+
+// Helper components
+function DetailSection({ title, children }) {
+  const getSectionIcon = (title) => {
+    if (title.includes("Umum"))
+      return <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />;
+    if (title.includes("Deskripsi") || title.includes("Fungsi"))
+      return (
+        <>
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M9 9h6M9 13h6M9 17h6" />
+        </>
+      );
+    if (title.includes("Unit") || title.includes("PIC"))
+      return (
+        <>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+        </>
+      );
+    if (title.includes("Teknis"))
+      return (
+        <>
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </>
+      );
+    if (title.includes("Keamanan"))
+      return (
+        <>
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </>
+      );
+    if (title.includes("Infrastruktur"))
+      return (
+        <>
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+        </>
+      );
+    if (title.includes("Tambahan"))
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4M12 8h.01" />
+        </>
+      );
+    return <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />;
+  };
+
+  return (
+    <div
+      style={{
+        marginBottom: "16px",
+        padding: "0",
+        backgroundColor: "transparent",
+        borderRadius: "12px",
+        border: "none",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          padding: "10px 16px",
+          borderRadius: "12px 12px 0 0",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <div
+          style={{
+            width: "24px",
+            height: "24px",
+            borderRadius: "6px",
+            background: "rgba(255,255,255,0.2)",
+            backdropFilter: "blur(10px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {getSectionIcon(title)}
+          </svg>
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: "13px",
+            fontWeight: 700,
+            color: "#ffffff",
+            letterSpacing: "0.3px",
+          }}
+        >
+          {title}
+        </h3>
+      </div>
+      <div
+        style={{
+          padding: "16px",
+          backgroundColor: "#ffffff",
+          borderRadius: "0 0 12px 12px",
+          border: "1px solid #e5e7eb",
+          borderTop: "none",
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "14px",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailField({ label, value, isLink, isBadge, isTextarea }) {
+  const displayValue = value || "-";
+
+  if (isLink && value) {
+    return (
+      <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#6b7280",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "8px",
+          }}
+        >
+          {label}
+        </div>
+        <a
+          href={value.startsWith("http") ? value : `https://${value}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            color: "#667eea",
+            fontSize: "14px",
+            fontWeight: 500,
+            textDecoration: "none",
+            wordBreak: "break-all",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            transition: "all 0.2s",
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.color = "#764ba2";
+            e.currentTarget.style.gap = "8px";
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.color = "#667eea";
+            e.currentTarget.style.gap = "6px";
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+          </svg>
+          {value}
+        </a>
+      </div>
+    );
+  }
+
+  if (isBadge && value) {
+    const status = value.toLowerCase();
+    let bg = "#d1fae5";
+    let color = "#065f46";
+    let borderColor = "#6ee7b7";
+    if (status.includes("pengembang") || status.includes("pengembangan")) {
+      bg = "#fed7aa";
+      color = "#92400e";
+      borderColor = "#fbbf24";
+    } else if (status.includes("tidak")) {
+      bg = "#fecaca";
+      color = "#991b1b";
+      borderColor = "#f87171";
+    }
+
+    return (
+      <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#6b7280",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+            marginBottom: "8px",
+          }}
+        >
+          {label}
+        </div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "6px 12px",
+            borderRadius: "10px",
+            backgroundColor: bg,
+            color: color,
+            fontWeight: 600,
+            fontSize: "12px",
+            letterSpacing: "0.3px",
+            border: `2px solid ${borderColor}`,
+          }}
+        >
+          <span
+            style={{
+              width: "6px",
+              height: "6px",
+              borderRadius: "50%",
+              backgroundColor: color,
+              boxShadow: `0 0 0 2px ${bg}`,
+            }}
+          />
+          {value}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginBottom: isTextarea ? "16px" : "0" }}>
+      <div
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "#6b7280",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+          marginBottom: "8px",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "14px",
+          color: displayValue === "-" ? "#9ca3af" : "#1f2937",
+          fontWeight: displayValue === "-" ? 400 : 500,
+          lineHeight: "1.6",
+          wordBreak: "break-word",
+          whiteSpace: isTextarea ? "pre-wrap" : "normal",
+          padding: isTextarea ? "12px" : "0",
+          backgroundColor: isTextarea ? "#f9fafb" : "transparent",
+          borderRadius: isTextarea ? "8px" : "0",
+          border: isTextarea ? "1px solid #e5e7eb" : "none",
+        }}
+      >
+        {displayValue}
+      </div>
+    </div>
   );
 }
 

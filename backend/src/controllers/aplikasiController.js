@@ -11,6 +11,7 @@ exports.getAllAplikasi = async (req, res) => {
         da.*,
         e1.nama_eselon1,
         e2.nama_eselon2,
+        upt.nama_upt,
         ca.nama_cara_akses,
         fp.nama_frekuensi,
         sa.nama_status,
@@ -23,6 +24,7 @@ exports.getAllAplikasi = async (req, res) => {
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
       LEFT JOIN cara_akses ca ON da.cara_akses_id = ca.cara_akses_id
       LEFT JOIN frekuensi_pemakaian fp ON da.frekuensi_pemakaian = fp.frekuensi_pemakaian
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
@@ -67,15 +69,16 @@ exports.getAplikasiById = async (req, res) => {
         da.*,
         e1.nama_eselon1,
         e2.nama_eselon2,
+        upt.nama_upt,
         ca.nama_cara_akses,
         fp.nama_frekuensi,
         sa.nama_status,
         pdn.kode_pdn,
-        da.pdn_backup,
         env.jenis_environment
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
       LEFT JOIN cara_akses ca ON da.cara_akses_id = ca.cara_akses_id
       LEFT JOIN frekuensi_pemakaian fp ON da.frekuensi_pemakaian = fp.frekuensi_pemakaian
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
