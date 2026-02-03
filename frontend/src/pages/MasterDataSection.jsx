@@ -1324,7 +1324,12 @@ function MasterDataSection() {
       if (activeTab === "format_laporan") {
         const keys = selectedDataFields.map((f) => f.value);
         processedData.selected_fields = JSON.stringify(keys);
-        processedData.field_ids = selectedFieldIds;
+
+        // Filter out headers (parents) from field_ids payload
+        // Backend hierarchy builder will still function if children are present
+        const leafIdsOnly = selectedFieldIds.filter(id => allLeafIds.includes(id));
+        processedData.field_ids = leafIdsOnly;
+
         // Include click order for individual fields (fields without parent)
         processedData.field_click_order = individualFieldClickOrder;
         console.log('Submitting with click order:', individualFieldClickOrder);
@@ -2584,7 +2589,11 @@ function MasterDataSection() {
                                 id,
                                 hierarchicalFields,
                               );
-                              if (!nodeName) return null;
+                              // Filter out headers/groups from display list
+                              const nodeObj = findNodeById(id, hierarchicalFields);
+                              const isHeader = nodeObj?.children && nodeObj.children.length > 0;
+
+                              if (!nodeName || isHeader) return null;
                               return (
                                 <div
                                   key={`hier-${id}`}

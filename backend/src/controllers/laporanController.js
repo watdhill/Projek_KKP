@@ -35,6 +35,13 @@ function mapFieldName(kodeField) {
     'kontak_pic_internal': null, // No column for this
     'kontak_pic_eksternal': null, // No column for this
 
+    // Missing mappings identified during debug
+    'eselon_1': 'nama_eselon1',
+    'eselon_2': 'nama_eselon2',
+    'framework': 'kerangka_pengembangan',
+    'api_internal_integrasi': 'api_internal_status',
+    'frekuensi_update_data': 'frekuensi_pemakaian', // Fix "Frekuensi Update Data" mapping
+
     // Default: return as-is
   };
 
@@ -314,18 +321,47 @@ exports.getFormatFieldsForPreview = async (req, res) => {
   }
 };
 
+// Helper: Get Cara Akses Map (ID -> Name)
+async function getCaraAksesMap() {
+  const [rows] = await pool.query('SELECT cara_akses_id, nama_cara_akses FROM cara_akses');
+  const map = {};
+  rows.forEach(r => {
+    map[r.cara_akses_id] = r.nama_cara_akses;
+  });
+  return map;
+}
+
 // Get preview data with filters
 exports.getPreviewData = async (req, res) => {
   try {
     const { format_laporan_id, status, eselon1_id, eselon2_id } = req.query;
 
+    const caraAksesMap = await getCaraAksesMap();
+
     let query = `
       SELECT 
         da.nama_aplikasi,
-        e1.nama_eselon1,
+        e1.nama_eselon1 as eselon_1,
         e1.singkatan as unit,
-        e2.nama_eselon2,
-        da.pic_internal as pic,
+        e2.nama_eselon2 as eselon_2,
+        
+        /* PIC Logic: Fetch from master tables via FK */
+        pi.nama_pic_internal as pic_internal_master,
+        pi.kontak_pic_internal as kontak_pic_internal_master,
+        pe.nama_pic_eksternal as pic_eksternal_master,
+        pe.kontak_pic_eksternal as kontak_pic_eksternal_master,
+
+        da.pic_internal,
+        da.pic_eksternal,
+        da.kontak_pic_internal,
+        da.kontak_pic_eksternal,
+
+        /* PDN & Mandiri Aliases */
+        pd1.kode_pdn as pdn_utama,
+        da.pdn_backup as pdn_backup,
+        da.mandiri_komputasi_backup as mandiri,
+        da.mandiri_komputasi_backup as mandiri_backup,
+
         sa.nama_status as status_aplikasi,
         DATE_FORMAT(da.created_at, '%Y-%m-%d') as tanggal_ditambahkan,
         YEAR(COALESCE(da.updated_at, da.created_at)) as tahun_pengembangan,
@@ -336,7 +372,7 @@ exports.getPreviewData = async (req, res) => {
         da.luaran_output,
         da.bahasa_pemrograman,
         da.basis_data,
-        da.kerangka_pengembangan,
+        da.kerangka_pengembangan as framework,
         da.unit_pengembang,
         da.unit_operasional_teknologi,
         da.nilai_pengembangan_aplikasi,
@@ -354,12 +390,18 @@ exports.getPreviewData = async (req, res) => {
         da.status_bmn,
         da.server_aplikasi,
         da.tipe_lisensi_bahasa,
-        da.api_internal_status,
-        da.ssl
+        da.api_internal_status as api_internal_integrasi,
+        da.ssl,
+        da.cara_akses_multiple,
+        /* Fix: Map frekuensi_pemakaian to frekuensi_update_data since column doesn't exist */
+        da.frekuensi_pemakaian as frekuensi_update_data
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+      LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
+      LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
+      LEFT JOIN pdn pd1 ON da.pdn_id = pd1.pdn_id
       WHERE 1=1
     `;
 
@@ -381,13 +423,52 @@ exports.getPreviewData = async (req, res) => {
     }
 
     // Order by Eselon hierarchy (Setjen first), then by application name
-    query += ` ORDER BY e1.no ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
+    query += ` ORDER BY e1.eselon1_id ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
 
     const [rows] = await pool.query(query, params);
 
+    // Post-process rows
+    const formattedRows = rows.map(row => {
+      // Parse Cara Akses Multiple
+      let caraAksesStr = '';
+      if (row.cara_akses_multiple) {
+        try {
+          // Try to parse as JSON array if it looks like one, otherwise assume comma-separated string
+          let ids = [];
+          if (typeof row.cara_akses_multiple === 'string' && row.cara_akses_multiple.startsWith('[')) {
+            ids = JSON.parse(row.cara_akses_multiple);
+          } else if (typeof row.cara_akses_multiple === 'string') {
+            ids = row.cara_akses_multiple.split(',').map(s => s.trim());
+          } else if (Array.isArray(row.cara_akses_multiple)) {
+            ids = row.cara_akses_multiple;
+          }
+
+          caraAksesStr = ids.map(id => caraAksesMap[id] || id).join(', ');
+        } catch (e) {
+          console.error('Error parsing cara_akses_multiple:', e);
+          caraAksesStr = row.cara_akses_multiple;
+        }
+      }
+
+      // Use Master PIC if available, fall back to direct field
+      const picInternal = row.pic_internal_master || row.pic_internal;
+      const picEksternal = row.pic_eksternal_master || row.pic_eksternal;
+      const kontakPicInternal = row.kontak_pic_internal_master || row.kontak_pic_internal;
+      const kontakPicEksternal = row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
+
+      return {
+        ...row,
+        cara_akses: caraAksesStr, // Standardize to 'cara_akses' field expected by frontend
+        pic_internal: picInternal,
+        pic_eksternal: picEksternal,
+        kontak_pic_internal: kontakPicInternal,
+        kontak_pic_eksternal: kontakPicEksternal
+      };
+    });
+
     res.json({
       success: true,
-      data: rows
+      data: formattedRows
     });
   } catch (error) {
     res.status(500).json({
@@ -707,17 +788,35 @@ async function createFormatSheet(workbook, format, filters) {
 async function getFilteredData(filters) {
   const { status, eselon1_id, eselon2_id } = filters;
 
+  const caraAksesMap = await getCaraAksesMap();
+
   let query = `
     SELECT 
       da.*,
       e1.nama_eselon1,
       e1.singkatan as unit_eselon1,
       e2.nama_eselon2,
+      
+      /* PIC Logic: Fetch from master tables via FK */
+      pi.nama_pic_internal as pic_internal_master,
+      pi.kontak_pic_internal as kontak_pic_internal_master,
+      pe.nama_pic_eksternal as pic_eksternal_master,
+      pe.kontak_pic_eksternal as kontak_pic_eksternal_master,
+
+      /* PDN & Mandiri Aliases */
+      pd1.kode_pdn as pdn_utama,
+      da.pdn_backup as pdn_backup,
+      da.mandiri_komputasi_backup as mandiri,
+      da.mandiri_komputasi_backup as mandiri_backup,
+
       sa.nama_status
     FROM data_aplikasi da
     LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
     LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
     LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+    LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
+    LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
+    LEFT JOIN pdn pd1 ON da.pdn_id = pd1.pdn_id
     WHERE 1=1
   `;
 
@@ -739,10 +838,49 @@ async function getFilteredData(filters) {
   }
 
   // Order by Eselon hierarchy (Setjen first), then by application name
-  query += ` ORDER BY e1.no ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
+  query += ` ORDER BY e1.eselon1_id ASC, e2.nama_eselon2 ASC, da.nama_aplikasi ASC`;
 
   const [rows] = await pool.query(query, params);
-  return rows;
+
+  // Post-process rows
+  const formattedRows = rows.map(row => {
+    // Parse Cara Akses Multiple
+    let caraAksesStr = '';
+    if (row.cara_akses_multiple) {
+      try {
+        let ids = [];
+        if (typeof row.cara_akses_multiple === 'string' && row.cara_akses_multiple.startsWith('[')) {
+          ids = JSON.parse(row.cara_akses_multiple);
+        } else if (typeof row.cara_akses_multiple === 'string') {
+          ids = row.cara_akses_multiple.split(',').map(s => s.trim());
+        } else if (Array.isArray(row.cara_akses_multiple)) {
+          ids = row.cara_akses_multiple;
+        }
+
+        caraAksesStr = ids.map(id => caraAksesMap[id] || id).join(', ');
+      } catch (e) {
+        console.error('Error parsing cara_akses_multiple:', e);
+        caraAksesStr = row.cara_akses_multiple;
+      }
+    }
+
+    // Use Master PIC if available, fall back to direct field
+    const picInternal = row.pic_internal_master || row.pic_internal;
+    const picEksternal = row.pic_eksternal_master || row.pic_eksternal;
+    const kontakPicInternal = row.kontak_pic_internal_master || row.kontak_pic_internal;
+    const kontakPicEksternal = row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
+
+    return {
+      ...row,
+      cara_akses: caraAksesStr, // Standardize
+      pic_internal: picInternal,
+      pic_eksternal: picEksternal,
+      kontak_pic_internal: kontakPicInternal,
+      kontak_pic_eksternal: kontakPicEksternal
+    };
+  });
+
+  return formattedRows;
 }
 
 

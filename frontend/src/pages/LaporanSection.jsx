@@ -882,53 +882,6 @@ function LaporanSection() {
               >
                 <thead>
                   <tr>
-                    {/* Always show basic columns first */}
-                    <th
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "9px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        background: "transparent",
-                        borderBottom: "none",
-                      }}
-                    >
-                      NAMA APLIKASI
-                    </th>
-                    <th
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "9px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        background: "transparent",
-                        borderBottom: "none",
-                      }}
-                    >
-                      ESELON 1
-                    </th>
-                    <th
-                      style={{
-                        padding: "10px 12px",
-                        textAlign: "left",
-                        fontWeight: 700,
-                        color: "#475569",
-                        fontSize: "9px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.08em",
-                        background: "transparent",
-                        borderBottom: "none",
-                      }}
-                    >
-                      ESELON 2
-                    </th>
-
                     {/* Dynamic columns from format fields */}
                     {formatFields.map((field, idx) => {
                       // Skip header-only fields (is_header = 1)
@@ -981,47 +934,6 @@ function LaporanSection() {
                         e.currentTarget.style.boxShadow = "none";
                       }}
                     >
-                      {/* Basic columns */}
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          color: "#1e293b",
-                          fontWeight: 700,
-                          fontSize: "11px",
-                          borderTopLeftRadius: "8px",
-                          borderBottomLeftRadius: "8px",
-                          borderTop: "1px solid #e2e8f0",
-                          borderBottom: "1px solid #e2e8f0",
-                          borderLeft: "1px solid #e2e8f0",
-                        }}
-                      >
-                        {item.nama_aplikasi}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          color: "#64748b",
-                          fontSize: "10px",
-                          fontWeight: 500,
-                          borderTop: "1px solid #e2e8f0",
-                          borderBottom: "1px solid #e2e8f0",
-                        }}
-                      >
-                        {item.nama_eselon1 || "-"}
-                      </td>
-                      <td
-                        style={{
-                          padding: "10px 12px",
-                          color: "#64748b",
-                          fontSize: "10px",
-                          fontWeight: 500,
-                          borderTop: "1px solid #e2e8f0",
-                          borderBottom: "1px solid #e2e8f0",
-                        }}
-                      >
-                        {item.nama_eselon2 || "-"}
-                      </td>
-
                       {/* Dynamic columns from format fields */}
                       {formatFields.map((field, idx) => {
                         // Skip header-only fields
