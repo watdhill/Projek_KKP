@@ -1,0 +1,39 @@
+Database terhubung dengan sukses
+[
+  {
+    "upt_id": 3,
+    "nama_upt": "BALAI BESAR PENGUJIAN PENERAPAN PRODUK KELAUTAN DAN PERIKANAN"
+  },
+  {
+    "upt_id": 4,
+    "nama_upt": " BALAI PENATAAN RUANG LAUT MAKASSAR"
+  },
+  {
+    "upt_id": 5,
+    "nama_upt": "BALAI PENATAAN RUANG LAUT PADANG"
+  },
+  {
+    "upt_id": 6,
+    "nama_upt": "LOKA PENATAAN RUANG LAUT SERANG"
+  },
+  {
+    "upt_id": 7,
+    "nama_upt": "LOKA PENATAAN RUANG LAUT SORONG"
+  },
+  {
+    "upt_id": 8,
+    "nama_upt": "PELABUHAN PERIKANAN SAMUDERA BITUNG"
+  },
+  {
+    "upt_id": 9,
+    "nama_upt": "PELABUHAN PERIKANAN NUSANTARA SIBOLGA"
+  },
+  {
+    "upt_id": 10,
+    "nama_upt": "PELABUHAN PERIKANAN NUSANTARA TANJUNGPANDAN"
+  },
+  {
+    "upt_id": 11,
+    "nama_upt": "PELABUHAN PERIKANAN NUSANTARA SUNGAILIAT"
+  }
+]

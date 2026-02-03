@@ -1,0 +1,18 @@
+Database terhubung dengan sukses
+CREATE TABLE `pic_eksternal` (
+  `pic_eksternal_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `eselon2_id` bigint(20) unsigned DEFAULT NULL,
+  `upt_id` int(11) DEFAULT NULL,
+  `nama_pic_eksternal` varchar(150) DEFAULT NULL,
+  `email_pic` varchar(150) DEFAULT NULL,
+  `keterangan` text DEFAULT NULL,
+  `kontak_pic_eksternal` varchar(150) DEFAULT NULL,
+  `status_aktif` tinyint(1) DEFAULT 1,
+  `created_by` int(11) DEFAULT NULL,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`pic_eksternal_id`),
+  KEY `eselon2_id` (`eselon2_id`),
+  CONSTRAINT `pic_eksternal_ibfk_1` FOREIGN KEY (`eselon2_id`) REFERENCES `master_eselon2` (`eselon2_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci

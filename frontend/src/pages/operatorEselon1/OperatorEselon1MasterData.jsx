@@ -125,6 +125,8 @@ function OperatorEselon1MasterData() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const [eselon2Options, setEselon2Options] = useState([]);
 
   // ---------- Helpers ----------
@@ -322,6 +324,10 @@ function OperatorEselon1MasterData() {
       setShowModal(false);
       setEditingItem(null);
       fetchData();
+      setSuccessMessage(
+        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN"
+      );
+      setShowSuccess(true);
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
     }
@@ -1200,6 +1206,113 @@ function OperatorEselon1MasterData() {
                 onMouseLeave={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
               >
                 Tidak
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- Success Popup matching Image --- */}
+      {showSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "450px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+            }}
+          >
+            {/* Green Checkmark Icon */}
+            <div
+              style={{
+                width: "80px",
+                height: "80px",
+                backgroundColor: "#f0fdf4",
+                borderRadius: "50%",
+                border: "2px solid #dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 24px",
+              }}
+            >
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+                color: "#475569",
+                margin: "0 0 12px",
+                textTransform: "uppercase",
+              }}
+            >
+              Berhasil!
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#94a3b8",
+                margin: "0 0 32px",
+                lineHeight: "1.5",
+                textTransform: "uppercase",
+              }}
+            >
+              {successMessage}
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSuccess(false)}
+                style={{
+                  padding: "10px 28px",
+                  backgroundColor: "#7dd3fc",
+                  color: "white",
+                  border: "2px solid #bae6fd",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#38bdf8")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#7dd3fc")
+                }
+              >
+                OK
               </button>
             </div>
           </div>

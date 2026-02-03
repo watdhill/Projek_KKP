@@ -1287,6 +1287,13 @@ function MasterDataSection() {
         throw new Error("Silakan pilih minimal satu data untuk format laporan");
       }
 
+      // PIC Internal/Eksternal validation: Must pick Eselon 1 AND one of (Eselon 2 or UPT)
+      if (activeTab === "pic_internal" || activeTab === "pic_eksternal") {
+        if (!formData.eselon2_id && !formData.upt_id) {
+          throw new Error("Silakan pilih salah satu Eselon 2 atau UPT");
+        }
+      }
+
       setShowConfirm(true);
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
@@ -2736,7 +2743,18 @@ function MasterDataSection() {
                         { value: 0, label: "Nonaktif" },
                       ];
                     }
-                    return { ...field, options };
+
+                    // Exclusive selection logic for PIC forms
+                    let disabled = false;
+                    if (isPicForm) {
+                      if (field.name === "eselon2_id") {
+                        disabled = !formData.eselon1_id || !!formData.upt_id;
+                      } else if (field.name === "upt_id") {
+                        disabled = !formData.eselon1_id || !!formData.eselon2_id;
+                      }
+                    }
+
+                    return { ...field, options, disabled };
                   });
 
                   return (
@@ -2755,7 +2773,8 @@ function MasterDataSection() {
                               marginBottom: "8px",
                               fontSize: "13px",
                               fontWeight: 600,
-                              color: "#374151",
+                              color: field.disabled ? "#94a3b8" : "#374151",
+                              transition: "color 0.2s",
                             }}
                           >
                             {field.label}{" "}
@@ -2780,6 +2799,7 @@ function MasterDataSection() {
                                 setFormData(newData);
                               }}
                               required={field.required}
+                              disabled={field.disabled}
                               style={{
                                 width: "100%",
                                 padding: "11px 14px",
@@ -2787,12 +2807,14 @@ function MasterDataSection() {
                                 border: "1px solid #e2e8f0",
                                 fontSize: "14px",
                                 outline: "none",
-                                backgroundColor: "#ffffff",
-                                cursor: "pointer",
+                                backgroundColor: field.disabled ? "#f8fafc" : "#ffffff",
+                                cursor: field.disabled ? "not-allowed" : "pointer",
                                 transition: "all 0.2s",
                                 boxSizing: "border-box",
+                                color: field.disabled ? "#94a3b8" : "#1e293b",
                               }}
                               onFocus={(e) => {
+                                if (field.disabled) return;
                                 e.target.style.borderColor = "#4f46e5";
                                 e.target.style.boxShadow =
                                   "0 0 0 3px rgba(79, 70, 229, 0.1)";
@@ -2825,6 +2847,7 @@ function MasterDataSection() {
                                 })
                               }
                               required={field.required}
+                              disabled={field.disabled}
                               style={{
                                 width: "100%",
                                 padding: "11px 14px",
@@ -2834,8 +2857,12 @@ function MasterDataSection() {
                                 outline: "none",
                                 transition: "all 0.2s",
                                 boxSizing: "border-box",
+                                backgroundColor: field.disabled ? "#f8fafc" : "#ffffff",
+                                cursor: field.disabled ? "not-allowed" : "pointer",
+                                color: field.disabled ? "#94a3b8" : "#1e293b",
                               }}
                               onFocus={(e) => {
+                                if (field.disabled) return;
                                 e.target.style.borderColor = "#4f46e5";
                                 e.target.style.boxShadow =
                                   "0 0 0 3px rgba(79, 70, 229, 0.1)";
