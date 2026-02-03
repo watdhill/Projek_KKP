@@ -110,6 +110,8 @@ function OperatorUPTMasterData() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // ---------- Helpers ----------
   const formatColumnHeader = (col) =>
@@ -130,50 +132,49 @@ function OperatorUPTMasterData() {
   // ---------- Fetch ----------
   useEffect(() => {
     fetchData();
+    const user = getCurrentUser();
+    if (user && !user.upt_id) {
+      console.warn("WARNING: Akun ini tidak memiliki UPT ID terasosiasi. Data mungkin tidak tersaring atau tersimpan dengan benar.");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const getUserEselon2Id = () => {
-    // For UPT, we might need to know which Eselon 2 they belong to if we want to filter specific PICs.
-    // Assuming UPT user object has eselon2_id.
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        return user.eselon2_id;
-      } catch (e) {
-        console.error("Error parsing user data:", e);
-      }
+  const getCurrentUser = () => {
+    try {
+      const user = {
+        id: localStorage.getItem("userId"),
+        upt_id: localStorage.getItem("upt_id"),
+        eselon1_id: localStorage.getItem("eselon1_id"),
+        eselon2_id: localStorage.getItem("eselon2_id")
+      };
+      console.log("Current User Info from storage:", user);
+      return user;
+    } catch (e) {
+      console.error("Error retrieving user info from localStorage:", e);
+      return null;
     }
-    return null;
+  };
+
+  const getUserUptId = () => {
+    const user = getCurrentUser();
+    return user?.upt_id || null;
   };
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const eselon2Id = getUserEselon2Id();
-      // Get current user ID for strict ownership check
-      const userStr = localStorage.getItem("user");
-      let currentUserId = null;
-      if (userStr) {
-        try {
-          const u = JSON.parse(userStr);
-          currentUserId = u.id; // Assuming user object has 'id'
-        } catch (e) {
-          console.error("Error parsing user for ID:", e);
-        }
-      }
+      const user = getCurrentUser();
+      const uptId = user?.upt_id;
+      const currentUserId = user?.id;
 
       let url = `${API_BASE}?type=${activeTab}`;
 
-      // If we have a user ID, use it to filter only their created records
-      if (currentUserId && (activeTab === 'pic_internal' || activeTab === 'pic_eksternal')) {
+      // Priority: filter by UPT ID if available, otherwise by Eselon 2 (legacy), otherwise by created_by (strict)
+      if (uptId) {
+        url += `&upt_id=${uptId}`;
+      } else if (currentUserId && (activeTab === 'pic_internal' || activeTab === 'pic_eksternal')) {
         url += `&created_by=${currentUserId}`;
-      }
-      // Fallback
-      else if (eselon2Id) {
-        url += `&eselon2_id=${eselon2Id}`;
       }
 
       const response = await fetch(url);
@@ -191,18 +192,24 @@ function OperatorUPTMasterData() {
   const handleAdd = () => {
     setEditingItem(null);
     const initialData = {};
-    const userEselon2Id = getUserEselon2Id();
+    const user = getCurrentUser();
 
     (FORM_FIELDS[activeTab] || []).forEach((field) => {
       // Initialize Selects
       if (field.name === "eselon2_id") {
-        initialData[field.name] = userEselon2Id || "";
+        initialData[field.name] = user?.eselon2_id || "";
+      } else if (field.name === "upt_id") {
+        initialData[field.name] = user?.upt_id || "";
       } else if (field.type === "select" && field.options?.length) {
         initialData[field.name] = field.options[0].value;
       } else {
         initialData[field.name] = "";
       }
     });
+
+    // Ensure hidden hierarchical IDs are present
+    if (initialData.upt_id === undefined) initialData.upt_id = user?.upt_id || "";
+    if (initialData.eselon2_id === undefined) initialData.eselon2_id = user?.eselon2_id || "";
 
     // default status_aktif
     if (initialData.status_aktif === undefined) initialData.status_aktif = 1;
@@ -218,10 +225,13 @@ function OperatorUPTMasterData() {
       editData[field.name] = item[field.name] ?? "";
     });
 
-    // Ensure eselon2_id is preserved or re-assigned
-    if (!editData.eselon2_id) {
-      const userEselon2Id = getUserEselon2Id();
-      editData.eselon2_id = userEselon2Id;
+    // Ensure upt_id/eselon2_id is preserved or re-assigned
+    const user = getCurrentUser();
+    if (!editData.upt_id && user?.upt_id) {
+      editData.upt_id = user.upt_id;
+    }
+    if (!editData.eselon2_id && user?.eselon2_id) {
+      editData.eselon2_id = user.eselon2_id;
     }
 
     if (editData.status_aktif === undefined) editData.status_aktif = 1;
@@ -277,25 +287,19 @@ function OperatorUPTMasterData() {
 
       const processedData = { ...formData };
 
-      // Ensure eselon2_id is set
-      const userEselon2Id = getUserEselon2Id();
-      if (!processedData.eselon2_id && userEselon2Id) {
-        processedData.eselon2_id = userEselon2Id;
+      // Ensure upt_id is set
+      const user = getCurrentUser();
+      if (!processedData.upt_id && user?.upt_id) {
+        processedData.upt_id = user.upt_id;
       }
 
       // Auto-assign created_by / updated_by from current user
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        try {
-          const u = JSON.parse(userStr);
-          if (u.id) {
-            if (editingItem) {
-              processedData.updated_by = u.id;
-            } else {
-              processedData.created_by = u.id;
-            }
-          }
-        } catch (e) { /* ignore */ }
+      if (user?.id) {
+        if (editingItem) {
+          processedData.updated_by = user.id;
+        } else {
+          processedData.created_by = user.id;
+        }
       }
 
       // Normalize Phone Numbers (08 instead of +62)
@@ -312,11 +316,34 @@ function OperatorUPTMasterData() {
       if (processedData.kontak_pic_eksternal)
         processedData.kontak_pic_eksternal = formatHP(processedData.kontak_pic_eksternal);
 
-      // Normalize ints
-      if (processedData.eselon2_id)
-        processedData.eselon2_id = parseInt(processedData.eselon2_id, 10);
+      // Normalize IDs (ensure they are either valid integers or removed so they become NULL)
+      // We are very aggressive here to avoid any Foreign Key Errors with "" or 0
+      const normalizeID = (val) => {
+        if (val === "" || val === null || val === undefined) return undefined;
+        let p = parseInt(val, 10);
+        if (isNaN(p) || p <= 0) return undefined;
+        return p;
+      };
+
+      ["eselon1_id", "eselon2_id", "upt_id", "created_by", "updated_by"].forEach(key => {
+        const normalized = normalizeID(processedData[key]);
+        if (normalized !== undefined) {
+          processedData[key] = normalized;
+        } else {
+          delete processedData[key];
+        }
+      });
+
       if (processedData.status_aktif !== undefined)
         processedData.status_aktif = parseInt(processedData.status_aktif, 10);
+
+      console.log("=== SUBMITTING PIC DATA ===");
+      console.log("Type:", activeTab);
+      console.log("Method:", method);
+      console.log("URL:", url);
+      console.log("Payload:", processedData);
+      console.log("Session User:", user);
+      console.log("===========================");
 
       const response = await fetch(url, {
         method,
@@ -332,6 +359,10 @@ function OperatorUPTMasterData() {
       setShowModal(false);
       setEditingItem(null);
       fetchData();
+      setSuccessMessage(
+        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN"
+      );
+      setShowSuccess(true);
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
     }
@@ -772,6 +803,7 @@ function OperatorUPTMasterData() {
                     return (
                       <td
                         key={col}
+                        className={col === "email_pic" ? "allow-lowercase" : ""}
                         style={{
                           padding: "10px 14px",
                           color: "#1e293b",
@@ -1187,6 +1219,113 @@ function OperatorUPTMasterData() {
                 }}
               >
                 Ya, Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- Success Popup matching Image --- */}
+      {showSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "450px",
+              textAlign: "center",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+              position: "relative",
+            }}
+          >
+            {/* Green Checkmark Icon */}
+            <div
+              style={{
+                width: "80px",
+                height: "80px",
+                backgroundColor: "#f0fdf4",
+                borderRadius: "50%",
+                border: "2px solid #dcfce7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 24px",
+              }}
+            >
+              <svg
+                width="40"
+                height="40"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#22c55e"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 700,
+                color: "#475569",
+                margin: "0 0 12px",
+                textTransform: "uppercase",
+              }}
+            >
+              Berhasil!
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                color: "#94a3b8",
+                margin: "0 0 32px",
+                lineHeight: "1.5",
+                textTransform: "uppercase",
+              }}
+            >
+              {successMessage}
+            </p>
+
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowSuccess(false)}
+                style={{
+                  padding: "10px 28px",
+                  backgroundColor: "#7dd3fc",
+                  color: "white",
+                  border: "2px solid #bae6fd",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#38bdf8")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#7dd3fc")
+                }
+              >
+                OK
               </button>
             </div>
           </div>

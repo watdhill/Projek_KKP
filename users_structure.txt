@@ -1,0 +1,24 @@
+Database terhubung dengan sukses
+CREATE TABLE `users` (
+  `user_id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `role_id` bigint(20) unsigned NOT NULL,
+  `eselon1_id` bigint(20) unsigned DEFAULT NULL,
+  `eselon2_id` bigint(20) unsigned DEFAULT NULL,
+  `upt_id` bigint(20) unsigned DEFAULT NULL,
+  `nama` varchar(150) DEFAULT NULL,
+  `nip` varchar(50) DEFAULT NULL,
+  `email` varchar(150) DEFAULT NULL,
+  `jabatan` varchar(150) DEFAULT NULL,
+  `kontak` varchar(20) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `status_aktif` tinyint(1) DEFAULT 1,
+  PRIMARY KEY (`user_id`),
+  KEY `role_id` (`role_id`),
+  KEY `eselon1_id` (`eselon1_id`),
+  KEY `eselon2_id` (`eselon2_id`),
+  KEY `upt_id` (`upt_id`),
+  CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`role_id`),
+  CONSTRAINT `users_ibfk_2` FOREIGN KEY (`eselon1_id`) REFERENCES `master_eselon1` (`eselon1_id`),
+  CONSTRAINT `users_ibfk_3` FOREIGN KEY (`eselon2_id`) REFERENCES `master_eselon2` (`eselon2_id`),
+  CONSTRAINT `users_ibfk_4` FOREIGN KEY (`upt_id`) REFERENCES `master_upt` (`upt_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci

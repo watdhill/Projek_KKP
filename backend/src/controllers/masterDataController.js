@@ -130,6 +130,7 @@ const tableConfig = {
     idField: "pic_eksternal_id",
     columns: [
       "eselon2_id",
+      "upt_id",
       "nama_pic_eksternal",
       "email_pic",
       "kontak_pic_eksternal",
@@ -154,6 +155,7 @@ const tableConfig = {
     idField: "pic_internal_id",
     columns: [
       "eselon2_id",
+      "upt_id",
       "nama_pic_internal",
       "email_pic",
       "kontak_pic_internal",
@@ -232,6 +234,10 @@ exports.getAllMasterData = async (req, res) => {
         // Filter by Eselon 2: Direct filter on eselon2_id
         query += ` AND t.eselon2_id = ?`;
         params.push(req.query.eselon2_id);
+      } else if (req.query.upt_id) {
+        // Filter by UPT: Direct filter on upt_id
+        query += ` AND t.upt_id = ?`;
+        params.push(req.query.upt_id);
       }
     } else if ((type === "eselon2" || type === "upt") && req.query.eselon1_id) {
       // Filter Eselon 2 or UPT by Eselon 1
