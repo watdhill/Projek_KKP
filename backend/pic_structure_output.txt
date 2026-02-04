@@ -1,0 +1,33 @@
+
+--- Structure of pic_internal ---
+pic_internal_id: bigint(20) unsigned | Null: NO | Key: PRI | Default: null
+eselon2_id: bigint(20) unsigned | Null: YES | Key: MUL | Default: null
+upt_id: int(11) | Null: YES | Key:  | Default: null
+nama_pic_internal: varchar(150) | Null: YES | Key:  | Default: null
+email_pic: varchar(150) | Null: YES | Key:  | Default: null
+kontak_pic_internal: varchar(150) | Null: YES | Key:  | Default: null
+status_aktif: tinyint(1) | Null: YES | Key:  | Default: 1
+created_by: int(11) | Null: YES | Key:  | Default: null
+updated_by: int(11) | Null: YES | Key:  | Default: null
+created_at: timestamp | Null: NO | Key:  | Default: current_timestamp()
+updated_at: timestamp | Null: NO | Key:  | Default: current_timestamp()
+
+--- Foreign keys for pic_internal ---
+Column: eselon2_id | Constraint: pic_internal_ibfk_1 | Ref Table: master_eselon2 | Ref Col: eselon2_id
+
+--- Structure of pic_eksternal ---
+pic_eksternal_id: bigint(20) unsigned | Null: NO | Key: PRI | Default: null
+eselon2_id: bigint(20) unsigned | Null: YES | Key: MUL | Default: null
+upt_id: int(11) | Null: YES | Key:  | Default: null
+nama_pic_eksternal: varchar(150) | Null: YES | Key:  | Default: null
+email_pic: varchar(150) | Null: YES | Key:  | Default: null
+keterangan: text | Null: YES | Key:  | Default: null
+kontak_pic_eksternal: varchar(150) | Null: YES | Key:  | Default: null
+status_aktif: tinyint(1) | Null: YES | Key:  | Default: 1
+created_by: int(11) | Null: YES | Key:  | Default: null
+updated_by: int(11) | Null: YES | Key:  | Default: null
+created_at: timestamp | Null: NO | Key:  | Default: current_timestamp()
+updated_at: timestamp | Null: NO | Key:  | Default: current_timestamp()
+
+--- Foreign keys for pic_eksternal ---
+Column: eselon2_id | Constraint: pic_eksternal_ibfk_1 | Ref Table: master_eselon2 | Ref Col: eselon2_id
