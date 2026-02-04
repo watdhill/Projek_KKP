@@ -15,14 +15,14 @@ const ID_FIELDS = {
 
 const TABLE_COLUMNS = {
   pic_internal: [
-    "eselon2_id",
+    "unit",
     "nama_pic_internal",
     "email_pic",
     "kontak_pic_internal",
     "status_aktif",
   ],
   pic_eksternal: [
-    "eselon2_id",
+    "unit",
     "nama_pic_eksternal",
     "keterangan",
     "email_pic",
@@ -38,8 +38,15 @@ const FORM_FIELDS = {
       label: "Unit Eselon 2",
       type: "select",
       options: [],
-      required: true,
-    }, // Options diisi dynamic
+      required: false, // Handled by selectionType
+    },
+    {
+      name: "upt_id",
+      label: "Unit UPT",
+      type: "select",
+      options: [],
+      required: false, // Handled by selectionType
+    },
     {
       name: "nama_pic_internal",
       label: "Nama PIC Internal",
@@ -78,8 +85,15 @@ const FORM_FIELDS = {
       label: "Unit Eselon 2",
       type: "select",
       options: [],
-      required: true,
-    }, // Options diisi dynamic
+      required: false, // Handled by selectionType
+    },
+    {
+      name: "upt_id",
+      label: "Unit UPT",
+      type: "select",
+      options: [],
+      required: false, // Handled by selectionType
+    },
     {
       name: "nama_pic_eksternal",
       label: "Nama PIC Eksternal",
@@ -134,10 +148,14 @@ function OperatorEselon1MasterData() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [eselon2Options, setEselon2Options] = useState([]);
+  const [uptOptions, setUptOptions] = useState([]);
+  const [selectionType, setSelectionType] = useState("eselon2"); // 'eselon2' or 'upt'
 
   // ---------- Helpers ----------
   const formatColumnHeader = (col) => {
+    if (col === "unit") return "Unit Kerja";
     if (col === "eselon2_id") return "Eselon 2";
+    if (col === "upt_id") return "UPT";
     return col.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
@@ -183,13 +201,7 @@ function OperatorEselon1MasterData() {
 
   const fetchEselon2Options = async () => {
     try {
-      // Get user info
       let userEselon1Id = localStorage.getItem("eselon1_id");
-
-      console.log("Fetching Eselon 2 for Eselon 1 ID:", userEselon1Id); // DEBUG
-      // alert('Debug: User Eselon 1 ID detected is ' + (userEselon1Id || 'NULL/Undefined')); // Uncomment if needed for direct user feedback
-
-      // Construct URL with query param
       let url = `${API_BASE}/dropdown`;
       if (userEselon1Id) {
         url += `?eselon1_id=${userEselon1Id}`;
@@ -200,28 +212,34 @@ function OperatorEselon1MasterData() {
 
       const result = await response.json();
 
-      // Data is already filtered by server
-      const opts = (result.data?.eselon2 || []).map((item) => ({
+      const e2Opts = (result.data?.eselon2 || []).map((item) => ({
         value: item.eselon2_id,
         label: item.nama_eselon2,
       }));
+      setEselon2Options(e2Opts);
 
-      setEselon2Options(opts);
+      const uOpts = (result.data?.upt || []).map((item) => ({
+        value: item.upt_id,
+        label: item.nama_upt,
+      }));
+      setUptOptions(uOpts);
     } catch (err) {
-      console.error("Failed to fetch Eselon 2 options:", err);
+      console.error("Failed to fetch dropdown options:", err);
     }
   };
 
   // ---------- Actions ----------
   const handleAdd = () => {
     setEditingItem(null);
+    setSelectionType("eselon2");
     const initialData = {};
     (FORM_FIELDS[activeTab] || []).forEach((field) => {
-      // Initialize Selects
       if (field.name === "eselon2_id") {
         initialData[field.name] = eselon2Options.length
           ? eselon2Options[0].value
           : "";
+      } else if (field.name === "upt_id") {
+        initialData[field.name] = uptOptions.length ? uptOptions[0].value : "";
       } else if (field.type === "select" && field.options?.length) {
         initialData[field.name] = field.options[0].value;
       } else {
@@ -229,7 +247,6 @@ function OperatorEselon1MasterData() {
       }
     });
 
-    // default status_aktif
     if (initialData.status_aktif === undefined) initialData.status_aktif = 1;
 
     setFormData(initialData);
@@ -238,6 +255,11 @@ function OperatorEselon1MasterData() {
 
   const handleEdit = (item) => {
     setEditingItem(item);
+    if (item.upt_id) {
+      setSelectionType("upt");
+    } else {
+      setSelectionType("eselon2");
+    }
     const editData = {};
     FORM_FIELDS[activeTab]?.forEach((field) => {
       editData[field.name] = item[field.name] ?? "";
@@ -254,6 +276,10 @@ function OperatorEselon1MasterData() {
       // Client-side validation
       const fields = FORM_FIELDS[activeTab] || [];
       for (const field of fields) {
+        // Validation logic for eselon2_id / upt_id
+        if (field.name === "eselon2_id" && selectionType !== "eselon2") continue;
+        if (field.name === "upt_id" && selectionType !== "upt") continue;
+
         if (field.required) {
           const val = formData[field.name];
           if (
@@ -264,6 +290,13 @@ function OperatorEselon1MasterData() {
             throw new Error(`Field "${field.label}" wajib diisi`);
           }
         }
+      }
+      // Special validation for unit
+      if (selectionType === "eselon2" && !formData.eselon2_id) {
+        throw new Error("Unit Eselon 2 wajib dipilih");
+      }
+      if (selectionType === "upt" && !formData.upt_id) {
+        throw new Error("Unit UPT wajib dipilih");
       }
       // Validation for Phone Number (must start with 08)
       const hpFields = ["kontak_pic_internal", "kontak_pic_eksternal"];
@@ -319,9 +352,17 @@ function OperatorEselon1MasterData() {
           processedData.kontak_pic_eksternal,
         );
 
-      // Normalize ints
-      if (processedData.eselon2_id)
-        processedData.eselon2_id = parseInt(processedData.eselon2_id, 10);
+      // Normalize ints and cleanup based on selectionType
+      if (selectionType === "eselon2") {
+        processedData.upt_id = null;
+        if (processedData.eselon2_id)
+          processedData.eselon2_id = parseInt(processedData.eselon2_id, 10);
+      } else {
+        processedData.eselon2_id = null;
+        if (processedData.upt_id)
+          processedData.upt_id = parseInt(processedData.upt_id, 10);
+      }
+
       if (processedData.status_aktif !== undefined)
         processedData.status_aktif = parseInt(processedData.status_aktif, 10);
 
@@ -788,10 +829,14 @@ function OperatorEselon1MasterData() {
                         </td>
                       );
                     }
-                    if (col === "eselon2_id") {
-                      const eselon = eselon2Options.find(
-                        (opt) => opt.value === item[col],
-                      );
+                    if (col === "unit") {
+                      const label = item.upt_id
+                        ? (uptOptions.find((o) => o.value === item.upt_id)
+                          ?.label || item.upt_id)
+                        : (eselon2Options.find(
+                          (o) => o.value === item.eselon2_id,
+                        )?.label || item.eselon2_id);
+
                       return (
                         <td
                           key={col}
@@ -801,7 +846,24 @@ function OperatorEselon1MasterData() {
                             fontSize: "13px",
                           }}
                         >
-                          {eselon ? eselon.label : item[col]}
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "2px",
+                            }}
+                          >
+                            <span style={{ fontWeight: 600 }}>{label}</span>
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                color: "#64748b",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {item.upt_id ? "UPT" : "Eselon 2"}
+                            </span>
+                          </div>
                         </td>
                       );
                     }
@@ -969,9 +1031,77 @@ function OperatorEselon1MasterData() {
               </h2>
             </div>
             <form onSubmit={handleSubmit}>
+              {/* Unit Selection Toggle */}
+              <div style={{ marginBottom: "18px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#475569",
+                  }}
+                >
+                  Pilih Jenis Unit{" "}
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectionType("eselon2")}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid",
+                      borderColor:
+                        selectionType === "eselon2" ? "#4f46e5" : "#e2e8f0",
+                      backgroundColor:
+                        selectionType === "eselon2" ? "#eef2ff" : "#ffffff",
+                      color:
+                        selectionType === "eselon2" ? "#4f46e5" : "#64748b",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    Eselon 2
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectionType("upt")}
+                    style={{
+                      flex: 1,
+                      padding: "8px",
+                      borderRadius: "6px",
+                      border: "1px solid",
+                      borderColor:
+                        selectionType === "upt" ? "#4f46e5" : "#e2e8f0",
+                      backgroundColor:
+                        selectionType === "upt" ? "#eef2ff" : "#ffffff",
+                      color: selectionType === "upt" ? "#4f46e5" : "#64748b",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    UPT
+                  </button>
+                </div>
+              </div>
+
               {(FORM_FIELDS[activeTab] || []).map((field) => {
+                // Conditional fields
+                if (field.name === "eselon2_id" && selectionType !== "eselon2")
+                  return null;
+                if (field.name === "upt_id" && selectionType !== "upt")
+                  return null;
+
                 let options = field.options || [];
                 if (field.name === "eselon2_id") options = eselon2Options;
+                if (field.name === "upt_id") options = uptOptions;
 
                 return (
                   <div key={field.name} style={{ marginBottom: "18px" }}>
