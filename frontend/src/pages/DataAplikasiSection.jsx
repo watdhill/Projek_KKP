@@ -1212,51 +1212,46 @@ function DataAplikasiSection() {
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              flex: "1 1 320px",
-              minWidth: "250px",
-            }}
-          >
-            <svg
+        {/* Baris 1: Search + Filter Eselon 1 + Filter Status */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <div
               style={{
                 position: "absolute",
                 left: "14px",
                 top: "50%",
                 transform: "translateY(-50%)",
                 color: "#94a3b8",
+                pointerEvents: "none",
               }}
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
             >
-              <circle
-                cx="11"
-                cy="11"
-                r="7"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M20 20L16.65 16.65"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M20 20L16.65 16.65"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -1295,6 +1290,8 @@ function DataAplikasiSection() {
               setFilterUpt(""); // Reset UPT when eselon 1 changes
             }}
             style={{
+              flex: 1,
+              minWidth: "200px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
               border: "1.5px solid #e2e8f0",
@@ -1332,133 +1329,11 @@ function DataAplikasiSection() {
           </select>
 
           <select
-            value={filterEselon2}
-            onChange={(e) => {
-              setFilterEselon2(e.target.value);
-              if (e.target.value) {
-                setFilterUpt(""); // Reset UPT when Eselon 2 is selected
-              }
-            }}
-            disabled={!filterEselon1 || !!filterUpt}
-            style={{
-              padding: "9px 34px 9px 12px",
-              borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
-              fontSize: "12.5px",
-              fontWeight: 600,
-              color: "#475569",
-              backgroundColor:
-                !filterEselon1 || !!filterUpt ? "#f1f5f9" : "#fafbfc",
-              cursor: !filterEselon1 || !!filterUpt ? "not-allowed" : "pointer",
-              opacity: !!filterUpt ? 0.6 : 1,
-              outline: "none",
-              appearance: "none",
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-              backgroundPosition: "right 8px center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "18px",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-            onFocus={(e) => {
-              if (filterEselon1 && !filterUpt) {
-                e.currentTarget.style.borderColor = "#4f46e5";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
-              e.currentTarget.style.backgroundColor =
-                !filterEselon1 || !!filterUpt ? "#f1f5f9" : "#fafbfc";
-            }}
-          >
-            <option value="">
-              {!filterEselon1
-                ? "Eselon 2"
-                : !!filterUpt
-                  ? "Eselon 2 (UPT dipilih)"
-                  : "Semua Eselon 2"}
-            </option>
-            {(master.eselon2 || [])
-              .filter(
-                (e2) =>
-                  (e2.status_aktif === 1 || e2.status_aktif === true) &&
-                  (!filterEselon1 || e2.eselon1_id === parseInt(filterEselon1)),
-              )
-              .map((e2) => (
-                <option key={e2.eselon2_id} value={e2.eselon2_id}>
-                  {e2.nama_eselon2}
-                </option>
-              ))}
-          </select>
-
-          <select
-            value={filterUpt}
-            onChange={(e) => {
-              setFilterUpt(e.target.value);
-              if (e.target.value) {
-                setFilterEselon2(""); // Reset Eselon 2 when UPT is selected
-              }
-            }}
-            disabled={!filterEselon1 || !!filterEselon2}
-            style={{
-              padding: "9px 34px 9px 12px",
-              borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
-              fontSize: "12.5px",
-              fontWeight: 600,
-              color: "#475569",
-              backgroundColor:
-                !filterEselon1 || !!filterEselon2 ? "#f1f5f9" : "#fafbfc",
-              cursor:
-                !filterEselon1 || !!filterEselon2 ? "not-allowed" : "pointer",
-              opacity: !!filterEselon2 ? 0.6 : 1,
-              outline: "none",
-              appearance: "none",
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-              backgroundPosition: "right 8px center",
-              backgroundRepeat: "no-repeat",
-              backgroundSize: "18px",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            }}
-            onFocus={(e) => {
-              if (filterEselon1 && !filterEselon2) {
-                e.currentTarget.style.borderColor = "#4f46e5";
-                e.currentTarget.style.backgroundColor = "#fff";
-              }
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
-              e.currentTarget.style.backgroundColor =
-                !filterEselon1 || !!filterEselon2 ? "#f1f5f9" : "#fafbfc";
-            }}
-          >
-            <option value="">
-              {!filterEselon1
-                ? "UPT"
-                : !!filterEselon2
-                  ? "UPT (Eselon 2 dipilih)"
-                  : "Semua UPT"}
-            </option>
-            {(master.upt || [])
-              .filter(
-                (upt) =>
-                  (upt.status_aktif === 1 || upt.status_aktif === true) &&
-                  (!filterEselon1 ||
-                    upt.eselon1_id === parseInt(filterEselon1)),
-              )
-              .map((upt) => (
-                <option key={upt.upt_id} value={upt.upt_id}>
-                  {upt.nama_upt}
-                </option>
-              ))}
-          </select>
-
-          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             style={{
+              flex: 1,
+              minWidth: "220px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
               border: "1.5px solid #e2e8f0",
@@ -1495,39 +1370,156 @@ function DataAplikasiSection() {
               </option>
             ))}
           </select>
+        </div>
 
-          {(search ||
-            statusFilter !== "all" ||
-            filterEselon1 ||
-            filterEselon2) && (
-            <div
+        {/* Baris 2: Filter Eselon 2 + Filter UPT + Badge */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <select
+            value={filterEselon2}
+            onChange={(e) => {
+              setFilterEselon2(e.target.value);
+              if (e.target.value) {
+                setFilterUpt(""); // Reset UPT when Eselon 2 is selected
+              }
+            }}
+            disabled={!!filterUpt}
+            style={{
+              flex: 1,
+              minWidth: "200px",
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: !!filterUpt ? "#f1f5f9" : "#fafbfc",
+              cursor: !!filterUpt ? "not-allowed" : "pointer",
+              opacity: !!filterUpt ? 0.6 : 1,
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (!filterUpt) {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = !!filterUpt
+                ? "#f1f5f9"
+                : "#fafbfc";
+            }}
+          >
+            <option value="">
+              {!!filterUpt ? "Eselon 2 (UPT dipilih)" : "Semua Eselon 2"}
+            </option>
+            {(master.eselon2 || [])
+              .filter(
+                (e2) =>
+                  (e2.status_aktif === 1 || e2.status_aktif === true) &&
+                  (!filterEselon1 || e2.eselon1_id === parseInt(filterEselon1)),
+              )
+              .map((e2) => (
+                <option key={e2.eselon2_id} value={e2.eselon2_id}>
+                  {e2.nama_eselon2}
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={filterUpt}
+            onChange={(e) => {
+              setFilterUpt(e.target.value);
+              if (e.target.value) {
+                setFilterEselon2(""); // Reset Eselon 2 when UPT is selected
+              }
+            }}
+            disabled={!!filterEselon2}
+            style={{
+              flex: 1,
+              minWidth: "200px",
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: !!filterEselon2 ? "#f1f5f9" : "#fafbfc",
+              cursor: !!filterEselon2 ? "not-allowed" : "pointer",
+              opacity: !!filterEselon2 ? 0.6 : 1,
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (!filterEselon2) {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = !!filterEselon2
+                ? "#f1f5f9"
+                : "#fafbfc";
+            }}
+          >
+            <option value="">
+              {!!filterEselon2 ? "UPT (Eselon 2 dipilih)" : "Semua UPT"}
+            </option>
+            {(master.upt || [])
+              .filter(
+                (upt) =>
+                  (upt.status_aktif === 1 || upt.status_aktif === true) &&
+                  (!filterEselon1 ||
+                    upt.eselon1_id === parseInt(filterEselon1)),
+              )
+              .map((upt) => (
+                <option key={upt.upt_id} value={upt.upt_id}>
+                  {upt.nama_upt}
+                </option>
+              ))}
+          </select>
+
+          <div
+            style={{
+              padding: "7px 12px",
+              background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+              borderRadius: "10px",
+              fontSize: "11px",
+              color: "#4f46e5",
+              fontWeight: 700,
+              border: "1.5px solid #c7d2fe",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              textTransform: "uppercase",
+              letterSpacing: "0.02em",
+            }}
+          >
+            <span
               style={{
-                padding: "7px 12px",
-                background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
-                borderRadius: "10px",
-                fontSize: "11px",
-                color: "#4f46e5",
-                fontWeight: 700,
-                border: "1.5px solid #c7d2fe",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                textTransform: "uppercase",
-                letterSpacing: "0.02em",
+                width: "5px",
+                height: "5px",
+                borderRadius: "50%",
+                backgroundColor: "#4f46e5",
+                display: "inline-block",
               }}
-            >
-              <span
-                style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  backgroundColor: "#4f46e5",
-                  display: "inline-block",
-                }}
-              />
-              <span>{filtered.length} Aplikasi</span>
-            </div>
-          )}
+            />
+            <span>{filtered.length} Aplikasi</span>
+          </div>
         </div>
       </div>
 

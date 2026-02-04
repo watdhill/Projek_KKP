@@ -14,7 +14,12 @@ const ID_FIELDS = {
 };
 
 const TABLE_COLUMNS = {
-  pic_internal: ["nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
+  pic_internal: [
+    "nama_pic_internal",
+    "email_pic",
+    "kontak_pic_internal",
+    "status_aktif",
+  ],
   pic_eksternal: [
     "nama_pic_eksternal",
     "keterangan",
@@ -174,7 +179,10 @@ function OperatorEselon2MasterData() {
       let url = `${API_BASE}?type=${activeTab}`;
 
       // If we have a user ID, use it to filter only their created records
-      if (currentUserId && (activeTab === 'pic_internal' || activeTab === 'pic_eksternal')) {
+      if (
+        currentUserId &&
+        (activeTab === "pic_internal" || activeTab === "pic_eksternal")
+      ) {
         url += `&created_by=${currentUserId}`;
       }
       // Fallback or additional filter (though created_by should be sufficient for strict view)
@@ -271,14 +279,16 @@ function OperatorEselon2MasterData() {
       }
       // Validation for Phone Number (must start with 08)
       const hpFields = ["kontak_pic_internal", "kontak_pic_eksternal"];
-      hpFields.forEach(f => {
+      hpFields.forEach((f) => {
         if (formData[f]) {
           let val = formData[f].toString().trim();
           if (val.startsWith("+62")) val = "0" + val.slice(3);
           else if (val.startsWith("62")) val = "0" + val.slice(2);
 
           if (!val.startsWith("08")) {
-            throw new Error(`Nomor HP pada field "${fields.find(field => field.name === f)?.label}" harus diawali dengan 08`);
+            throw new Error(
+              `Nomor HP pada field "${fields.find((field) => field.name === f)?.label}" harus diawali dengan 08`,
+            );
           }
         }
       });
@@ -318,22 +328,31 @@ function OperatorEselon2MasterData() {
               processedData.created_by = u.id;
             }
           }
-        } catch (e) { /* ignore */ }
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       // Normalize Phone Numbers (08 instead of +62)
       const formatHP = (val) => {
         if (!val) return val;
-        let clean = val.toString().trim().replace(/[^0-9+]/g, "");
+        let clean = val
+          .toString()
+          .trim()
+          .replace(/[^0-9+]/g, "");
         if (clean.startsWith("+62")) return "0" + clean.slice(3);
         if (clean.startsWith("62")) return "0" + clean.slice(2);
         return clean;
       };
 
       if (processedData.kontak_pic_internal)
-        processedData.kontak_pic_internal = formatHP(processedData.kontak_pic_internal);
+        processedData.kontak_pic_internal = formatHP(
+          processedData.kontak_pic_internal,
+        );
       if (processedData.kontak_pic_eksternal)
-        processedData.kontak_pic_eksternal = formatHP(processedData.kontak_pic_eksternal);
+        processedData.kontak_pic_eksternal = formatHP(
+          processedData.kontak_pic_eksternal,
+        );
 
       // Normalize ints
       if (processedData.eselon2_id)
@@ -356,7 +375,7 @@ function OperatorEselon2MasterData() {
       setEditingItem(null);
       fetchData();
       setSuccessMessage(
-        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN"
+        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN",
       );
       setShowSuccess(true);
     } catch (err) {
@@ -368,7 +387,7 @@ function OperatorEselon2MasterData() {
   const filteredData = data.filter((item) => {
     if (!searchTerm) return true;
     return Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+      String(val).toLowerCase().includes(searchTerm.toLowerCase()),
     );
   });
 
@@ -382,24 +401,24 @@ function OperatorEselon2MasterData() {
           marginBottom: "28px",
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          gap: "14px",
         }}
       >
         <div
           style={{
-            width: "48px",
-            height: "48px",
+            width: "40px",
+            height: "40px",
             borderRadius: "12px",
             background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+            boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
           }}
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="#ffffff"
@@ -416,11 +435,14 @@ function OperatorEselon2MasterData() {
           <h1
             style={{
               margin: 0,
-              marginBottom: "4px",
-              fontSize: "24px",
+              marginBottom: "2px",
+              fontSize: "18px",
               fontWeight: 700,
-              color: "#1e293b",
-              letterSpacing: "-0.025em",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
             }}
           >
             Master Data (PIC)
@@ -429,8 +451,9 @@ function OperatorEselon2MasterData() {
             style={{
               margin: 0,
               color: "#64748b",
-              fontSize: "13.5px",
-              fontWeight: 400,
+              fontSize: "11px",
+              fontWeight: 500,
+              lineHeight: 1.3,
             }}
           >
             Kelola data PIC Internal dan Eksternal
@@ -586,7 +609,9 @@ function OperatorEselon2MasterData() {
         >
           <div style={{ fontSize: "32px", marginBottom: "8px" }}>📋</div>
           <div style={{ fontWeight: 500 }}>Belum ada data</div>
-          <div style={{ fontSize: "12px", marginTop: "4px", marginBottom: "16px" }}>
+          <div
+            style={{ fontSize: "12px", marginTop: "4px", marginBottom: "16px" }}
+          >
             Klik tombol "Tambah Data" untuk menambahkan data baru
           </div>
           <button
@@ -606,7 +631,9 @@ function OperatorEselon2MasterData() {
               boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
               transition: "all 0.2s",
             }}
-            onMouseEnter={(e) => (e.target.style.transform = "translateY(-1px)")}
+            onMouseEnter={(e) =>
+              (e.target.style.transform = "translateY(-1px)")
+            }
             onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
           >
             <svg
@@ -1148,7 +1175,8 @@ function OperatorEselon2MasterData() {
               width: "100%",
               maxWidth: "400px",
               textAlign: "center",
-              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+              boxShadow:
+                "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
               animation: "slideUp 0.3s ease",
             }}
           >
@@ -1179,10 +1207,24 @@ function OperatorEselon2MasterData() {
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </div>
-            <h3 style={{ margin: "0 0 12px", fontSize: "18px", fontWeight: 700, color: "#1e293b" }}>
+            <h3
+              style={{
+                margin: "0 0 12px",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "#1e293b",
+              }}
+            >
               Konfirmasi
             </h3>
-            <p style={{ margin: "0 0 28px", color: "#64748b", fontSize: "15px", lineHeight: "1.5" }}>
+            <p
+              style={{
+                margin: "0 0 28px",
+                color: "#64748b",
+                fontSize: "15px",
+                lineHeight: "1.5",
+              }}
+            >
               {editingItem
                 ? "Apakah anda yakin ingin memperbarui data?"
                 : "Apakah data yang diisi sudah benar?"}
@@ -1201,8 +1243,12 @@ function OperatorEselon2MasterData() {
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#4338ca")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#4f46e5")}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#4338ca")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#4f46e5")
+                }
               >
                 Ya
               </button>
@@ -1219,8 +1265,12 @@ function OperatorEselon2MasterData() {
                   cursor: "pointer",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = "#e2e8f0")}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = "#f1f5f9")}
+                onMouseEnter={(e) =>
+                  (e.target.style.backgroundColor = "#e2e8f0")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.backgroundColor = "#f1f5f9")
+                }
               >
                 Tidak
               </button>
