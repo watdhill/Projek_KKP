@@ -1136,8 +1136,8 @@ function OperatorEselon2DataAplikasi() {
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <div
             style={{
-              width: "48px",
-              height: "48px",
+              width: "40px",
+              height: "40px",
               background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
               borderRadius: "12px",
               display: "flex",
@@ -1147,8 +1147,8 @@ function OperatorEselon2DataAplikasi() {
             }}
           >
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -1196,13 +1196,13 @@ function OperatorEselon2DataAplikasi() {
             <h1
               style={{
                 margin: 0,
-                marginBottom: "3px",
-                fontSize: "20px",
+                marginBottom: "2px",
+                fontSize: "18px",
                 fontWeight: 700,
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-                letterSpacing: "-0.02em",
+                letterSpacing: "-0.01em",
                 lineHeight: 1.2,
               }}
             >
@@ -1212,7 +1212,7 @@ function OperatorEselon2DataAplikasi() {
               style={{
                 margin: 0,
                 color: "#64748b",
-                fontSize: "12.5px",
+                fontSize: "11px",
                 fontWeight: 500,
                 lineHeight: 1.3,
               }}
@@ -1280,255 +1280,256 @@ function OperatorEselon2DataAplikasi() {
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
           display: "flex",
+          flexDirection: "column",
           gap: "12px",
-          alignItems: "center",
-          flexWrap: "wrap",
         }}
       >
-        <div
-          style={{ position: "relative", flex: "1 1 360px", minWidth: "250px" }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              left: "14px",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#94a3b8",
-              pointerEvents: "none",
+        {/* Baris 1: Filter Eselon 1 + Filter Eselon 2 */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <select
+            value={filterEselon1}
+            onChange={(e) => {
+              if (isUnitLocked) return;
+              setFilterEselon1(e.target.value);
+              setFilterEselon2("");
             }}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="11"
-                cy="11"
-                r="7"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M20 20L16.65 16.65"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari aplikasi, PIC, atau unit..."
+            disabled={isUnitLocked}
             style={{
-              width: "100%",
-              padding: "9px 14px 9px 38px",
+              flex: 1,
+              minWidth: "200px",
+              padding: "9px 34px 9px 12px",
               borderRadius: "10px",
               border: "1.5px solid #e2e8f0",
               fontSize: "12.5px",
-              fontWeight: 500,
-              color: "#1e293b",
-              backgroundColor: "#fafbfc",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: isUnitLocked ? "#f1f5f9" : "#fafbfc",
+              cursor: isUnitLocked ? "not-allowed" : "pointer",
               outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (isUnitLocked) return;
+              e.currentTarget.style.borderColor = "#4f46e5";
+              e.currentTarget.style.backgroundColor = "#fff";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor = isUnitLocked
+                ? "#f1f5f9"
+                : "#fafbfc";
+            }}
+          >
+            <option value="">Semua Eselon 1</option>
+            {(master.eselon1 || [])
+              .filter((e1) => e1.status_aktif === 1 || e1.status_aktif === true)
+              .map((e1) => (
+                <option key={e1.eselon1_id} value={e1.eselon1_id}>
+                  {e1.nama_eselon1}
+                </option>
+              ))}
+          </select>
+
+          <select
+            value={filterEselon2}
+            onChange={(e) => {
+              if (isUnitLocked) return;
+              setFilterEselon2(e.target.value);
+            }}
+            disabled={isUnitLocked || !filterEselon1}
+            style={{
+              flex: 1,
+              minWidth: "200px",
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor:
+                isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc",
+              cursor:
+                isUnitLocked || !filterEselon1 ? "not-allowed" : "pointer",
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+            onFocus={(e) => {
+              if (!isUnitLocked && filterEselon1) {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+              }
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.backgroundColor =
+                isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc";
+            }}
+          >
+            <option value="">
+              {!filterEselon1 ? "Eselon 2" : "Semua Eselon 2"}
+            </option>
+            {(master.eselon2 || [])
+              .filter((e2) => {
+                const aktif = e2.status_aktif === 1 || e2.status_aktif === true;
+                if (!aktif) return false;
+                if (!filterEselon1) return true;
+                return e2.eselon1_id === parseInt(filterEselon1);
+              })
+              .map((e2) => (
+                <option key={e2.eselon2_id} value={e2.eselon2_id}>
+                  {e2.nama_eselon2}
+                </option>
+              ))}
+          </select>
+        </div>
+
+        {/* Baris 2: Search + Filter Status + Badge Aplikasi */}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <div
+              style={{
+                position: "absolute",
+                left: "14px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#94a3b8",
+                pointerEvents: "none",
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M20 20L16.65 16.65"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </div>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari aplikasi, PIC, atau unit..."
+              style={{
+                width: "100%",
+                padding: "9px 14px 9px 38px",
+                borderRadius: "10px",
+                border: "1.5px solid #e2e8f0",
+                fontSize: "12.5px",
+                fontWeight: 500,
+                color: "#1e293b",
+                backgroundColor: "#fafbfc",
+                outline: "none",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = "#4f46e5";
+                e.currentTarget.style.backgroundColor = "#fff";
+                e.currentTarget.style.boxShadow =
+                  "0 0 0 3px rgba(79, 70, 229, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.backgroundColor = "#fafbfc";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              padding: "9px 34px 9px 12px",
+              borderRadius: "10px",
+              border: "1.5px solid #e2e8f0",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              color: "#475569",
+              backgroundColor: "#fafbfc",
+              cursor: "pointer",
+              outline: "none",
+              appearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
+              backgroundPosition: "right 8px center",
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "18px",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              minWidth: "220px",
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = "#4f46e5";
               e.currentTarget.style.backgroundColor = "#fff";
-              e.currentTarget.style.boxShadow =
-                "0 0 0 3px rgba(79, 70, 229, 0.1)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = "#e2e8f0";
               e.currentTarget.style.backgroundColor = "#fafbfc";
-              e.currentTarget.style.boxShadow = "none";
             }}
-          />
-        </div>
-
-        <select
-          value={filterEselon1}
-          onChange={(e) => {
-            if (isUnitLocked) return;
-            setFilterEselon1(e.target.value);
-            setFilterEselon2("");
-          }}
-          disabled={isUnitLocked}
-          style={{
-            padding: "9px 34px 9px 12px",
-            borderRadius: "10px",
-            border: "1.5px solid #e2e8f0",
-            fontSize: "12.5px",
-            fontWeight: 600,
-            color: "#475569",
-            backgroundColor: isUnitLocked ? "#f1f5f9" : "#fafbfc",
-            cursor: isUnitLocked ? "not-allowed" : "pointer",
-            outline: "none",
-            appearance: "none",
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-            backgroundPosition: "right 8px center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "18px",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            flex: "2 1 520px",
-            minWidth: "260px",
-          }}
-          onFocus={(e) => {
-            if (isUnitLocked) return;
-            e.currentTarget.style.borderColor = "#4f46e5";
-            e.currentTarget.style.backgroundColor = "#fff";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#e2e8f0";
-            e.currentTarget.style.backgroundColor = isUnitLocked
-              ? "#f1f5f9"
-              : "#fafbfc";
-          }}
-        >
-          <option value="">Semua Eselon 1</option>
-          {(master.eselon1 || [])
-            .filter((e1) => e1.status_aktif === 1 || e1.status_aktif === true)
-            .map((e1) => (
-              <option key={e1.eselon1_id} value={e1.eselon1_id}>
-                {e1.nama_eselon1}
+          >
+            <option value="all">Semua Status</option>
+            {(master.status_aplikasi || []).map((s) => (
+              <option
+                key={s.status_aplikasi_id}
+                value={(s.nama_status || "").toLowerCase()}
+              >
+                {s.nama_status}
               </option>
             ))}
-        </select>
+          </select>
 
-        {/* Force next row like admin layout (search + eselon1 on first row) */}
-        <div style={{ flexBasis: "100%", height: 0 }} />
-
-        <select
-          value={filterEselon2}
-          onChange={(e) => {
-            if (isUnitLocked) return;
-            setFilterEselon2(e.target.value);
-          }}
-          disabled={isUnitLocked || !filterEselon1}
-          style={{
-            padding: "9px 34px 9px 12px",
-            borderRadius: "10px",
-            border: "1.5px solid #e2e8f0",
-            fontSize: "12.5px",
-            fontWeight: 600,
-            color: "#475569",
-            backgroundColor:
-              isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc",
-            cursor: isUnitLocked || !filterEselon1 ? "not-allowed" : "pointer",
-            outline: "none",
-            appearance: "none",
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-            backgroundPosition: "right 8px center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "18px",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            flex: "1 1 420px",
-            minWidth: "260px",
-          }}
-          onFocus={(e) => {
-            if (!isUnitLocked && filterEselon1) {
-              e.currentTarget.style.borderColor = "#4f46e5";
-              e.currentTarget.style.backgroundColor = "#fff";
-            }
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#e2e8f0";
-            e.currentTarget.style.backgroundColor =
-              isUnitLocked || !filterEselon1 ? "#f1f5f9" : "#fafbfc";
-          }}
-        >
-          <option value="">
-            {!filterEselon1 ? "Eselon 2" : "Semua Eselon 2"}
-          </option>
-          {(master.eselon2 || [])
-            .filter((e2) => {
-              const aktif = e2.status_aktif === 1 || e2.status_aktif === true;
-              if (!aktif) return false;
-              if (!filterEselon1) return true;
-              return e2.eselon1_id === parseInt(filterEselon1);
-            })
-            .map((e2) => (
-              <option key={e2.eselon2_id} value={e2.eselon2_id}>
-                {e2.nama_eselon2}
-              </option>
-            ))}
-        </select>
-
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={{
-            padding: "9px 34px 9px 12px",
-            borderRadius: "10px",
-            border: "1.5px solid #e2e8f0",
-            fontSize: "12.5px",
-            fontWeight: 600,
-            color: "#475569",
-            backgroundColor: "#fafbfc",
-            cursor: "pointer",
-            outline: "none",
-            appearance: "none",
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E\")",
-            backgroundPosition: "right 8px center",
-            backgroundRepeat: "no-repeat",
-            backgroundSize: "18px",
-            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            minWidth: "220px",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#4f46e5";
-            e.currentTarget.style.backgroundColor = "#fff";
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#e2e8f0";
-            e.currentTarget.style.backgroundColor = "#fafbfc";
-          }}
-        >
-          <option value="all">Semua Status</option>
-          {(master.status_aplikasi || []).map((s) => (
-            <option
-              key={s.status_aplikasi_id}
-              value={(s.nama_status || "").toLowerCase()}
-            >
-              {s.nama_status}
-            </option>
-          ))}
-        </select>
-
-        <div
-          style={{
-            padding: "6px 14px",
-            borderRadius: "12px",
-            background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
-            border: "1px solid #c7d2fe",
-            fontSize: "11px",
-            fontWeight: 600,
-            color: "#4338ca",
-            letterSpacing: "0.025em",
-            textTransform: "uppercase",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          <span
+          <div
             style={{
-              width: "5px",
-              height: "5px",
-              borderRadius: "50%",
-              background: "#4f46e5",
-              display: "inline-block",
+              padding: "6px 14px",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)",
+              border: "1px solid #c7d2fe",
+              fontSize: "11px",
+              fontWeight: 600,
+              color: "#4338ca",
+              letterSpacing: "0.025em",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
             }}
-          />
-          {filtered.length} Aplikasi
+          >
+            <span
+              style={{
+                width: "5px",
+                height: "5px",
+                borderRadius: "50%",
+                background: "#4f46e5",
+                display: "inline-block",
+              }}
+            />
+            {filtered.length} Aplikasi
+          </div>
         </div>
       </div>
 

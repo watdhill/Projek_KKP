@@ -14,7 +14,12 @@ const ID_FIELDS = {
 };
 
 const TABLE_COLUMNS = {
-  pic_internal: ["nama_pic_internal", "email_pic", "kontak_pic_internal", "status_aktif"],
+  pic_internal: [
+    "nama_pic_internal",
+    "email_pic",
+    "kontak_pic_internal",
+    "status_aktif",
+  ],
   pic_eksternal: [
     "nama_pic_eksternal",
     "keterangan",
@@ -134,7 +139,9 @@ function OperatorUPTMasterData() {
     fetchData();
     const user = getCurrentUser();
     if (user && !user.upt_id) {
-      console.warn("WARNING: Akun ini tidak memiliki UPT ID terasosiasi. Data mungkin tidak tersaring atau tersimpan dengan benar.");
+      console.warn(
+        "WARNING: Akun ini tidak memiliki UPT ID terasosiasi. Data mungkin tidak tersaring atau tersimpan dengan benar.",
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
@@ -145,7 +152,7 @@ function OperatorUPTMasterData() {
         id: localStorage.getItem("userId"),
         upt_id: localStorage.getItem("upt_id"),
         eselon1_id: localStorage.getItem("eselon1_id"),
-        eselon2_id: localStorage.getItem("eselon2_id")
+        eselon2_id: localStorage.getItem("eselon2_id"),
       };
       console.log("Current User Info from storage:", user);
       return user;
@@ -173,7 +180,10 @@ function OperatorUPTMasterData() {
       // Priority: filter by UPT ID if available, otherwise by Eselon 2 (legacy), otherwise by created_by (strict)
       if (uptId) {
         url += `&upt_id=${uptId}`;
-      } else if (currentUserId && (activeTab === 'pic_internal' || activeTab === 'pic_eksternal')) {
+      } else if (
+        currentUserId &&
+        (activeTab === "pic_internal" || activeTab === "pic_eksternal")
+      ) {
         url += `&created_by=${currentUserId}`;
       }
 
@@ -208,8 +218,10 @@ function OperatorUPTMasterData() {
     });
 
     // Ensure hidden hierarchical IDs are present
-    if (initialData.upt_id === undefined) initialData.upt_id = user?.upt_id || "";
-    if (initialData.eselon2_id === undefined) initialData.eselon2_id = user?.eselon2_id || "";
+    if (initialData.upt_id === undefined)
+      initialData.upt_id = user?.upt_id || "";
+    if (initialData.eselon2_id === undefined)
+      initialData.eselon2_id = user?.eselon2_id || "";
 
     // default status_aktif
     if (initialData.status_aktif === undefined) initialData.status_aktif = 1;
@@ -258,14 +270,16 @@ function OperatorUPTMasterData() {
       }
       // Validation for Phone Number (must start with 08)
       const hpFields = ["kontak_pic_internal", "kontak_pic_eksternal"];
-      hpFields.forEach(f => {
+      hpFields.forEach((f) => {
         if (formData[f]) {
           let val = formData[f].toString().trim();
           if (val.startsWith("+62")) val = "0" + val.slice(3);
           else if (val.startsWith("62")) val = "0" + val.slice(2);
 
           if (!val.startsWith("08")) {
-            throw new Error(`Nomor HP pada field "${fields.find(field => field.name === f)?.label}" harus diawali dengan 08`);
+            throw new Error(
+              `Nomor HP pada field "${fields.find((field) => field.name === f)?.label}" harus diawali dengan 08`,
+            );
           }
         }
       });
@@ -305,16 +319,23 @@ function OperatorUPTMasterData() {
       // Normalize Phone Numbers (08 instead of +62)
       const formatHP = (val) => {
         if (!val) return val;
-        let clean = val.toString().trim().replace(/[^0-9+]/g, "");
+        let clean = val
+          .toString()
+          .trim()
+          .replace(/[^0-9+]/g, "");
         if (clean.startsWith("+62")) return "0" + clean.slice(3);
         if (clean.startsWith("62")) return "0" + clean.slice(2);
         return clean;
       };
 
       if (processedData.kontak_pic_internal)
-        processedData.kontak_pic_internal = formatHP(processedData.kontak_pic_internal);
+        processedData.kontak_pic_internal = formatHP(
+          processedData.kontak_pic_internal,
+        );
       if (processedData.kontak_pic_eksternal)
-        processedData.kontak_pic_eksternal = formatHP(processedData.kontak_pic_eksternal);
+        processedData.kontak_pic_eksternal = formatHP(
+          processedData.kontak_pic_eksternal,
+        );
 
       // Normalize IDs (ensure they are either valid integers or removed so they become NULL)
       // We are very aggressive here to avoid any Foreign Key Errors with "" or 0
@@ -325,7 +346,13 @@ function OperatorUPTMasterData() {
         return p;
       };
 
-      ["eselon1_id", "eselon2_id", "upt_id", "created_by", "updated_by"].forEach(key => {
+      [
+        "eselon1_id",
+        "eselon2_id",
+        "upt_id",
+        "created_by",
+        "updated_by",
+      ].forEach((key) => {
         const normalized = normalizeID(processedData[key]);
         if (normalized !== undefined) {
           processedData[key] = normalized;
@@ -360,7 +387,7 @@ function OperatorUPTMasterData() {
       setEditingItem(null);
       fetchData();
       setSuccessMessage(
-        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN"
+        editingItem ? "DATA BERHASIL DIPERBARUI" : "DATA BERHASIL DITAMBAHKAN",
       );
       setShowSuccess(true);
     } catch (err) {
@@ -372,7 +399,7 @@ function OperatorUPTMasterData() {
   const filteredData = data.filter((item) => {
     if (!searchTerm) return true;
     return Object.values(item).some((val) =>
-      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+      String(val).toLowerCase().includes(searchTerm.toLowerCase()),
     );
   });
 
@@ -386,24 +413,24 @@ function OperatorUPTMasterData() {
           marginBottom: "28px",
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          gap: "14px",
         }}
       >
         <div
           style={{
-            width: "48px",
-            height: "48px",
+            width: "40px",
+            height: "40px",
             borderRadius: "12px",
             background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
+            boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
           }}
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="#ffffff"
@@ -420,11 +447,14 @@ function OperatorUPTMasterData() {
           <h1
             style={{
               margin: 0,
-              marginBottom: "4px",
-              fontSize: "24px",
+              marginBottom: "2px",
+              fontSize: "18px",
               fontWeight: 700,
-              color: "#1e293b",
-              letterSpacing: "-0.025em",
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
             }}
           >
             Master Data (PIC)
@@ -433,8 +463,9 @@ function OperatorUPTMasterData() {
             style={{
               margin: 0,
               color: "#64748b",
-              fontSize: "13.5px",
-              fontWeight: 400,
+              fontSize: "11px",
+              fontWeight: 500,
+              lineHeight: 1.3,
             }}
           >
             Kelola data PIC Internal dan Eksternal
@@ -590,7 +621,9 @@ function OperatorUPTMasterData() {
         >
           <div style={{ fontSize: "32px", marginBottom: "8px" }}>📋</div>
           <div style={{ fontWeight: 500 }}>Belum ada data</div>
-          <div style={{ fontSize: "12px", marginTop: "4px", marginBottom: "16px" }}>
+          <div
+            style={{ fontSize: "12px", marginTop: "4px", marginBottom: "16px" }}
+          >
             Klik tombol "Tambah Data" untuk menambahkan data baru
           </div>
           <button
@@ -610,7 +643,9 @@ function OperatorUPTMasterData() {
               boxShadow: "0 4px 12px rgba(79, 70, 229, 0.2)",
               transition: "all 0.2s",
             }}
-            onMouseEnter={(e) => (e.target.style.transform = "translateY(-1px)")}
+            onMouseEnter={(e) =>
+              (e.target.style.transform = "translateY(-1px)")
+            }
             onMouseLeave={(e) => (e.target.style.transform = "translateY(0)")}
           >
             <svg
@@ -1136,7 +1171,8 @@ function OperatorUPTMasterData() {
               maxWidth: "400px",
               textAlign: "center",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              animation: "bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+              animation:
+                "bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
