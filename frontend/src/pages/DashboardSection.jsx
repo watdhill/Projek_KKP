@@ -62,14 +62,14 @@ function DashboardSection() {
     <div
       style={{
         background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-        borderRadius: "12px",
-        padding: "18px",
+        borderRadius: "10px",
+        padding: "12px 14px",
         boxShadow:
           "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
         border: "1px solid #e2e8f0",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         cursor: "pointer",
-        minHeight: "110px",
+        minHeight: "95px",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -204,7 +204,7 @@ function DashboardSection() {
       id="dashboard"
       className="page-section"
       style={{
-        padding: "24px",
+        padding: "12px 6px 12px 4px",
         backgroundColor: "#f8fafc",
         minHeight: "100vh",
       }}
@@ -215,10 +215,10 @@ function DashboardSection() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "28px",
-          padding: "14px 18px",
+          marginBottom: "12px",
+          padding: "12px 16px",
           background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-          borderRadius: "12px",
+          borderRadius: "10px",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
@@ -375,8 +375,8 @@ function DashboardSection() {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-              gap: "14px",
-              marginBottom: "20px",
+              gap: "10px",
+              marginBottom: "10px",
             }}
           >
             <StatCard
@@ -458,12 +458,12 @@ function DashboardSection() {
           <div
             style={{
               background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-              borderRadius: "12px",
-              padding: "18px",
+              borderRadius: "10px",
+              padding: "14px",
               boxShadow:
                 "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
               border: "1px solid #e2e8f0",
-              marginBottom: "20px",
+              marginBottom: "10px",
             }}
           >
             <div
@@ -471,7 +471,7 @@ function DashboardSection() {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                marginBottom: "24px",
+                marginBottom: "14px",
               }}
             >
               <div
@@ -966,8 +966,8 @@ function DashboardSection() {
           <div
             style={{
               background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-              borderRadius: "12px",
-              padding: "16px",
+              borderRadius: "10px",
+              padding: "14px",
               boxShadow:
                 "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
               border: "1px solid #e2e8f0",

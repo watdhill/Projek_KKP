@@ -1,6 +1,6 @@
-const pool = require('../config/database');
-const ExcelJS = require('exceljs');
-const PDFDocument = require('pdfkit');
+const pool = require("../config/database");
+const ExcelJS = require("exceljs");
+const PDFDocument = require("pdfkit");
 
 // ============================================
 // FIELD NAME MAPPING
@@ -13,34 +13,34 @@ const PDFDocument = require('pdfkit');
 function mapFieldName(kodeField) {
   const fieldMapping = {
     // PDN fields
-    'pdn_utama': 'pdn_id',
-    'pdn_backup': 'pdn_id', // Same as utama, just different context
+    pdn_utama: "pdn_id",
+    pdn_backup: "pdn_id", // Same as utama, just different context
 
     // Mandiri field
-    'mandiri': 'mandiri_komputasi_backup',
-    'mandiri_backup': 'mandiri_komputasi_backup',
+    mandiri: "mandiri_komputasi_backup",
+    mandiri_backup: "mandiri_komputasi_backup",
 
     // API fields
-    'api_internal_integrasi': 'api_internal_status',
-    'api_internal_sistem_integrasi': 'api_internal_status',
+    api_internal_integrasi: "api_internal_status",
+    api_internal_sistem_integrasi: "api_internal_status",
 
     // VA/PT fields
-    'va_pt': 'va_pt_status',
-    'va_pt_ya_tidak': 'va_pt_status',
-    'ya_tidak': 'va_pt_status',
-    'waktu_va_pt': 'va_pt_waktu',
-    'waktu': 'va_pt_waktu',
+    va_pt: "va_pt_status",
+    va_pt_ya_tidak: "va_pt_status",
+    ya_tidak: "va_pt_status",
+    waktu_va_pt: "va_pt_waktu",
+    waktu: "va_pt_waktu",
 
     // PIC contact fields (these don't exist in data_aplikasi)
-    'kontak_pic_internal': null, // No column for this
-    'kontak_pic_eksternal': null, // No column for this
+    kontak_pic_internal: null, // No column for this
+    kontak_pic_eksternal: null, // No column for this
 
     // Missing mappings identified during debug
-    'eselon_1': 'nama_eselon1',
-    'eselon_2': 'nama_eselon2',
-    'framework': 'kerangka_pengembangan',
-    'api_internal_integrasi': 'api_internal_status',
-    'frekuensi_update_data': 'frekuensi_pemakaian', // Fix "Frekuensi Update Data" mapping
+    eselon_1: "nama_eselon1",
+    eselon_2: "nama_eselon2",
+    framework: "kerangka_pengembangan",
+    api_internal_integrasi: "api_internal_status",
+    frekuensi_update_data: "frekuensi_pemakaian", // Fix "Frekuensi Update Data" mapping
 
     // Default: return as-is
   };
@@ -58,9 +58,10 @@ function mapFieldName(kodeField) {
  * Returns: { judul: "Arsitektur Infrastruktur", subJudul: "Fasilitas Komputasi Utama", fieldLabel: "Fasilitas Komputasi Utama" }
  */
 function parseHierarchicalLabel(labelTampilan) {
-  if (!labelTampilan) return { judul: null, subJudul: null, fieldLabel: labelTampilan };
+  if (!labelTampilan)
+    return { judul: null, subJudul: null, fieldLabel: labelTampilan };
 
-  const parts = labelTampilan.split('>').map(s => s.trim());
+  const parts = labelTampilan.split(">").map((s) => s.trim());
 
   if (parts.length === 1) {
     // No hierarchy, just field label
@@ -70,7 +71,11 @@ function parseHierarchicalLabel(labelTampilan) {
     return { judul: parts[0], subJudul: null, fieldLabel: parts[1] };
   } else {
     // Judul > SubJudul > Field
-    return { judul: parts[0], subJudul: parts[1], fieldLabel: parts[2] || parts[1] };
+    return {
+      judul: parts[0],
+      subJudul: parts[1],
+      fieldLabel: parts[2] || parts[1],
+    };
   }
 }
 
@@ -83,8 +88,8 @@ async function buildHierarchyFromMasterField(formatDetails) {
 
   // Get all field_ids from formatDetails
   const fieldIds = formatDetails
-    .filter(d => d.field_id)
-    .map(d => d.field_id);
+    .filter((d) => d.field_id)
+    .map((d) => d.field_id);
 
   if (fieldIds.length === 0) {
     return structure;
@@ -92,7 +97,7 @@ async function buildHierarchyFromMasterField(formatDetails) {
 
   // Create Order Map from format details
   const orderMap = new Map();
-  formatDetails.forEach(d => {
+  formatDetails.forEach((d) => {
     if (d.field_id) orderMap.set(d.field_id, d.order_index);
   });
 
@@ -104,18 +109,20 @@ async function buildHierarchyFromMasterField(formatDetails) {
 
   // Build tree structure
   const fieldMap = new Map();
-  allFields.forEach(field => {
+  allFields.forEach((field) => {
     fieldMap.set(field.field_id, {
       ...field,
       children: [],
       // Set own order
-      ownOrder: orderMap.has(field.field_id) ? orderMap.get(field.field_id) : 999999
+      ownOrder: orderMap.has(field.field_id)
+        ? orderMap.get(field.field_id)
+        : 999999,
     });
   });
 
   // Link children to parents
   const roots = [];
-  allFields.forEach(field => {
+  allFields.forEach((field) => {
     const node = fieldMap.get(field.field_id);
     if (field.parent_id && fieldMap.has(field.parent_id)) {
       fieldMap.get(field.parent_id).children.push(node);
@@ -129,7 +136,9 @@ async function buildHierarchyFromMasterField(formatDetails) {
     let minOrder = node.ownOrder;
 
     if (node.children && node.children.length > 0) {
-      const childOrders = node.children.map(child => processAndSortNode(child));
+      const childOrders = node.children.map((child) =>
+        processAndSortNode(child),
+      );
       const minChildOrder = Math.min(...childOrders);
       if (minChildOrder < minOrder) minOrder = minChildOrder;
 
@@ -140,34 +149,34 @@ async function buildHierarchyFromMasterField(formatDetails) {
     return minOrder;
   }
 
-  roots.forEach(root => processAndSortNode(root));
+  roots.forEach((root) => processAndSortNode(root));
   roots.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
 
   // Convert tree to export structure
   function convertToExportStructure(nodes) {
     const result = [];
 
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       const nodeIsSelected = fieldIds.includes(node.field_id);
 
       if (node.level === 1) {
         // Level 1: Judul (Header Group)
         const group = {
-          type: 'group',
+          type: "group",
           judul: node.nama_field,
           subGroups: new Map(),
-          fields: []
+          fields: [],
         };
 
         // Process children (Level 2/3)
-        node.children.forEach(child => {
+        node.children.forEach((child) => {
           if (child.level === 2) {
             // Sub-Judul
             const subFields = child.children
-              .filter(f => f.level === 3 && fieldIds.includes(f.field_id))
-              .map(f => ({
+              .filter((f) => f.level === 3 && fieldIds.includes(f.field_id))
+              .map((f) => ({
                 label: f.nama_field,
-                fieldName: mapFieldName(f.kode_field)
+                fieldName: mapFieldName(f.kode_field),
               }));
 
             if (subFields.length > 0) {
@@ -177,7 +186,7 @@ async function buildHierarchyFromMasterField(formatDetails) {
             // Direct field under Judul (no sub-judul)
             group.fields.push({
               label: child.nama_field,
-              fieldName: mapFieldName(child.kode_field)
+              fieldName: mapFieldName(child.kode_field),
             });
           }
         });
@@ -188,40 +197,40 @@ async function buildHierarchyFromMasterField(formatDetails) {
         } else if (nodeIsSelected && node.kode_field) {
           // Treat as regular field if it has a kode_field but no children selected
           result.push({
-            type: 'field',
+            type: "field",
             label: node.nama_field,
-            fieldName: mapFieldName(node.kode_field)
+            fieldName: mapFieldName(node.kode_field),
           });
         }
       } else if (node.level === 2) {
         // Level 2 (Sub-Judul) as root
         const subFields = node.children
-          .filter(f => f.level === 3 && fieldIds.includes(f.field_id))
-          .map(f => ({
+          .filter((f) => f.level === 3 && fieldIds.includes(f.field_id))
+          .map((f) => ({
             label: f.nama_field,
-            fieldName: mapFieldName(f.kode_field)
+            fieldName: mapFieldName(f.kode_field),
           }));
 
         if (subFields.length > 0) {
           result.push({
-            type: 'group',
+            type: "group",
             judul: node.nama_field,
             subGroups: new Map(),
-            fields: subFields
+            fields: subFields,
           });
         } else if (nodeIsSelected && node.kode_field) {
           result.push({
-            type: 'field',
+            type: "field",
             label: node.nama_field,
-            fieldName: mapFieldName(node.kode_field)
+            fieldName: mapFieldName(node.kode_field),
           });
         }
       } else if (node.level === 3 && nodeIsSelected) {
         // Level 3 (Data Field) as root
         result.push({
-          type: 'field',
+          type: "field",
           label: node.nama_field,
-          fieldName: mapFieldName(node.kode_field)
+          fieldName: mapFieldName(node.kode_field),
         });
       }
     });
@@ -236,7 +245,8 @@ async function buildHierarchyFromMasterField(formatDetails) {
  * Get format laporan details with hierarchical structure
  */
 async function getFormatDetails(formatId) {
-  const [details] = await pool.query(`
+  const [details] = await pool.query(
+    `
     SELECT 
       fld.id,
       fld.format_laporan_id,
@@ -246,13 +256,15 @@ async function getFormatDetails(formatId) {
       mlf.kode_field as field_name,
       mlf.nama_field as label_tampilan,
       fld.field_id,
-      fld.order_index,
+      fld.id as order_index,
       COALESCE(mlf.urutan, 999) as urutan
     FROM format_laporan_detail fld
     LEFT JOIN master_laporan_field mlf ON fld.field_id = mlf.field_id
     WHERE fld.format_laporan_id = ?
-    ORDER BY fld.order_index ASC
-  `, [formatId]);
+    ORDER BY fld.id ASC
+  `,
+    [formatId],
+  );
 
   return details;
 }
@@ -268,13 +280,13 @@ exports.getAllFormatLaporan = async (req, res) => {
     `);
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil format laporan',
-      error: error.message
+      message: "Error mengambil format laporan",
+      error: error.message,
     });
   }
 };
@@ -287,11 +299,12 @@ exports.getFormatFieldsForPreview = async (req, res) => {
     if (!format_laporan_id) {
       return res.status(400).json({
         success: false,
-        message: 'format_laporan_id required'
+        message: "format_laporan_id required",
       });
     }
 
-    const [fields] = await pool.query(`
+    const [fields] = await pool.query(
+      `
       SELECT 
         fld.id,
         fld.parent_id,
@@ -301,31 +314,35 @@ exports.getFormatFieldsForPreview = async (req, res) => {
         mlf.nama_field,
         mlf.urutan,
         fld.field_id,
-        fld.order_index
+        fld.id as order_index
       FROM format_laporan_detail fld
       LEFT JOIN master_laporan_field mlf ON fld.field_id = mlf.field_id
       WHERE fld.format_laporan_id = ?
-      ORDER BY fld.order_index ASC
-    `, [format_laporan_id]);
+      ORDER BY fld.id ASC
+    `,
+      [format_laporan_id],
+    );
 
     res.json({
       success: true,
-      data: fields
+      data: fields,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching format fields',
-      error: error.message
+      message: "Error fetching format fields",
+      error: error.message,
     });
   }
 };
 
 // Helper: Get Cara Akses Map (ID -> Name)
 async function getCaraAksesMap() {
-  const [rows] = await pool.query('SELECT cara_akses_id, nama_cara_akses FROM cara_akses');
+  const [rows] = await pool.query(
+    "SELECT cara_akses_id, nama_cara_akses FROM cara_akses",
+  );
   const map = {};
-  rows.forEach(r => {
+  rows.forEach((r) => {
     map[r.cara_akses_id] = r.nama_cara_akses;
   });
   return map;
@@ -407,17 +424,17 @@ exports.getPreviewData = async (req, res) => {
 
     const params = [];
 
-    if (status && status !== 'all') {
+    if (status && status !== "all") {
       query += ` AND da.status_aplikasi = ?`;
       params.push(status);
     }
 
-    if (eselon1_id && eselon1_id !== 'all') {
+    if (eselon1_id && eselon1_id !== "all") {
       query += ` AND da.eselon1_id = ?`;
       params.push(eselon1_id);
     }
 
-    if (eselon2_id && eselon2_id !== 'all') {
+    if (eselon2_id && eselon2_id !== "all") {
       query += ` AND da.eselon2_id = ?`;
       params.push(eselon2_id);
     }
@@ -428,24 +445,27 @@ exports.getPreviewData = async (req, res) => {
     const [rows] = await pool.query(query, params);
 
     // Post-process rows
-    const formattedRows = rows.map(row => {
+    const formattedRows = rows.map((row) => {
       // Parse Cara Akses Multiple
-      let caraAksesStr = '';
+      let caraAksesStr = "";
       if (row.cara_akses_multiple) {
         try {
           // Try to parse as JSON array if it looks like one, otherwise assume comma-separated string
           let ids = [];
-          if (typeof row.cara_akses_multiple === 'string' && row.cara_akses_multiple.startsWith('[')) {
+          if (
+            typeof row.cara_akses_multiple === "string" &&
+            row.cara_akses_multiple.startsWith("[")
+          ) {
             ids = JSON.parse(row.cara_akses_multiple);
-          } else if (typeof row.cara_akses_multiple === 'string') {
-            ids = row.cara_akses_multiple.split(',').map(s => s.trim());
+          } else if (typeof row.cara_akses_multiple === "string") {
+            ids = row.cara_akses_multiple.split(",").map((s) => s.trim());
           } else if (Array.isArray(row.cara_akses_multiple)) {
             ids = row.cara_akses_multiple;
           }
 
-          caraAksesStr = ids.map(id => caraAksesMap[id] || id).join(', ');
+          caraAksesStr = ids.map((id) => caraAksesMap[id] || id).join(", ");
         } catch (e) {
-          console.error('Error parsing cara_akses_multiple:', e);
+          console.error("Error parsing cara_akses_multiple:", e);
           caraAksesStr = row.cara_akses_multiple;
         }
       }
@@ -453,8 +473,10 @@ exports.getPreviewData = async (req, res) => {
       // Use Master PIC if available, fall back to direct field
       const picInternal = row.pic_internal_master || row.pic_internal;
       const picEksternal = row.pic_eksternal_master || row.pic_eksternal;
-      const kontakPicInternal = row.kontak_pic_internal_master || row.kontak_pic_internal;
-      const kontakPicEksternal = row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
+      const kontakPicInternal =
+        row.kontak_pic_internal_master || row.kontak_pic_internal;
+      const kontakPicEksternal =
+        row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
 
       return {
         ...row,
@@ -462,19 +484,19 @@ exports.getPreviewData = async (req, res) => {
         pic_internal: picInternal,
         pic_eksternal: picEksternal,
         kontak_pic_internal: kontakPicInternal,
-        kontak_pic_eksternal: kontakPicEksternal
+        kontak_pic_eksternal: kontakPicEksternal,
       };
     });
 
     res.json({
       success: true,
-      data: formattedRows
+      data: formattedRows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil preview data',
-      error: error.message
+      message: "Error mengambil preview data",
+      error: error.message,
     });
   }
 };
@@ -482,14 +504,15 @@ exports.getPreviewData = async (req, res) => {
 // Export to Excel with hierarchical headers
 exports.exportExcel = async (req, res) => {
   try {
-    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } =
+      req.query;
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'KKP System';
+    workbook.creator = "KKP System";
     workbook.created = new Date();
 
     // Check if "all formats" is selected
-    const isAllFormats = format_laporan_id === 'all';
+    const isAllFormats = format_laporan_id === "all";
 
     let formats = [];
     if (isAllFormats) {
@@ -503,11 +526,14 @@ exports.exportExcel = async (req, res) => {
       formats = allFormats;
     } else if (format_laporan_id) {
       // Get single format
-      const [singleFormat] = await pool.query(`
+      const [singleFormat] = await pool.query(
+        `
         SELECT format_laporan_id, nama_format
         FROM format_laporan
         WHERE format_laporan_id = ?
-      `, [format_laporan_id]);
+      `,
+        [format_laporan_id],
+      );
       formats = singleFormat;
     }
 
@@ -527,19 +553,21 @@ exports.exportExcel = async (req, res) => {
     const buffer = await workbook.xlsx.writeBuffer();
 
     const filename = isAllFormats
-      ? `Laporan_Semua_Format_${new Date().toISOString().split('T')[0]}.xlsx`
-      : `Laporan_${formats[0]?.nama_format || 'Aplikasi'}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      ? `Laporan_Semua_Format_${new Date().toISOString().split("T")[0]}.xlsx`
+      : `Laporan_${formats[0]?.nama_format || "Aplikasi"}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(buffer);
-
   } catch (error) {
-    console.error('Export Excel error:', error);
+    console.error("Export Excel error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error generating Excel file',
-      error: error.message
+      message: "Error generating Excel file",
+      error: error.message,
     });
   }
 };
@@ -561,7 +589,7 @@ exports.exportExcelAll = async (req, res) => {
     if (formats.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Tidak ada format laporan aktif'
+        message: "Tidak ada format laporan aktif",
       });
     }
 
@@ -577,50 +605,52 @@ exports.exportExcelAll = async (req, res) => {
     const buffer = await workbook.xlsx.writeBuffer();
 
     // Build filename with filters
-    let filenameParts = ['Semua_Format_Laporan'];
-    if (tahun && tahun !== 'all') filenameParts.push(tahun);
-    if (status && status !== 'all') filenameParts.push('Status' + status);
-    if (eselon1_id && eselon1_id !== 'all') filenameParts.push('Eselon1_' + eselon1_id);
+    let filenameParts = ["Semua_Format_Laporan"];
+    if (tahun && tahun !== "all") filenameParts.push(tahun);
+    if (status && status !== "all") filenameParts.push("Status" + status);
+    if (eselon1_id && eselon1_id !== "all")
+      filenameParts.push("Eselon1_" + eselon1_id);
 
-    const filename = `${filenameParts.join('_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const filename = `${filenameParts.join("_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.send(buffer);
-
   } catch (error) {
-    console.error('Export Excel All error:', error);
+    console.error("Export Excel All error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error generating Excel file with all formats',
-      error: error.message
+      message: "Error generating Excel file with all formats",
+      error: error.message,
     });
   }
 };
 
-
 // Helper: Create sheet with default columns
 async function createDefaultSheet(workbook, filters) {
-  const worksheet = workbook.addWorksheet('Laporan Aplikasi');
+  const worksheet = workbook.addWorksheet("Laporan Aplikasi");
 
   // Default columns
   worksheet.columns = [
-    { header: 'No', key: 'no', width: 5 },
-    { header: 'Nama Aplikasi', key: 'nama_aplikasi', width: 30 },
-    { header: 'Unit', key: 'unit', width: 15 },
-    { header: 'PIC', key: 'pic', width: 20 },
-    { header: 'Status', key: 'status', width: 15 },
-    { header: 'Tanggal Ditambahkan', key: 'tanggal', width: 20 }
+    { header: "No", key: "no", width: 5 },
+    { header: "Nama Aplikasi", key: "nama_aplikasi", width: 30 },
+    { header: "Unit", key: "unit", width: 15 },
+    { header: "PIC", key: "pic", width: 20 },
+    { header: "Status", key: "status", width: 15 },
+    { header: "Tanggal Ditambahkan", key: "tanggal", width: 20 },
   ];
 
   // Style header
   worksheet.getRow(1).font = { bold: true };
   worksheet.getRow(1).fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF4472C4' }
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF4472C4" },
   };
-  worksheet.getRow(1).font = { color: { argb: 'FFFFFFFF' }, bold: true };
+  worksheet.getRow(1).font = { color: { argb: "FFFFFFFF" }, bold: true };
 
   // Get data
   const data = await getFilteredData(filters);
@@ -633,13 +663,15 @@ async function createDefaultSheet(workbook, filters) {
       unit: row.unit,
       pic: row.pic_internal,
       status: row.status_aplikasi,
-      tanggal: row.created_at ? new Date(row.created_at).toLocaleString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }) : '-'
+      tanggal: row.created_at
+        ? new Date(row.created_at).toLocaleString("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "-",
     });
   });
 }
@@ -660,7 +692,10 @@ async function createFormatSheet(workbook, format, filters) {
   // Build hierarchical structure from master_laporan_field tree
   const structure = await buildHierarchyFromMasterField(formatDetails);
 
-  console.log(`[createFormatSheet] Built structure:`, JSON.stringify(structure, null, 2));
+  console.log(
+    `[createFormatSheet] Built structure:`,
+    JSON.stringify(structure, null, 2),
+  );
 
   // Calculate column positions and create headers
   let currentCol = 1;
@@ -670,8 +705,8 @@ async function createFormatSheet(workbook, format, filters) {
   let hasJudul = false;
   let hasSubJudul = false;
 
-  structure.forEach(item => {
-    if (item.type === 'group') {
+  structure.forEach((item) => {
+    if (item.type === "group") {
       hasJudul = true;
       if (item.subGroups.size > 0) {
         hasSubJudul = true;
@@ -682,8 +717,8 @@ async function createFormatSheet(workbook, format, filters) {
   const headerStartRow = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
 
   // Build headers
-  structure.forEach(item => {
-    if (item.type === 'field') {
+  structure.forEach((item) => {
+    if (item.type === "field") {
       // Standalone field
       const col = currentCol++;
 
@@ -698,7 +733,7 @@ async function createFormatSheet(workbook, format, filters) {
         // Set the value in the merged cell (row 1)
         worksheet.getCell(1, col).value = item.label;
       }
-    } else if (item.type === 'group') {
+    } else if (item.type === "group") {
       // Group with judul
       const startCol = currentCol;
       let groupColCount = 0;
@@ -707,7 +742,7 @@ async function createFormatSheet(workbook, format, filters) {
         // Has sub-groups
         item.subGroups.forEach((fields, subJudul) => {
           const subStartCol = currentCol;
-          fields.forEach(field => {
+          fields.forEach((field) => {
             const col = currentCol++;
             worksheet.getCell(headerStartRow, col).value = field.label;
             columnMapping.push({ fieldName: field.fieldName, col });
@@ -722,7 +757,7 @@ async function createFormatSheet(workbook, format, filters) {
         });
       } else {
         // No sub-groups, just fields
-        item.fields.forEach(field => {
+        item.fields.forEach((field) => {
           const col = currentCol++;
           worksheet.getCell(headerStartRow, col).value = field.label;
           columnMapping.push({ fieldName: field.fieldName, col });
@@ -741,21 +776,21 @@ async function createFormatSheet(workbook, format, filters) {
   // Style headers
   for (let row = 1; row <= headerStartRow; row++) {
     const headerRow = worksheet.getRow(row);
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
     headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: row === 1 ? 'FF4472C4' : 'FF8EAADB' }
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: row === 1 ? "FF4472C4" : "FF8EAADB" },
     };
-    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.alignment = { horizontal: "center", vertical: "middle" };
 
     // Add borders to all header cells
     headerRow.eachCell({ includeEmpty: true }, (cell) => {
       cell.border = {
-        top: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-        left: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-        bottom: { style: 'thin', color: { argb: 'FFFFFFFF' } },
-        right: { style: 'thin', color: { argb: 'FFFFFFFF' } }
+        top: { style: "thin", color: { argb: "FFFFFFFF" } },
+        left: { style: "thin", color: { argb: "FFFFFFFF" } },
+        bottom: { style: "thin", color: { argb: "FFFFFFFF" } },
+        right: { style: "thin", color: { argb: "FFFFFFFF" } },
       };
     });
   }
@@ -769,15 +804,15 @@ async function createFormatSheet(workbook, format, filters) {
     columnMapping.forEach(({ fieldName, col }) => {
       // Skip if fieldName is null (field doesn't exist in data_aplikasi)
       if (fieldName) {
-        row.getCell(col).value = rowData[fieldName] || '-';
+        row.getCell(col).value = rowData[fieldName] || "-";
       } else {
-        row.getCell(col).value = '-';
+        row.getCell(col).value = "-";
       }
     });
   });
 
   // Auto-fit columns
-  worksheet.columns.forEach(column => {
+  worksheet.columns.forEach((column) => {
     column.width = 15;
   });
 }
@@ -822,17 +857,17 @@ async function getFilteredData(filters) {
 
   const params = [];
 
-  if (status && status !== 'all') {
+  if (status && status !== "all") {
     query += ` AND da.status_aplikasi = ?`;
     params.push(status);
   }
 
-  if (eselon1_id && eselon1_id !== 'all') {
+  if (eselon1_id && eselon1_id !== "all") {
     query += ` AND da.eselon1_id = ?`;
     params.push(eselon1_id);
   }
 
-  if (eselon2_id && eselon2_id !== 'all') {
+  if (eselon2_id && eselon2_id !== "all") {
     query += ` AND da.eselon2_id = ?`;
     params.push(eselon2_id);
   }
@@ -843,23 +878,26 @@ async function getFilteredData(filters) {
   const [rows] = await pool.query(query, params);
 
   // Post-process rows
-  const formattedRows = rows.map(row => {
+  const formattedRows = rows.map((row) => {
     // Parse Cara Akses Multiple
-    let caraAksesStr = '';
+    let caraAksesStr = "";
     if (row.cara_akses_multiple) {
       try {
         let ids = [];
-        if (typeof row.cara_akses_multiple === 'string' && row.cara_akses_multiple.startsWith('[')) {
+        if (
+          typeof row.cara_akses_multiple === "string" &&
+          row.cara_akses_multiple.startsWith("[")
+        ) {
           ids = JSON.parse(row.cara_akses_multiple);
-        } else if (typeof row.cara_akses_multiple === 'string') {
-          ids = row.cara_akses_multiple.split(',').map(s => s.trim());
+        } else if (typeof row.cara_akses_multiple === "string") {
+          ids = row.cara_akses_multiple.split(",").map((s) => s.trim());
         } else if (Array.isArray(row.cara_akses_multiple)) {
           ids = row.cara_akses_multiple;
         }
 
-        caraAksesStr = ids.map(id => caraAksesMap[id] || id).join(', ');
+        caraAksesStr = ids.map((id) => caraAksesMap[id] || id).join(", ");
       } catch (e) {
-        console.error('Error parsing cara_akses_multiple:', e);
+        console.error("Error parsing cara_akses_multiple:", e);
         caraAksesStr = row.cara_akses_multiple;
       }
     }
@@ -867,8 +905,10 @@ async function getFilteredData(filters) {
     // Use Master PIC if available, fall back to direct field
     const picInternal = row.pic_internal_master || row.pic_internal;
     const picEksternal = row.pic_eksternal_master || row.pic_eksternal;
-    const kontakPicInternal = row.kontak_pic_internal_master || row.kontak_pic_internal;
-    const kontakPicEksternal = row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
+    const kontakPicInternal =
+      row.kontak_pic_internal_master || row.kontak_pic_internal;
+    const kontakPicEksternal =
+      row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
 
     return {
       ...row,
@@ -876,36 +916,44 @@ async function getFilteredData(filters) {
       pic_internal: picInternal,
       pic_eksternal: picEksternal,
       kontak_pic_internal: kontakPicInternal,
-      kontak_pic_eksternal: kontakPicEksternal
+      kontak_pic_eksternal: kontakPicEksternal,
     };
   });
 
   return formattedRows;
 }
 
-
 // Export to PDF
 exports.exportPDF = async (req, res) => {
   try {
-    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } = req.query;
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } =
+      req.query;
 
     // Get format details
-    let formatName = 'Laporan Aplikasi';
+    let formatName = "Laporan Aplikasi";
     let formatDetails = [];
 
     if (format_laporan_id) {
-      const [formatRows] = await pool.query(`
+      const [formatRows] = await pool.query(
+        `
         SELECT nama_format FROM format_laporan WHERE format_laporan_id = ?
-      `, [format_laporan_id]);
+      `,
+        [format_laporan_id],
+      );
 
       if (formatRows.length > 0) {
         formatName = formatRows[0].nama_format;
       }
 
-      const [details] = await pool.query(`
-        SELECT field_id, order_index FROM format_laporan_detail 
+      const [details] = await pool.query(
+        `
+        SELECT field_id, id as order_index
+        FROM format_laporan_detail 
         WHERE format_laporan_id = ?
-      `, [format_laporan_id]);
+        ORDER BY id ASC
+      `,
+        [format_laporan_id],
+      );
 
       formatDetails = details;
     }
@@ -919,24 +967,36 @@ exports.exportPDF = async (req, res) => {
 
     // Create PDF with landscape A3
     const doc = new PDFDocument({
-      size: 'A3',
-      layout: 'landscape',
-      margin: 30
+      size: "A3",
+      layout: "landscape",
+      margin: 30,
     });
 
     // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${formatName}_${new Date().toISOString().split('T')[0]}.pdf"`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${formatName}_${new Date().toISOString().split("T")[0]}.pdf"`,
+    );
 
     doc.pipe(res);
 
     // Add title
-    doc.fontSize(14).font('Helvetica-Bold').text(formatName, { align: 'center' });
-    doc.fontSize(9).font('Helvetica').text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
+    doc
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text(formatName, { align: "center" });
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, {
+        align: "center",
+      });
     doc.moveDown(0.5);
 
     // Calculate layout
-    const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+    const pageWidth =
+      doc.page.width - doc.page.margins.left - doc.page.margins.right;
     const startX = doc.page.margins.left;
     let startY = doc.y;
 
@@ -944,19 +1004,23 @@ exports.exportPDF = async (req, res) => {
     let totalColumns = 0;
     const columnMapping = [];
 
-    structure.forEach(item => {
-      if (item.type === 'field') {
+    structure.forEach((item) => {
+      if (item.type === "field") {
         totalColumns++;
         columnMapping.push({ fieldName: item.fieldName, label: item.label });
-      } else if (item.type === 'group') {
+      } else if (item.type === "group") {
         if (item.subGroups.size > 0) {
-          item.subGroups.forEach(fields => {
+          item.subGroups.forEach((fields) => {
             totalColumns += fields.length;
-            fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+            fields.forEach((f) =>
+              columnMapping.push({ fieldName: f.fieldName, label: f.label }),
+            );
           });
         } else {
           totalColumns += item.fields.length;
-          item.fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+          item.fields.forEach((f) =>
+            columnMapping.push({ fieldName: f.fieldName, label: f.label }),
+          );
         }
       }
     });
@@ -969,8 +1033,8 @@ exports.exportPDF = async (req, res) => {
     let hasJudul = false;
     let hasSubJudul = false;
 
-    structure.forEach(item => {
-      if (item.type === 'group') {
+    structure.forEach((item) => {
+      if (item.type === "group") {
         hasJudul = true;
         if (item.subGroups.size > 0) hasSubJudul = true;
       }
@@ -979,46 +1043,50 @@ exports.exportPDF = async (req, res) => {
     const headerRows = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
 
     // Render headers
-    doc.fontSize(fontSize).font('Helvetica-Bold');
+    doc.fontSize(fontSize).font("Helvetica-Bold");
     let currentCol = 0;
 
     // Helper function to draw cell
     const drawCell = (x, y, width, height, text, options = {}) => {
-      const { fill = false, align = 'center', fontSize: fs = fontSize } = options;
+      const {
+        fill = false,
+        align = "center",
+        fontSize: fs = fontSize,
+      } = options;
 
       // Draw border
       doc.rect(x, y, width, height).stroke();
 
       // Fill background if needed
       if (fill) {
-        doc.rect(x, y, width, height).fillAndStroke('#e0e0e0', '#000000');
+        doc.rect(x, y, width, height).fillAndStroke("#e0e0e0", "#000000");
       }
 
       // Draw text
-      doc.fontSize(fs).fillColor('#000000');
+      doc.fontSize(fs).fillColor("#000000");
       const textY = y + (height - fs) / 2;
-      doc.text(text || '-', x + 2, textY, {
+      doc.text(text || "-", x + 2, textY, {
         width: width - 4,
         height: height,
         align: align,
-        ellipsis: true
+        ellipsis: true,
       });
     };
 
     // Render Level 1 (Judul) if exists
     if (hasJudul) {
       let x = startX;
-      structure.forEach(item => {
-        if (item.type === 'field') {
+      structure.forEach((item) => {
+        if (item.type === "field") {
           // Standalone field - merge all rows
           const height = rowHeight * headerRows;
           drawCell(x, startY, columnWidth, height, item.label, { fill: true });
           x += columnWidth;
-        } else if (item.type === 'group') {
+        } else if (item.type === "group") {
           // Group - calculate span
           let colSpan = 0;
           if (item.subGroups.size > 0) {
-            item.subGroups.forEach(fields => colSpan += fields.length);
+            item.subGroups.forEach((fields) => (colSpan += fields.length));
           } else {
             colSpan = item.fields.length;
           }
@@ -1035,11 +1103,11 @@ exports.exportPDF = async (req, res) => {
       let x = startX;
       const y = startY + rowHeight;
 
-      structure.forEach(item => {
-        if (item.type === 'field') {
+      structure.forEach((item) => {
+        if (item.type === "field") {
           // Already merged in Level 1
           x += columnWidth;
-        } else if (item.type === 'group') {
+        } else if (item.type === "group") {
           if (item.subGroups.size > 0) {
             item.subGroups.forEach((fields, subJudul) => {
               const width = columnWidth * fields.length;
@@ -1056,17 +1124,17 @@ exports.exportPDF = async (req, res) => {
     }
 
     // Render Level 3 (Field labels)
-    const fieldY = startY + (rowHeight * (headerRows - 1));
+    const fieldY = startY + rowHeight * (headerRows - 1);
     let x = startX;
 
-    columnMapping.forEach(col => {
+    columnMapping.forEach((col) => {
       drawCell(x, fieldY, columnWidth, rowHeight, col.label, { fill: true });
       x += columnWidth;
     });
 
     // Render data rows
     startY = fieldY + rowHeight;
-    doc.font('Helvetica');
+    doc.font("Helvetica");
 
     data.forEach((row, index) => {
       // Check if need new page
@@ -1077,20 +1145,24 @@ exports.exportPDF = async (req, res) => {
         // Re-render headers on new page
         // (simplified - just render field labels)
         x = startX;
-        doc.font('Helvetica-Bold');
-        columnMapping.forEach(col => {
-          drawCell(x, startY, columnWidth, rowHeight, col.label, { fill: true });
+        doc.font("Helvetica-Bold");
+        columnMapping.forEach((col) => {
+          drawCell(x, startY, columnWidth, rowHeight, col.label, {
+            fill: true,
+          });
           x += columnWidth;
         });
         startY += rowHeight;
-        doc.font('Helvetica');
+        doc.font("Helvetica");
       }
 
       // Render data cells
       x = startX;
-      columnMapping.forEach(col => {
-        const value = col.fieldName ? (row[col.fieldName] || '-') : '-';
-        drawCell(x, startY, columnWidth, rowHeight, String(value), { align: 'left' });
+      columnMapping.forEach((col) => {
+        const value = col.fieldName ? row[col.fieldName] || "-" : "-";
+        drawCell(x, startY, columnWidth, rowHeight, String(value), {
+          align: "left",
+        });
         x += columnWidth;
       });
 
@@ -1098,13 +1170,12 @@ exports.exportPDF = async (req, res) => {
     });
 
     doc.end();
-
   } catch (error) {
-    console.error('PDF Export Error:', error);
+    console.error("PDF Export Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error export PDF',
-      error: error.message
+      message: "Error export PDF",
+      error: error.message,
     });
   }
 };
@@ -1126,7 +1197,7 @@ exports.exportPDFAll = async (req, res) => {
     if (formats.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Tidak ada format laporan aktif'
+        message: "Tidak ada format laporan aktif",
       });
     }
 
@@ -1135,38 +1206,50 @@ exports.exportPDFAll = async (req, res) => {
 
     // Create PDF with landscape A3
     const doc = new PDFDocument({
-      size: 'A3',
-      layout: 'landscape',
-      margin: 30
+      size: "A3",
+      layout: "landscape",
+      margin: 30,
     });
 
     // Build filename
-    let filenameParts = ['Semua_Format_Laporan'];
-    if (tahun && tahun !== 'all') filenameParts.push(tahun);
-    if (status && status !== 'all') filenameParts.push('Status' + status);
+    let filenameParts = ["Semua_Format_Laporan"];
+    if (tahun && tahun !== "all") filenameParts.push(tahun);
+    if (status && status !== "all") filenameParts.push("Status" + status);
 
-    const filename = `${filenameParts.join('_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+    const filename = `${filenameParts.join("_")}_${new Date().toISOString().split("T")[0]}.pdf`;
 
     // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
     doc.pipe(res);
 
     // Add cover page
-    doc.fontSize(20).font('Helvetica-Bold').text('LAPORAN APLIKASI', { align: 'center' });
+    doc
+      .fontSize(20)
+      .font("Helvetica-Bold")
+      .text("LAPORAN APLIKASI", { align: "center" });
     doc.moveDown();
-    doc.fontSize(14).font('Helvetica').text('Semua Format Laporan', { align: 'center' });
-    doc.fontSize(10).text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, { align: 'center' });
-    doc.fontSize(10).text(`Total Aplikasi: ${data.length}`, { align: 'center' });
+    doc
+      .fontSize(14)
+      .font("Helvetica")
+      .text("Semua Format Laporan", { align: "center" });
+    doc
+      .fontSize(10)
+      .text(`Tanggal: ${new Date().toLocaleDateString("id-ID")}`, {
+        align: "center",
+      });
+    doc
+      .fontSize(10)
+      .text(`Total Aplikasi: ${data.length}`, { align: "center" });
     doc.moveDown(2);
 
     // Add filter info if applied
-    if (tahun && tahun !== 'all') {
-      doc.fontSize(9).text(`Filter Tahun: ${tahun}`, { align: 'center' });
+    if (tahun && tahun !== "all") {
+      doc.fontSize(9).text(`Filter Tahun: ${tahun}`, { align: "center" });
     }
-    if (status && status !== 'all') {
-      doc.fontSize(9).text(`Filter Status: ${status}`, { align: 'center' });
+    if (status && status !== "all") {
+      doc.fontSize(9).text(`Filter Status: ${status}`, { align: "center" });
     }
 
     // Render each format
@@ -1174,14 +1257,20 @@ exports.exportPDFAll = async (req, res) => {
       const format = formats[i];
 
       // Get format details
-      const [formatDetails] = await pool.query(`
-        SELECT field_id, order_index 
+      const [formatDetails] = await pool.query(
+        `
+        SELECT field_id, id as order_index
         FROM format_laporan_detail 
         WHERE format_laporan_id = ?
-      `, [format.format_laporan_id]);
+        ORDER BY id ASC
+      `,
+        [format.format_laporan_id],
+      );
 
       if (formatDetails.length === 0) {
-        console.log(`Skipping format ${format.nama_format} - no fields defined`);
+        console.log(
+          `Skipping format ${format.nama_format} - no fields defined`,
+        );
         continue;
       }
 
@@ -1191,7 +1280,10 @@ exports.exportPDFAll = async (req, res) => {
       }
 
       // Add format title
-      doc.fontSize(16).font('Helvetica-Bold').text(format.nama_format, { align: 'center' });
+      doc
+        .fontSize(16)
+        .font("Helvetica-Bold")
+        .text(format.nama_format, { align: "center" });
       doc.moveDown(0.5);
 
       // Build hierarchical structure
@@ -1202,20 +1294,20 @@ exports.exportPDFAll = async (req, res) => {
     }
 
     doc.end();
-
   } catch (error) {
-    console.error('PDF Export All Error:', error);
+    console.error("PDF Export All Error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error export PDF semua format',
-      error: error.message
+      message: "Error export PDF semua format",
+      error: error.message,
     });
   }
 };
 
 // Helper: Render PDF table section (extracted from exportPDF)
 async function renderPDFTableSection(doc, structure, data) {
-  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const pageWidth =
+    doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const startX = doc.page.margins.left;
   let startY = doc.y;
 
@@ -1223,19 +1315,23 @@ async function renderPDFTableSection(doc, structure, data) {
   let totalColumns = 0;
   const columnMapping = [];
 
-  structure.forEach(item => {
-    if (item.type === 'field') {
+  structure.forEach((item) => {
+    if (item.type === "field") {
       totalColumns++;
       columnMapping.push({ fieldName: item.fieldName, label: item.label });
-    } else if (item.type === 'group') {
+    } else if (item.type === "group") {
       if (item.subGroups.size > 0) {
-        item.subGroups.forEach(fields => {
+        item.subGroups.forEach((fields) => {
           totalColumns += fields.length;
-          fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+          fields.forEach((f) =>
+            columnMapping.push({ fieldName: f.fieldName, label: f.label }),
+          );
         });
       } else {
         totalColumns += item.fields.length;
-        item.fields.forEach(f => columnMapping.push({ fieldName: f.fieldName, label: f.label }));
+        item.fields.forEach((f) =>
+          columnMapping.push({ fieldName: f.fieldName, label: f.label }),
+        );
       }
     }
   });
@@ -1248,8 +1344,8 @@ async function renderPDFTableSection(doc, structure, data) {
   let hasJudul = false;
   let hasSubJudul = false;
 
-  structure.forEach(item => {
-    if (item.type === 'group') {
+  structure.forEach((item) => {
+    if (item.type === "group") {
       hasJudul = true;
       if (item.subGroups.size > 0) hasSubJudul = true;
     }
@@ -1259,38 +1355,38 @@ async function renderPDFTableSection(doc, structure, data) {
 
   // Helper function to draw cell
   const drawCell = (x, y, width, height, text, options = {}) => {
-    const { fill = false, align = 'center', fontSize: fs = fontSize } = options;
+    const { fill = false, align = "center", fontSize: fs = fontSize } = options;
 
     doc.rect(x, y, width, height).stroke();
 
     if (fill) {
-      doc.rect(x, y, width, height).fillAndStroke('#e0e0e0', '#000000');
+      doc.rect(x, y, width, height).fillAndStroke("#e0e0e0", "#000000");
     }
 
-    doc.fontSize(fs).fillColor('#000000');
+    doc.fontSize(fs).fillColor("#000000");
     const textY = y + (height - fs) / 2;
-    doc.text(text || '-', x + 2, textY, {
+    doc.text(text || "-", x + 2, textY, {
       width: width - 4,
       height: height,
       align: align,
-      ellipsis: true
+      ellipsis: true,
     });
   };
 
   // Render headers (same logic as exportPDF)
-  doc.fontSize(fontSize).font('Helvetica-Bold');
+  doc.fontSize(fontSize).font("Helvetica-Bold");
 
   if (hasJudul) {
     let x = startX;
-    structure.forEach(item => {
-      if (item.type === 'field') {
+    structure.forEach((item) => {
+      if (item.type === "field") {
         const height = rowHeight * headerRows;
         drawCell(x, startY, columnWidth, height, item.label, { fill: true });
         x += columnWidth;
-      } else if (item.type === 'group') {
+      } else if (item.type === "group") {
         let colSpan = 0;
         if (item.subGroups.size > 0) {
-          item.subGroups.forEach(fields => colSpan += fields.length);
+          item.subGroups.forEach((fields) => (colSpan += fields.length));
         } else {
           colSpan = item.fields.length;
         }
@@ -1306,10 +1402,10 @@ async function renderPDFTableSection(doc, structure, data) {
     let x = startX;
     const y = startY + rowHeight;
 
-    structure.forEach(item => {
-      if (item.type === 'field') {
+    structure.forEach((item) => {
+      if (item.type === "field") {
         x += columnWidth;
-      } else if (item.type === 'group') {
+      } else if (item.type === "group") {
         if (item.subGroups.size > 0) {
           item.subGroups.forEach((fields, subJudul) => {
             const width = columnWidth * fields.length;
@@ -1324,17 +1420,17 @@ async function renderPDFTableSection(doc, structure, data) {
     });
   }
 
-  const fieldY = startY + (rowHeight * (headerRows - 1));
+  const fieldY = startY + rowHeight * (headerRows - 1);
   let x = startX;
 
-  columnMapping.forEach(col => {
+  columnMapping.forEach((col) => {
     drawCell(x, fieldY, columnWidth, rowHeight, col.label, { fill: true });
     x += columnWidth;
   });
 
   // Render data rows
   startY = fieldY + rowHeight;
-  doc.font('Helvetica');
+  doc.font("Helvetica");
 
   data.forEach((row, index) => {
     if (startY + rowHeight > doc.page.height - doc.page.margins.bottom) {
@@ -1343,19 +1439,21 @@ async function renderPDFTableSection(doc, structure, data) {
 
       // Re-render headers on new page
       x = startX;
-      doc.font('Helvetica-Bold');
-      columnMapping.forEach(col => {
+      doc.font("Helvetica-Bold");
+      columnMapping.forEach((col) => {
         drawCell(x, startY, columnWidth, rowHeight, col.label, { fill: true });
         x += columnWidth;
       });
       startY += rowHeight;
-      doc.font('Helvetica');
+      doc.font("Helvetica");
     }
 
     x = startX;
-    columnMapping.forEach(col => {
-      const value = col.fieldName ? (row[col.fieldName] || '-') : '-';
-      drawCell(x, startY, columnWidth, rowHeight, String(value), { align: 'left' });
+    columnMapping.forEach((col) => {
+      const value = col.fieldName ? row[col.fieldName] || "-" : "-";
+      drawCell(x, startY, columnWidth, rowHeight, String(value), {
+        align: "left",
+      });
       x += columnWidth;
     });
 

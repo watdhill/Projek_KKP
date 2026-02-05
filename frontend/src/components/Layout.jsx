@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import kkpLogo from "../assets/kkp.png";
+import { logout } from "../utils/api";
 
 function Layout({ navItems }) {
   const navigate = useNavigate();
@@ -41,8 +42,8 @@ function Layout({ navItems }) {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
+    // Use JWT logout utility which clears token and redirects
+    logout();
   };
 
   const getIcon = (iconName) => {

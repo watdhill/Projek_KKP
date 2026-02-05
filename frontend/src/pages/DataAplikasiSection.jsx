@@ -949,7 +949,17 @@ function DataAplikasiSection() {
     } catch (err) {
       const status = err?.status;
       const payload = err?.payload;
-      if (status === 409 || payload?.code === "DUPLICATE_NAMA_APLIKASI") {
+
+      // Handle duplicate domain error
+      if (status === 409 && payload?.errorCode === "DUPLICATE_DOMAIN") {
+        showMessage(
+          "error",
+          "Domain sudah digunakan!\n\n" + payload?.message,
+          7000,
+        );
+      }
+      // Handle duplicate nama aplikasi error
+      else if (status === 409 || payload?.code === "DUPLICATE_NAMA_APLIKASI") {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +

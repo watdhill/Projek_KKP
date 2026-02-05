@@ -187,6 +187,11 @@ function LoginPage() {
       localStorage.setItem("namaEselon2", result.data.nama_eselon2 || "");
       localStorage.setItem("namaUPT", result.data.nama_upt || "");
 
+      // Store JWT token for authentication
+      if (result.token) {
+        localStorage.setItem("token", result.token);
+      }
+
       // Navigate ke home page sesuai role
       navigate(roleHome[role] || "/admin", { replace: true });
     } catch (error) {
@@ -213,7 +218,16 @@ function LoginPage() {
         }}
       >
         {/* PixelBlast Background */}
-        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: 0 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 0,
+          }}
+        >
           <PixelBlast
             variant="square"
             pixelSize={4}
@@ -234,7 +248,7 @@ function LoginPage() {
             transparent
           />
         </div>
-        
+
         {/* Login Card */}
         <div
           style={{

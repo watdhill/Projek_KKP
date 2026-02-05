@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const pool = require("./config/database");
+const { authenticateToken } = require("./middleware/auth");
+const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const userRoutes = require("./routes/userRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const masterDataRoutes = require("./routes/masterDataRoutes");
@@ -13,6 +15,10 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Apply JWT authentication middleware globally
+// This validates tokens but doesn't block requests (backward compatible)
+app.use(authenticateToken);
 
 app.get("/", (req, res) => {
   res.send("Backend berhasil jalan");
@@ -52,5 +58,11 @@ app.use("/api/aplikasi", aplikasiRoutes);
 app.use("/api/laporan", laporanRoutes);
 app.use("/api/audit-log", auditLogRoutes);
 app.use("/api/dynamic-master", dynamicMasterRoutes);
+
+// 404 Handler - harus setelah semua routes
+app.use(notFoundHandler);
+
+// Global Error Handler - harus paling akhir
+app.use(errorHandler);
 
 module.exports = app;
