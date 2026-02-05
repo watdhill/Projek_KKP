@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+const pool = require("../config/database");
 
 // Get all audit logs
 exports.getAllAuditLogs = async (req, res) => {
@@ -13,13 +13,20 @@ exports.getAllAuditLogs = async (req, res) => {
     const [rows] = await pool.query(query);
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
+    if (error && error.code === "ER_NO_SUCH_TABLE") {
+      return res.json({
+        success: true,
+        data: [],
+        warning: "Audit log belum tersedia (tabel audit_log belum ada)",
+      });
+    }
     res.status(500).json({
       success: false,
-      message: 'Error mengambil audit log',
-      error: error.message
+      message: "Error mengambil audit log",
+      error: error.message,
     });
   }
 };
@@ -37,13 +44,20 @@ exports.getAuditLogsByUser = async (req, res) => {
     const [rows] = await pool.query(query, [req.params.userId]);
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
+    if (error && error.code === "ER_NO_SUCH_TABLE") {
+      return res.json({
+        success: true,
+        data: [],
+        warning: "Audit log belum tersedia (tabel audit_log belum ada)",
+      });
+    }
     res.status(500).json({
       success: false,
-      message: 'Error mengambil audit log user',
-      error: error.message
+      message: "Error mengambil audit log user",
+      error: error.message,
     });
   }
 };
@@ -53,19 +67,19 @@ exports.createAuditLog = async (req, res) => {
   try {
     const { user_id, aksi, detail, ip_address } = req.body;
     const [result] = await pool.query(
-      'INSERT INTO audit_log (user_id, aksi, detail, ip_address) VALUES (?, ?, ?, ?)',
-      [user_id, aksi, detail, ip_address]
+      "INSERT INTO audit_log (user_id, aksi, detail, ip_address) VALUES (?, ?, ?, ?)",
+      [user_id, aksi, detail, ip_address],
     );
     res.status(201).json({
       success: true,
-      message: 'Audit log berhasil ditambahkan',
-      data: { id: result.insertId, user_id, aksi, detail, ip_address }
+      message: "Audit log berhasil ditambahkan",
+      data: { id: result.insertId, user_id, aksi, detail, ip_address },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error menambahkan audit log',
-      error: error.message
+      message: "Error menambahkan audit log",
+      error: error.message,
     });
   }
 };

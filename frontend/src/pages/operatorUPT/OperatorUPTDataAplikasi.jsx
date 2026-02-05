@@ -610,6 +610,28 @@ function OperatorUPTDataAplikasi() {
         );
         return;
       }
+
+      // Cek duplikat domain (hanya untuk mode tambah)
+      const normalizedDomain =
+        typeof formData.domain === "string" ? formData.domain.trim() : "";
+      if (normalizedDomain) {
+        const isDuplicateDomain = apps.some((app) => {
+          if (!app?.domain) return false;
+          return (
+            String(app.domain).trim().toLowerCase() ===
+            normalizedDomain.toLowerCase()
+          );
+        });
+
+        if (isDuplicateDomain) {
+          showMessage(
+            "error",
+            `Aplikasi dengan domain "${normalizedDomain}" sudah terdaftar di database!\n\nSilakan gunakan domain yang berbeda atau edit aplikasi yang sudah ada.`,
+            7000,
+          );
+          return;
+        }
+      }
     }
 
     // Lakukan validasi terlebih dahulu
@@ -997,7 +1019,14 @@ function OperatorUPTDataAplikasi() {
       const serverCode = payload?.code;
 
       // Handle specific error types
-      if (
+      if (status === 409 && payload?.errorCode === "DUPLICATE_DOMAIN") {
+        showMessage(
+          "error",
+          "Aplikasi sudah terdaftar di database!\n\n" +
+            (payload?.message || ""),
+          7000,
+        );
+      } else if (
         status === 409 ||
         serverCode === "DUPLICATE_NAMA_APLIKASI" ||
         (errorMsg.includes("Duplicate entry") &&

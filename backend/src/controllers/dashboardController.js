@@ -1,21 +1,21 @@
-const pool = require('../config/database');
+const pool = require("../config/database");
 
 // Get statistics for dashboard - 4 cards
 exports.getStatistics = async (req, res) => {
   try {
     const queries = [
       // Aplikasi Aktif (status_aplikasi_id = 2)
-      'SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 2',
+      "SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 2",
       // Aplikasi Tidak Aktif (status_aplikasi_id = 3)
-      'SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 3',
+      "SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 3",
       // Aplikasi Dalam Pengembangan (status_aplikasi_id = 6)
-      'SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 6',
+      "SELECT COUNT(*) as total FROM data_aplikasi WHERE status_aplikasi = 6",
       // Total Aplikasi
-      'SELECT COUNT(*) as total FROM data_aplikasi'
+      "SELECT COUNT(*) as total FROM data_aplikasi",
     ];
 
     const results = await Promise.all(
-      queries.map(query => pool.query(query))
+      queries.map((query) => pool.query(query)),
     );
 
     res.json({
@@ -24,14 +24,14 @@ exports.getStatistics = async (req, res) => {
         aplikasiAktif: results[0][0][0].total,
         aplikasiTidakAktif: results[1][0][0].total,
         aplikasiDalamPengembangan: results[2][0][0].total,
-        totalAplikasi: results[3][0][0].total
-      }
+        totalAplikasi: results[3][0][0].total,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil statistik dashboard',
-      error: error.message
+      message: "Error mengambil statistik dashboard",
+      error: error.message,
     });
   }
 };
@@ -58,22 +58,24 @@ exports.getEselon1Chart = async (req, res) => {
     const [rows] = await pool.query(query);
 
     // Debug log
-    console.log('=== Chart Data (Fixed) ===');
-    rows.forEach(row => {
+    console.log("=== Chart Data (Fixed) ===");
+    rows.forEach((row) => {
       if (row.total > 0) {
-        console.log(`${row.singkatan}: total=${row.total}, aktif=${row.aktif}, tidak_aktif=${row.tidak_aktif}, dalam_pengembangan=${row.dalam_pengembangan}`);
+        console.log(
+          `${row.singkatan}: total=${row.total}, aktif=${row.aktif}, tidak_aktif=${row.tidak_aktif}, dalam_pengembangan=${row.dalam_pengembangan}`,
+        );
       }
     });
 
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data chart eselon1',
-      error: error.message
+      message: "Error mengambil data chart eselon1",
+      error: error.message,
     });
   }
 };
@@ -105,13 +107,13 @@ exports.getRecentUpdates = async (req, res) => {
 
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data update aplikasi',
-      error: error.message
+      message: "Error mengambil data update aplikasi",
+      error: error.message,
     });
   }
 };
@@ -124,17 +126,17 @@ exports.getOperatorStatistics = async (req, res) => {
     const { eselon1_id, eselon2_id, upt_id } = req.query;
 
     // Build WHERE clause based on operator level
-    let whereClause = '';
+    let whereClause = "";
     const params = [];
 
     if (upt_id) {
-      whereClause = 'WHERE da.upt_id = ?';
+      whereClause = "WHERE da.upt_id = ?";
       params.push(upt_id);
     } else if (eselon2_id) {
-      whereClause = 'WHERE da.eselon2_id = ?';
+      whereClause = "WHERE da.eselon2_id = ?";
       params.push(eselon2_id);
     } else if (eselon1_id) {
-      whereClause = 'WHERE da.eselon1_id = ?';
+      whereClause = "WHERE da.eselon1_id = ?";
       params.push(eselon1_id);
     }
 
@@ -146,11 +148,11 @@ exports.getOperatorStatistics = async (req, res) => {
       // Aplikasi Dalam Pengembangan (status_aplikasi_id = 6)
       `SELECT COUNT(*) as total FROM data_aplikasi da ${whereClause} AND da.status_aplikasi = 6`,
       // Total Aplikasi
-      `SELECT COUNT(*) as total FROM data_aplikasi da ${whereClause}`
+      `SELECT COUNT(*) as total FROM data_aplikasi da ${whereClause}`,
     ];
 
     const results = await Promise.all(
-      queries.map(query => pool.query(query, params))
+      queries.map((query) => pool.query(query, params)),
     );
 
     res.json({
@@ -159,14 +161,14 @@ exports.getOperatorStatistics = async (req, res) => {
         aplikasiAktif: results[0][0][0].total,
         aplikasiTidakAktif: results[1][0][0].total,
         aplikasiDalamPengembangan: results[2][0][0].total,
-        totalAplikasi: results[3][0][0].total
-      }
+        totalAplikasi: results[3][0][0].total,
+      },
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil statistik dashboard operator',
-      error: error.message
+      message: "Error mengambil statistik dashboard operator",
+      error: error.message,
     });
   }
 };
@@ -176,25 +178,28 @@ exports.getOperatorChart = async (req, res) => {
   try {
     const { eselon1_id, eselon2_id } = req.query;
 
-    let query = '';
+    let query = "";
     let params = [];
 
     if (eselon1_id) {
-      // For Eselon1 operator: show Eselon2 breakdown
+      // For Eselon1 operator: show Eselon2 breakdown + UPT applications
       query = `
         SELECT 
-          e2.nama_eselon2 as nama,
-          COUNT(CASE WHEN da.status_aplikasi = 2 THEN 1 END) as aktif,
-          COUNT(CASE WHEN da.status_aplikasi = 3 THEN 1 END) as tidak_aktif,
-          COUNT(CASE WHEN da.status_aplikasi = 6 THEN 1 END) as dalam_pengembangan,
-          COUNT(da.nama_aplikasi) as total
-        FROM master_eselon2 e2
-        LEFT JOIN data_aplikasi da ON e2.eselon2_id = da.eselon2_id AND da.eselon1_id = ?
-        WHERE e2.eselon1_id = ? AND e2.status_aktif = 1
-        GROUP BY e2.eselon2_id, e2.nama_eselon2
-        ORDER BY e2.nama_eselon2 ASC
+          COALESCE(e2.nama_eselon2, CONCAT('UPT - ', upt.nama_upt)) as nama,
+          COALESCE(SUM(CASE WHEN da.status_aplikasi = 2 THEN 1 ELSE 0 END), 0) as aktif,
+          COALESCE(SUM(CASE WHEN da.status_aplikasi = 3 THEN 1 ELSE 0 END), 0) as tidak_aktif,
+          COALESCE(SUM(CASE WHEN da.status_aplikasi = 6 THEN 1 ELSE 0 END), 0) as dalam_pengembangan,
+          COUNT(da.nama_aplikasi) as total,
+          CASE WHEN e2.eselon2_id IS NOT NULL THEN 1 ELSE 2 END as sort_order
+        FROM data_aplikasi da
+        LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+        LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
+        WHERE da.eselon1_id = ?
+        GROUP BY COALESCE(e2.eselon2_id, CONCAT('upt_', da.upt_id)), COALESCE(e2.nama_eselon2, CONCAT('UPT - ', upt.nama_upt))
+        HAVING total > 0
+        ORDER BY sort_order, nama ASC
       `;
-      params = [eselon1_id, eselon1_id];
+      params = [eselon1_id];
     } else if (eselon2_id) {
       // For Eselon2 operator: show UPT breakdown (if UPT table exists)
       // For now, show application breakdown by status
@@ -218,7 +223,7 @@ exports.getOperatorChart = async (req, res) => {
       // No filter - return empty
       return res.json({
         success: true,
-        data: []
+        data: [],
       });
     }
 
@@ -226,13 +231,13 @@ exports.getOperatorChart = async (req, res) => {
 
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data chart operator',
-      error: error.message
+      message: "Error mengambil data chart operator",
+      error: error.message,
     });
   }
 };
@@ -243,17 +248,17 @@ exports.getOperatorRecentUpdates = async (req, res) => {
     const { eselon1_id, eselon2_id, upt_id, limit = 10 } = req.query;
 
     // Build WHERE clause based on operator level
-    let whereClause = '';
+    let whereClause = "";
     const params = [];
 
     if (upt_id) {
-      whereClause = 'WHERE da.upt_id = ?';
+      whereClause = "WHERE da.upt_id = ?";
       params.push(upt_id);
     } else if (eselon2_id) {
-      whereClause = 'WHERE da.eselon2_id = ?';
+      whereClause = "WHERE da.eselon2_id = ?";
       params.push(eselon2_id);
     } else if (eselon1_id) {
-      whereClause = 'WHERE da.eselon1_id = ?';
+      whereClause = "WHERE da.eselon1_id = ?";
       params.push(eselon1_id);
     }
 
@@ -265,12 +270,14 @@ exports.getOperatorRecentUpdates = async (req, res) => {
         e1.nama_eselon1,
         e1.singkatan as singkatan_eselon1,
         e2.nama_eselon2,
+        upt.nama_upt,
         da.updated_at,
         da.created_at
       FROM data_aplikasi da
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
       ${whereClause}
       ORDER BY COALESCE(da.updated_at, da.created_at) DESC
       LIMIT ?
@@ -282,13 +289,13 @@ exports.getOperatorRecentUpdates = async (req, res) => {
 
     res.json({
       success: true,
-      data: rows
+      data: rows,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error mengambil data update aplikasi operator',
-      error: error.message
+      message: "Error mengambil data update aplikasi operator",
+      error: error.message,
     });
   }
 };

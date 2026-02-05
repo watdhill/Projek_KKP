@@ -1,24 +1,50 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const masterDataController = require('../controllers/masterDataController');
-const laporanFieldController = require('../controllers/laporanFieldController');
-console.log('MasterDataController Keys:', Object.keys(masterDataController));
+const masterDataController = require("../controllers/masterDataController");
+const laporanFieldController = require("../controllers/laporanFieldController");
+const {
+  validateMasterDataQuery,
+  validateCreateMasterData,
+  validateUpdateMasterData,
+  validateDeleteMasterData,
+} = require("../middleware/validate");
+console.log("MasterDataController Keys:", Object.keys(masterDataController));
 
 // Get available types metadata
-router.get('/types', masterDataController.getTypes);
+router.get("/types", masterDataController.getTypes);
 
 // Get dropdown data untuk form
-router.get('/dropdown', masterDataController.getDropdownData);
+router.get("/dropdown", masterDataController.getDropdownData);
 
 // Get hierarchical report fields
-router.get('/laporan-fields', laporanFieldController.getHierarchicalFields);
+router.get("/laporan-fields", laporanFieldController.getHierarchicalFields);
 
 // CRUD operations with ?type= query parameter
-router.get('/', masterDataController.getAllMasterData);
-router.get('/:id', masterDataController.getMasterDataById);
-router.post('/', masterDataController.createMasterData);
-router.put('/:id', masterDataController.updateMasterData);
-router.patch('/:id/status', masterDataController.toggleStatus);
-router.delete('/:id', masterDataController.deleteMasterData);
+router.get("/", validateMasterDataQuery, masterDataController.getAllMasterData);
+router.get(
+  "/:id",
+  validateMasterDataQuery,
+  masterDataController.getMasterDataById,
+);
+router.post(
+  "/",
+  validateCreateMasterData,
+  masterDataController.createMasterData,
+);
+router.put(
+  "/:id",
+  validateUpdateMasterData,
+  masterDataController.updateMasterData,
+);
+router.patch(
+  "/:id/status",
+  validateUpdateMasterData,
+  masterDataController.toggleStatus,
+);
+router.delete(
+  "/:id",
+  validateDeleteMasterData,
+  masterDataController.deleteMasterData,
+);
 
 module.exports = router;
