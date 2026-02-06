@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const fs = require("fs");
 const path = require("path");
+const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
 
 // Table configuration to map type to database table, columns, and ID field
 const tableConfig = {
@@ -574,6 +575,19 @@ exports.createMasterData = async (req, res) => {
       message: "Master data berhasil ditambahkan",
       data: { id: newId, ...req.body },
     });
+    
+    // Log audit untuk CREATE master data
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: config.tableName,
+      action: 'CREATE',
+      recordId: newId,
+      newValues: req.body,
+      detail: `Master data created: ${type} (${newId})`,
+      description: `Data master ${type} ditambahkan`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   } catch (error) {
     console.error("=== ERROR CREATE MASTER DATA ===");
     console.error("Error:", error);
@@ -758,6 +772,20 @@ exports.updateMasterData = async (req, res) => {
       success: true,
       message: "Master data berhasil diupdate",
     });
+    
+    // Log audit untuk UPDATE master data
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: config.tableName,
+      action: 'UPDATE',
+      recordId: req.params.id,
+      newValues: req.body,
+      changes: Object.keys(req.body).join(', '),
+      detail: `Master data updated: ${type} (${req.params.id})`,
+      description: `Data master ${type} diubah`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   } catch (error) {
     const fs = require("fs");
     fs.appendFileSync(
@@ -813,6 +841,20 @@ exports.toggleStatus = async (req, res) => {
       success: true,
       message: `Status berhasil diubah menjadi ${status_aktif ? "Aktif" : "Nonaktif"}`,
     });
+    
+    // Log audit untuk UPDATE status master data
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: config.tableName,
+      action: 'UPDATE',
+      recordId: req.params.id,
+      newValues: { status_aktif },
+      changes: 'status_aktif',
+      detail: `Status master data updated: ${type} (${req.params.id})`,
+      description: `Status ${type} diubah menjadi ${status_aktif ? "Aktif" : "Nonaktif"}`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -841,6 +883,18 @@ exports.deleteMasterData = async (req, res) => {
     res.json({
       success: true,
       message: "Master data berhasil dihapus",
+    });
+    
+    // Log audit untuk DELETE master data
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: config.tableName,
+      action: 'DELETE',
+      recordId: req.params.id,
+      detail: `Master data deleted: ${type} (${req.params.id})`,
+      description: `Data master ${type} dihapus`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
     });
   } catch (error) {
     res.status(500).json({

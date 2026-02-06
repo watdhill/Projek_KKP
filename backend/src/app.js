@@ -13,7 +13,19 @@ const dynamicMasterRoutes = require("./routes/dynamicMasterRoutes");
 
 const app = express();
 
-app.use(cors());
+// CORS configuration - allow all origins for development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    // Allow all origins in development
+    callback(null, true);
+  },
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Apply JWT authentication middleware globally

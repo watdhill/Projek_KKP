@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const asyncHandler = require("../utils/asyncHandler");
+const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
 const { NotFoundError } = require("../middleware/errorHandler");
 
 const isDuplicateKeyError = (error) =>
@@ -142,6 +143,19 @@ exports.createAplikasi = asyncHandler(async (req, res) => {
     message: "Aplikasi berhasil ditambahkan",
     data: { nama_aplikasi: normalizedNamaAplikasi, domain: req.body.domain },
   });
+  
+    // Log audit untuk CREATE aplikasi
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'data_aplikasi',
+      action: 'CREATE',
+      recordId: result.insertId,
+      newValues: { nama_aplikasi: normalizedNamaAplikasi },
+      detail: `New application created: ${normalizedNamaAplikasi}`,
+      description: `Aplikasi ${normalizedNamaAplikasi} ditambahkan ke sistem`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   // Duplicate error (ER_DUP_ENTRY) otomatis di-handle oleh errorHandler
 });
 
@@ -209,6 +223,20 @@ exports.updateAplikasi = asyncHandler(async (req, res) => {
     success: true,
     message: "Aplikasi berhasil diupdate",
   });
+  
+    // Log audit untuk UPDATE aplikasi
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'data_aplikasi',
+      action: 'UPDATE',
+      recordId: req.params.id,
+      newValues: req.body,
+      changes: Object.keys(req.body).join(', '),
+      detail: `Application updated: ${normalizedNamaAplikasi}`,
+      description: `Data aplikasi ${normalizedNamaAplikasi} diubah`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   // Duplicate error otomatis di-handle oleh errorHandler
 });
 
@@ -228,6 +256,18 @@ exports.deleteAplikasi = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "Aplikasi berhasil dihapus",
+    });
+  
+    // Log audit untuk DELETE aplikasi
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'data_aplikasi',
+      action: 'DELETE',
+      recordId: req.params.id,
+      detail: `Application deleted: ${req.params.id}`,
+      description: `Aplikasi ${req.params.id} dihapus dari sistem`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
   });
   // Foreign key constraint error otomatis di-handle oleh errorHandler
 });
