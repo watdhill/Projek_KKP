@@ -378,55 +378,155 @@ function AuditLogSection() {
     }
   };
 
+  const unitOptions = logs.reduce((acc, log) => {
+    const userId = log.user_id;
+    if (!userId || acc.map.has(userId)) return acc;
+
+    const name = log.user_role || log.user_name || "User";
+    const email = log.user_email || "";
+    const label = email ? `${name} - ${email}` : name;
+
+    acc.map.set(userId, true);
+    acc.items.push({ value: String(userId), label });
+    return acc;
+  }, { map: new Map(), items: [] }).items;
+
   return (
-    <section id="audit-log" className="page-section">
+    <section
+      id="audit-log"
+      className="page-section"
+      style={{
+        padding: "24px",
+        backgroundColor: "#f8fafc",
+        minHeight: "100vh",
+      }}
+    >
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, marginBottom: '8px', fontSize: '28px', fontWeight: 600, color: '#1e293b' }}>
-          Audit Log
-        </h1>
-        <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
-          Catatan aktivitas sistem untuk keperluan audit dan keamanan
-        </p>
+      <div
+        style={{
+          marginBottom: "28px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+        }}
+      >
+        <div
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "10px",
+            background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
+          }}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v6l4 2" />
+          </svg>
+        </div>
+        <div>
+          <h1
+            style={{
+              margin: 0,
+              marginBottom: "2px",
+              fontSize: "18px",
+              fontWeight: 700,
+              background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              letterSpacing: "-0.01em",
+              lineHeight: 1.2,
+            }}
+          >
+            Audit Log
+          </h1>
+          <p
+            style={{
+              margin: 0,
+              color: "#64748b",
+              fontSize: "11px",
+              fontWeight: 500,
+              lineHeight: 1.3,
+            }}
+          >
+            Catatan aktivitas sistem untuk keperluan audit dan keamanan
+          </p>
+        </div>
       </div>
 
       {/* Filters */}
-      <div style={{
-        backgroundColor: '#ffffff',
-        borderRadius: '8px',
-        padding: '20px',
-        marginBottom: '20px',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '16px',
-          marginBottom: '16px'
-        }}>
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "12px",
+          border: "1px solid #e2e8f0",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+          marginBottom: "16px",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "12px 16px",
+            backgroundColor: "#fafbfc",
+            borderBottom: "1px solid #e2e8f0",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#475569",
+          }}
+        >
+          Filter Audit Log
+        </div>
+        <div style={{ padding: "16px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+              gap: "12px",
+              alignItems: "end",
+              marginBottom: "12px",
+            }}
+          >
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
-              Tabel
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
+              Unit
             </label>
-            <input
-              type="text"
-              name="tableName"
-              value={filters.tableName}
+            <select
+              name="userId"
+              value={filters.userId}
               onChange={handleFilterChange}
-              placeholder="Nama tabel..."
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                fontSize: '14px'
+                fontSize: '13px',
+                boxSizing: 'border-box'
               }}
-            />
+            >
+              <option value="">Semua Unit</option>
+              {unitOptions.map((unit) => (
+                <option key={unit.value} value={unit.value}>
+                  {unit.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
               Aksi
             </label>
             <select
@@ -436,9 +536,10 @@ function AuditLogSection() {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                fontSize: '14px'
+                fontSize: '13px',
+                boxSizing: 'border-box'
               }}
             >
               <option value="">Semua Aksi</option>
@@ -451,7 +552,7 @@ function AuditLogSection() {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
               Tanggal Mulai
             </label>
             <input
@@ -462,15 +563,16 @@ function AuditLogSection() {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                fontSize: '14px'
+                fontSize: '13px',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>
               Tanggal Akhir
             </label>
             <input
@@ -481,71 +583,43 @@ function AuditLogSection() {
               style={{
                 width: '100%',
                 padding: '8px 12px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid #cbd5e1',
                 borderRadius: '6px',
-                fontSize: '14px'
+                fontSize: '13px',
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
-          <div>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#475569', marginBottom: '6px' }}>
-              Pencarian
-            </label>
-            <input
-              type="text"
-              name="search"
-              value={filters.search}
-              onChange={handleFilterChange}
-              placeholder="Cari dalam data..."
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '6px',
-                fontSize: '14px'
-              }}
-            />
           </div>
-        </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={applyFilters} style={{
-            padding: '8px 16px',
-            backgroundColor: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}>
-            🔍 Terapkan Filter
-          </button>
-          <button onClick={resetFilters} style={{
-            padding: '8px 16px',
-            backgroundColor: '#e2e8f0',
-            color: '#1e293b',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}>
-            🔄 Reset
-          </button>
-          <button onClick={() => exportLogs("csv")} style={{
-            padding: '8px 16px',
-            backgroundColor: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}>
-            📥 Export CSV
-          </button>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <button onClick={applyFilters} style={{
+              padding: '8px 16px',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 4px rgba(79, 70, 229, 0.2)'
+            }}>
+              🔍 Terapkan Filter
+            </button>
+            <button onClick={resetFilters} style={{
+              padding: '8px 16px',
+              backgroundColor: '#f1f5f9',
+              color: '#64748b',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}>
+              🔄 Reset
+            </button>
+          </div>
         </div>
       </div>
 
@@ -566,32 +640,43 @@ function AuditLogSection() {
 
       {/* Loading State */}
       {loading ? (
-        <div style={{
-          padding: '40px',
-          textAlign: 'center',
-          color: '#64748b'
-        }}>
-          <div style={{
-            display: 'inline-block',
-            padding: '12px 24px',
-            backgroundColor: '#f1f5f9',
-            borderRadius: '6px'
-          }}>
-            Memuat data audit log...
-          </div>
+        <div
+          style={{
+            padding: "40px 20px",
+            textAlign: "center",
+            color: "#94a3b8",
+            fontSize: "14px",
+            backgroundColor: "#f8fafc",
+            borderRadius: "10px",
+            border: "1px solid #e2e8f0",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-block",
+              width: "32px",
+              height: "32px",
+              border: "3px solid #e2e8f0",
+              borderTopColor: "#4f46e5",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          ></div>
+          <div style={{ marginTop: "12px" }}>Memuat data audit log...</div>
         </div>
       ) : (
         <>
           {/* Stats Summary */}
           <div style={{
             backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            padding: '20px',
-            marginBottom: '20px',
+            borderRadius: '12px',
+            padding: '16px 18px',
+            marginBottom: '16px',
             border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '16px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)'
           }}>
             <div style={{ fontSize: '32px' }}>📊</div>
             <div>
@@ -607,17 +692,18 @@ function AuditLogSection() {
           {/* Table */}
           <div style={{
             backgroundColor: '#ffffff',
-            borderRadius: '8px',
+            borderRadius: '12px',
             border: '1px solid #e2e8f0',
             overflow: 'hidden',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-            marginBottom: '20px'
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            marginBottom: '16px'
           }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                fontSize: '14px'
+                fontSize: '14px',
+                tableLayout: 'fixed'
               }}>
                 <thead>
                   <tr style={{
@@ -627,8 +713,8 @@ function AuditLogSection() {
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '180px' }}>Waktu</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '250px' }}>Unit</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '120px' }}>Aksi</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Detail Aktivitas</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '140px' }}>IP Address</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '420px' }}>Detail Aktivitas</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#475569', width: '130px' }}>IP Address</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -683,7 +769,14 @@ function AuditLogSection() {
                               {badgeColors.label}
                             </span>
                           </td>
-                          <td style={{ padding: '12px 16px', color: '#1e293b', fontSize: '14px' }}>
+                          <td style={{
+                            padding: '12px 16px',
+                            color: '#1e293b',
+                            fontSize: '14px',
+                            whiteSpace: 'normal',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'anywhere'
+                          }}>
                             {activityDesc}
                           </td>
                           <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '13px' }}>
@@ -706,8 +799,9 @@ function AuditLogSection() {
               alignItems: 'center',
               padding: '16px',
               backgroundColor: '#ffffff',
-              borderRadius: '8px',
+              borderRadius: '12px',
               border: '1px solid #e2e8f0',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               flexWrap: 'wrap',
               gap: '16px'
             }}>
