@@ -548,70 +548,21 @@ exports.createMasterData = async (req, res) => {
             });
           }
 
-          // Build final ordered array
-          // Groups should appear at the position of their FIRST clicked field
-          const orderedFieldIds = [];
-          const processedParents = new Set();
+          // Legacy sorting logic removed. 
+          // We now strictly follow the fieldIds order from the frontend.
 
-          // Create a combined list with click orders
-          const allItems = [];
-
-          // Add individual fields
-          individualFields.forEach((fid) => {
-            allItems.push({
-              type: "individual",
-              field_id: fid,
-              click_order: clickOrder[fid] || 999999,
-            });
-          });
-
-          // Add groups (use click order of first field in group)
-          Object.keys(groupedFields).forEach((parentId) => {
-            const groupFieldIds = groupedFields[parentId];
-            // Find minimum click order in this group (first clicked field)
-            let minClickOrder = 999999;
-            groupFieldIds.forEach((fid) => {
-              if (clickOrder[fid] && clickOrder[fid] < minClickOrder) {
-                minClickOrder = clickOrder[fid];
-              }
-            });
-
-            allItems.push({
-              type: "group",
-              parent_id: parentId,
-              field_ids: groupFieldIds,
-              click_order: minClickOrder,
-            });
-          });
-
-          // Sort all items by click order
-          allItems.sort((a, b) => a.click_order - b.click_order);
-
-          // Build final array
-          allItems.forEach((item) => {
-            if (item.type === "individual") {
-              orderedFieldIds.push(item.field_id);
-            } else if (item.type === "group") {
-              // Add all fields in this group (maintain tree order within group)
-              orderedFieldIds.push(...item.field_ids);
-            }
-          });
-
-          console.log("Original order:", fieldIds);
-          console.log("Click order:", clickOrder);
-          console.log("Final order:", orderedFieldIds);
-
-          // Insert details in desired order (ordering is derived from auto-increment id)
-          const detailValues = orderedFieldIds.map((fid) => [
+          // Use the order from field_ids directly (frontend sends correct order)
+          const detailValues = fieldIds.map((fid, index) => [
             newId, // format_laporan_id
             null, // parent_id
             null, // judul
             0, // is_header
             fid, // field_id
+            index + 1, // order_index based on array position
           ]);
 
           await pool.query(
-            "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
+            "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id, order_index) VALUES ?",
             [detailValues],
           );
         } // End if fieldIds.length > 0 check block (added else handling above)
@@ -781,121 +732,24 @@ exports.updateMasterData = async (req, res) => {
         fieldIds = fieldIds.filter((id) => validSet.has(id));
 
         if (fieldIds.length > 0) {
-          // Get parent_id for each field to determine grouping
-          const [fieldInfo] = await pool.query(
-            `
-              SELECT field_id, parent_id
-              FROM master_laporan_field
-              WHERE field_id IN (?)
-            `,
-            [fieldIds],
-          );
+          // Simplified logic: Use the order from field_ids directly
+          // Groups, parents, click_order map... all ignored. We trust the field_ids array order.
 
-          const fieldMap = {};
-          fieldInfo.forEach((f) => {
-            fieldMap[f.field_id] = f.parent_id;
-          });
+          if (fieldIds.length > 0) {
+            const detailValues = fieldIds.map((fid, index) => [
+              req.params.id, // format_laporan_id
+              null, // parent_id
+              null, // judul
+              0, // is_header
+              fid, // field_id
+              index + 1 // order_index based on array position
+            ]);
 
-          // Get click order for individual fields (optional parameter)
-          let clickOrder = {};
-          if (req.body.field_click_order) {
-            clickOrder =
-              typeof req.body.field_click_order === "string"
-                ? JSON.parse(req.body.field_click_order)
-                : req.body.field_click_order;
+            await pool.query(
+              "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id, order_index) VALUES ?",
+              [detailValues],
+            );
           }
-
-          // Separate fields into groups
-          const groupedFields = {}; // {parent_id: [field_ids]}
-          const individualFields = []; // fields without parent
-
-          fieldIds.forEach((fid) => {
-            const parentId = fieldMap[fid];
-            if (parentId) {
-              if (!groupedFields[parentId]) {
-                groupedFields[parentId] = [];
-              }
-              groupedFields[parentId].push(fid);
-            } else {
-              individualFields.push(fid);
-            }
-          });
-
-          // Sort individual fields by click order if available
-          if (Object.keys(clickOrder).length > 0) {
-            individualFields.sort((a, b) => {
-              const orderA = clickOrder[a] || 999999;
-              const orderB = clickOrder[b] || 999999;
-              return orderA - orderB;
-            });
-          }
-
-          // Build final ordered array
-          // Groups should appear at the position of their FIRST clicked field
-          const orderedFieldIds = [];
-          const processedParents = new Set();
-
-          // Create a combined list with click orders
-          const allItems = [];
-
-          // Add individual fields
-          individualFields.forEach((fid) => {
-            allItems.push({
-              type: "individual",
-              field_id: fid,
-              click_order: clickOrder[fid] || 999999,
-            });
-          });
-
-          // Add groups (use click order of first field in group)
-          Object.keys(groupedFields).forEach((parentId) => {
-            const groupFieldIds = groupedFields[parentId];
-            // Find minimum click order in this group (first clicked field)
-            let minClickOrder = 999999;
-            groupFieldIds.forEach((fid) => {
-              if (clickOrder[fid] && clickOrder[fid] < minClickOrder) {
-                minClickOrder = clickOrder[fid];
-              }
-            });
-
-            allItems.push({
-              type: "group",
-              parent_id: parentId,
-              field_ids: groupFieldIds,
-              click_order: minClickOrder,
-            });
-          });
-
-          // Sort all items by click order
-          allItems.sort((a, b) => a.click_order - b.click_order);
-
-          // Build final array
-          allItems.forEach((item) => {
-            if (item.type === "individual") {
-              orderedFieldIds.push(item.field_id);
-            } else if (item.type === "group") {
-              // Add all fields in this group (maintain tree order within group)
-              orderedFieldIds.push(...item.field_ids);
-            }
-          });
-
-          console.log("UPDATE - Original order:", fieldIds);
-          console.log("UPDATE - Click order:", clickOrder);
-          console.log("UPDATE - Final order:", orderedFieldIds);
-
-          // Insert details in desired order (ordering is derived from auto-increment id)
-          const detailValues = orderedFieldIds.map((fid) => [
-            req.params.id, // format_laporan_id
-            null, // parent_id
-            null, // judul
-            0, // is_header
-            fid, // field_id
-          ]);
-
-          await pool.query(
-            "INSERT INTO format_laporan_detail (format_laporan_id, parent_id, judul, is_header, field_id) VALUES ?",
-            [detailValues],
-          );
         } // End if fieldIds.length > 0 check
       }
     }

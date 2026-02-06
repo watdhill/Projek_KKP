@@ -415,6 +415,7 @@ exports.getPreviewData = async (req, res) => {
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
       LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
       LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
       LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
@@ -437,6 +438,13 @@ exports.getPreviewData = async (req, res) => {
     if (eselon2_id && eselon2_id !== "all") {
       query += ` AND da.eselon2_id = ?`;
       params.push(eselon2_id);
+    }
+
+    // Add UPT Filter
+    const { upt_id } = req.query;
+    if (upt_id && upt_id !== "all") {
+      query += ` AND da.upt_id = ?`;
+      params.push(upt_id);
     }
 
     // Order by Eselon hierarchy (Setjen first), then by application name
@@ -504,8 +512,14 @@ exports.getPreviewData = async (req, res) => {
 // Export to Excel with hierarchical headers
 exports.exportExcel = async (req, res) => {
   try {
-    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } =
-      req.query;
+    const {
+      format_laporan_id,
+      tahun,
+      status,
+      eselon1_id,
+      eselon2_id,
+      upt_id,
+    } = req.query;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "KKP System";
@@ -537,7 +551,7 @@ exports.exportExcel = async (req, res) => {
       formats = singleFormat;
     }
 
-    const filters = { tahun, status, eselon1_id, eselon2_id };
+    const filters = { tahun, status, eselon1_id, eselon2_id, upt_id };
 
     // If no format specified, use default columns
     if (formats.length === 0) {
@@ -575,8 +589,8 @@ exports.exportExcel = async (req, res) => {
 // Export All Formats as Excel (Multiple Sheets)
 exports.exportExcelAll = async (req, res) => {
   try {
-    const { tahun, status, eselon1_id, eselon2_id } = req.query;
-    const filters = { tahun, status, eselon1_id, eselon2_id };
+    const { tahun, status, eselon1_id, eselon2_id, upt_id } = req.query;
+    const filters = { tahun, status, eselon1_id, eselon2_id, upt_id };
 
     // Fetch all active formats
     const [formats] = await pool.query(`
@@ -610,6 +624,7 @@ exports.exportExcelAll = async (req, res) => {
     if (status && status !== "all") filenameParts.push("Status" + status);
     if (eselon1_id && eselon1_id !== "all")
       filenameParts.push("Eselon1_" + eselon1_id);
+    if (upt_id && upt_id !== "all") filenameParts.push("UPT_" + upt_id);
 
     const filename = `${filenameParts.join("_")}_${new Date().toISOString().split("T")[0]}.xlsx`;
 
@@ -665,12 +680,12 @@ async function createDefaultSheet(workbook, filters) {
       status: row.status_aplikasi,
       tanggal: row.created_at
         ? new Date(row.created_at).toLocaleString("id-ID", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
         : "-",
     });
   });
@@ -821,7 +836,7 @@ async function createFormatSheet(workbook, format, filters) {
  * Get filtered data for exports
  */
 async function getFilteredData(filters) {
-  const { status, eselon1_id, eselon2_id } = filters;
+  const { status, eselon1_id, eselon2_id, upt_id } = filters;
 
   const caraAksesMap = await getCaraAksesMap();
 
@@ -848,6 +863,7 @@ async function getFilteredData(filters) {
     FROM data_aplikasi da
     LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
     LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+    LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
     LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
     LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
     LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
@@ -870,6 +886,11 @@ async function getFilteredData(filters) {
   if (eselon2_id && eselon2_id !== "all") {
     query += ` AND da.eselon2_id = ?`;
     params.push(eselon2_id);
+  }
+
+  if (upt_id && upt_id !== "all") {
+    query += ` AND da.upt_id = ?`;
+    params.push(upt_id);
   }
 
   // Order by Eselon hierarchy (Setjen first), then by application name
@@ -926,8 +947,14 @@ async function getFilteredData(filters) {
 // Export to PDF
 exports.exportPDF = async (req, res) => {
   try {
-    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id } =
-      req.query;
+    const {
+      format_laporan_id,
+      tahun,
+      status,
+      eselon1_id,
+      eselon2_id,
+      upt_id,
+    } = req.query;
 
     // Get format details
     let formatName = "Laporan Aplikasi";
@@ -962,7 +989,7 @@ exports.exportPDF = async (req, res) => {
     const structure = await buildHierarchyFromMasterField(formatDetails);
 
     // Get filtered data
-    const filters = { tahun, status, eselon1_id, eselon2_id };
+    const filters = { tahun, status, eselon1_id, eselon2_id, upt_id };
     const data = await getFilteredData(filters);
 
     // Create PDF with landscape A3
@@ -1183,8 +1210,8 @@ exports.exportPDF = async (req, res) => {
 // Export All Formats as PDF (Single Document with Sections)
 exports.exportPDFAll = async (req, res) => {
   try {
-    const { tahun, status, eselon1_id, eselon2_id } = req.query;
-    const filters = { tahun, status, eselon1_id, eselon2_id };
+    const { tahun, status, eselon1_id, eselon2_id, upt_id } = req.query;
+    const filters = { tahun, status, eselon1_id, eselon2_id, upt_id };
 
     // Fetch all active formats
     const [formats] = await pool.query(`
