@@ -13,7 +13,10 @@ function LaporanSection() {
     status: "all",
     eselon1_id: "all",
     eselon2_id: "all",
+    upt_id: "all",
   });
+
+  const [uptList, setUptList] = useState([]);
 
   const [previewData, setPreviewData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,9 +30,11 @@ function LaporanSection() {
   useEffect(() => {
     if (filters.eselon1_id !== "all") {
       fetchEselon2ByEselon1(filters.eselon1_id);
+      fetchUptByEselon1(filters.eselon1_id);
     } else {
       setEselon2List([]);
-      setFilters((prev) => ({ ...prev, eselon2_id: "all" }));
+      setUptList([]);
+      setFilters((prev) => ({ ...prev, eselon2_id: "all", upt_id: "all" }));
     }
   }, [filters.eselon1_id]);
 
@@ -82,6 +87,20 @@ function LaporanSection() {
       }
     } catch (err) {
       console.error("Error fetching eselon2:", err);
+    }
+  };
+
+  const fetchUptByEselon1 = async (eselon1Id) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/master-data?type=upt&eselon1_id=${eselon1Id}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setUptList((data.data || []).filter((e) => e.status_aktif === 1));
+      }
+    } catch (err) {
+      console.error("Error fetching upt:", err);
     }
   };
 
@@ -159,6 +178,8 @@ function LaporanSection() {
       params.append("eselon1_id", filters.eselon1_id);
     if (filters.eselon2_id && filters.eselon2_id !== "all")
       params.append("eselon2_id", filters.eselon2_id);
+    if (filters.upt_id && filters.upt_id !== "all")
+      params.append("upt_id", filters.upt_id);
 
     const url = `http://localhost:5000/api/laporan/export/${format}?${params.toString()}`;
     window.open(url, "_blank");
@@ -530,6 +551,63 @@ function LaporanSection() {
               ))}
             </select>
           </div>
+
+          {/* UPT */}
+          <div>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "6px",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#475569",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+              }}
+            >
+              UPT
+            </label>
+            <select
+              value={filters.upt_id}
+              onChange={(e) => handleFilterChange("upt_id", e.target.value)}
+              disabled={filters.eselon1_id === "all"}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1.5px solid #e2e8f0",
+                fontSize: "12px",
+                fontWeight: 500,
+                color: filters.eselon1_id === "all" ? "#94a3b8" : "#1e293b",
+                backgroundColor:
+                  filters.eselon1_id === "all" ? "#f8fafc" : "#ffffff",
+                cursor:
+                  filters.eselon1_id === "all" ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+                opacity: filters.eselon1_id === "all" ? 0.6 : 1,
+              }}
+              onFocus={(e) => {
+                if (filters.eselon1_id !== "all") {
+                  e.currentTarget.style.borderColor = "#6366f1";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 0 3px rgba(99, 102, 241, 0.1)";
+                }
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.boxShadow =
+                  "0 1px 2px rgba(0, 0, 0, 0.04)";
+              }}
+            >
+              <option value="all">Semua UPT</option>
+              {uptList.map((upt) => (
+                <option key={upt.upt_id} value={upt.upt_id}>
+                  {upt.nama_upt}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -893,15 +971,19 @@ function LaporanSection() {
                         <th
                           key={`header_${idx}`}
                           style={{
-                            padding: "10px 12px",
-                            textAlign: "left",
+                            padding: "12px 14px",
+                            textAlign: "center", // Centered header for better look
+                            verticalAlign: "middle",
                             fontWeight: 700,
-                            color: "#475569",
-                            fontSize: "9px",
+                            color: "#ffffff", // White text
+                            fontSize: "11px",
                             textTransform: "uppercase",
-                            letterSpacing: "0.08em",
-                            background: "transparent",
-                            borderBottom: "none",
+                            letterSpacing: "0.05em",
+                            background: "#334155", // Dark Slate
+                            borderRight: "1px solid #475569",
+                            borderBottom: "1px solid #475569",
+                            whiteSpace: "nowrap", // Prevent wrapping for headers
+                            minWidth: "120px", // Minimum width
                           }}
                         >
                           {field.nama_field || field.kode_field}
@@ -947,15 +1029,13 @@ function LaporanSection() {
                           <td
                             key={`data_${idx}`}
                             style={{
-                              padding: "10px 12px",
-                              color: "#64748b",
-                              fontSize: "10px",
+                              padding: "10px 14px",
+                              color: "#334155",
+                              fontSize: "11px",
                               fontWeight: 500,
-                              borderTop: "1px solid #e2e8f0",
-                              borderBottom: "1px solid #e2e8f0",
-                              borderRight: isLastField ? "1px solid #e2e8f0" : "none",
-                              borderTopRightRadius: isLastField ? "8px" : "0",
-                              borderBottomRightRadius: isLastField ? "8px" : "0",
+                              borderRight: "1px solid #e2e8f0", // Vertical borders
+                              borderBottom: "1px solid #e2e8f0", // Horizontal borders
+                              verticalAlign: "middle",
                             }}
                           >
                             {item[field.kode_field] || "-"}

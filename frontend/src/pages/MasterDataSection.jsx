@@ -1,5 +1,44 @@
 import { useState, useEffect } from "react";
 import { authFetch } from "../utils/api";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Sortable Item Component
+function SortableItem(props) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: props.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    marginBottom: "8px",
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {props.children}
+    </div>
+  );
+}
 
 const API_BASE = "http://localhost:5000/api/master-data";
 
@@ -1105,10 +1144,17 @@ function MasterDataSection() {
           const selectedItems = flatOptions
             .filter((opt) => selectedSet.has(opt.value))
             .sort((a, b) => {
+              // Sort based on backend restored order (order_index)
+              // This is crucial for "Edit" to show correct order
               const orderA = fieldMap[a.value] || 999999;
               const orderB = fieldMap[b.value] || 999999;
               return orderA - orderB;
             });
+
+          // Re-sync selectedFieldIds based on this sorted order to ensure consistency
+          const sortedIds = selectedItems.map(item => item.value);
+          setSelectedFieldIds(sortedIds);
+
           setSelectedDataFields(selectedItems);
           setAvailableDataFields(
             flatOptions.filter((opt) => !selectedSet.has(opt.value)),
@@ -1396,6 +1442,37 @@ function MasterDataSection() {
       fetchData();
     } catch (err) {
       alert(err.message || "Terjadi kesalahan");
+    }
+  };
+
+  // ---------- Drag and Drop Logic ----------
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      // Find indexes in the IDs array (Order of Truth)
+      const oldIndex = selectedFieldIds.indexOf(active.id);
+      const newIndex = selectedFieldIds.indexOf(over.id);
+
+      // Reorder IDs
+      const newIds = arrayMove(selectedFieldIds, oldIndex, newIndex);
+      setSelectedFieldIds(newIds);
+
+      // Reorder Data Objects (Display) explicitly to match IDs
+      // This is crucial because selectedDataFields might have different references
+      // We rebuild selectedDataFields based on the new ID order
+      const newDataFields = newIds
+        .map((id) => selectedDataFields.find((f) => f.value === id))
+        .filter((f) => !!f); // Remove undefined if any
+
+      setSelectedDataFields(newDataFields);
     }
   };
 
@@ -1986,288 +2063,288 @@ function MasterDataSection() {
             <tbody>
               {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
               {(activeTab === "eselon2" || activeTab === "upt") &&
-              !selectedEselon1Filter
+                !selectedEselon1Filter
                 ? (() => {
-                    // Group data
-                    const grouped = {};
-                    filteredData.forEach((item) => {
-                      const e1Id = item.eselon1_id;
-                      if (!grouped[e1Id]) grouped[e1Id] = [];
-                      grouped[e1Id].push(item);
-                    });
+                  // Group data
+                  const grouped = {};
+                  filteredData.forEach((item) => {
+                    const e1Id = item.eselon1_id;
+                    if (!grouped[e1Id]) grouped[e1Id] = [];
+                    grouped[e1Id].push(item);
+                  });
 
-                    // Render groups
-                    return Object.keys(grouped).map((e1Id) => {
-                      // Find Eselon 1 Name
-                      const e1Name =
-                        eselon1Options.find(
-                          (opt) => opt.value === parseInt(e1Id),
-                        )?.label || `Eselon 1 ID: ${e1Id}`;
+                  // Render groups
+                  return Object.keys(grouped).map((e1Id) => {
+                    // Find Eselon 1 Name
+                    const e1Name =
+                      eselon1Options.find(
+                        (opt) => opt.value === parseInt(e1Id),
+                      )?.label || `Eselon 1 ID: ${e1Id}`;
 
-                      return (
-                        <>
-                          {/* Group Header */}
-                          <tr
-                            key={`group-${e1Id}`}
+                    return (
+                      <>
+                        {/* Group Header */}
+                        <tr
+                          key={`group-${e1Id}`}
+                          style={{
+                            backgroundColor: "#e0e7ff",
+                            borderBottom: "1px solid #c7d2fe",
+                          }}
+                        >
+                          <td
+                            colSpan={columns.length + 1}
                             style={{
-                              backgroundColor: "#e0e7ff",
-                              borderBottom: "1px solid #c7d2fe",
+                              padding: "10px 14px",
+                              fontWeight: 700,
+                              color: "#3730a3",
+                              fontSize: "13px",
                             }}
                           >
-                            <td
-                              colSpan={columns.length + 1}
-                              style={{
-                                padding: "10px 14px",
-                                fontWeight: 700,
-                                color: "#3730a3",
-                                fontSize: "13px",
-                              }}
-                            >
-                              {e1Name}
-                            </td>
-                          </tr>
-                          {/* Items in group */}
-                          {grouped[e1Id].map((item, index) => (
-                            <tr
-                              key={getRowId(item) ?? index}
-                              style={{
-                                borderBottom: "1px solid #f1f5f9",
-                                backgroundColor: "#ffffff",
-                                transition: "all 0.2s",
-                                height: "50px",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "#f0f9ff";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "#ffffff";
-                              }}
-                            >
-                              {columns.map((col) => (
-                                <td
-                                  key={`${getRowId(item)}-${col}`}
-                                  className={
-                                    col === "email_pic" ? "allow-lowercase" : ""
-                                  }
-                                  style={{
-                                    padding: "10px 14px",
-                                    color: "#334155",
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  {col === "status_aktif" ? (
-                                    <span
-                                      onClick={() => {
-                                        // Toggle status logic
-                                        const currentStatus =
-                                          item.status_aktif === 1 ||
-                                          item.status_aktif === true;
-                                        handleToggleStatus(
-                                          item,
-                                          !currentStatus,
-                                        );
-                                      }}
-                                      style={{
-                                        backgroundColor: getStatusColor(
-                                          item[col],
-                                        ).bg,
-                                        color: getStatusColor(item[col]).text,
-                                        padding: "4px 10px",
-                                        borderRadius: "6px",
-                                        fontSize: "11px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                        display: "inline-block",
-                                      }}
-                                    >
-                                      {getStatusColor(item[col]).label}
-                                    </span>
-                                  ) : (
-                                    item[col]
-                                  )}
-                                </td>
-                              ))}
-                              <td
-                                style={{
-                                  padding: "10px 14px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: "8px",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  <button
-                                    onClick={() => handleEdit(item)}
-                                    style={{
-                                      padding: "6px 14px",
-                                      background:
-                                        "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                                      color: "#ffffff",
-                                      border: "none",
-                                      borderRadius: "6px",
-                                      fontSize: "11px",
-                                      fontWeight: 700,
-                                      cursor: "pointer",
-                                      transition: "all 0.2s",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "5px",
-                                      boxShadow:
-                                        "0 2px 6px rgba(245, 158, 11, 0.25)",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.target.style.transform =
-                                        "translateY(-1px)";
-                                      e.target.style.boxShadow =
-                                        "0 4px 10px rgba(245, 158, 11, 0.35)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.target.style.transform =
-                                        "translateY(0)";
-                                      e.target.style.boxShadow =
-                                        "0 2px 6px rgba(245, 158, 11, 0.25)";
-                                    }}
-                                  >
-                                    <svg
-                                      width="12"
-                                      height="12"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                    >
-                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                    Edit
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </>
-                      );
-                    });
-                  })()
-                : filteredData.map((item, index) => (
-                    <tr
-                      key={getRowId(item) ?? index}
-                      style={{
-                        borderBottom: "1px solid #f1f5f9",
-                        backgroundColor:
-                          index % 2 === 0 ? "#ffffff" : "#fafbfc",
-                        transition: "all 0.2s",
-                        height: "50px",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = "#f0f9ff";
-                        e.currentTarget.style.transform = "scale(1.001)";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor =
-                          index % 2 === 0 ? "#ffffff" : "#fafbfc";
-                        e.currentTarget.style.transform = "scale(1)";
-                      }}
-                    >
-                      {columns.map((col) => (
-                        <td
-                          key={`${getRowId(item)}-${col}`}
-                          className={
-                            col === "email_pic" ? "allow-lowercase" : ""
-                          }
-                          style={{
-                            padding: "10px 14px",
-                            color: "#334155",
-                            fontWeight: 500,
-                          }}
-                        >
-                          {col === "status_aktif" ? (
-                            <span
-                              style={{
-                                backgroundColor: getStatusColor(item[col]).bg,
-                                color: getStatusColor(item[col]).text,
-                                padding: "4px 10px",
-                                borderRadius: "6px",
-                                fontSize: "11px",
-                                fontWeight: 600,
-                                display: "inline-block",
-                              }}
-                            >
-                              {getStatusColor(item[col]).label}
-                            </span>
-                          ) : fkDropdownData[col] ? (
-                            fkDropdownData[col].find(
-                              (opt) => String(opt.value) === String(item[col]),
-                            )?.label || item[col]
-                          ) : (
-                            item[col]
-                          )}
-                        </td>
-                      ))}
-                      <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            gap: "8px",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <button
-                            onClick={() => handleEdit(item)}
+                            {e1Name}
+                          </td>
+                        </tr>
+                        {/* Items in group */}
+                        {grouped[e1Id].map((item, index) => (
+                          <tr
+                            key={getRowId(item) ?? index}
                             style={{
-                              padding: "6px 14px",
-                              background:
-                                "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                              color: "#ffffff",
-                              border: "none",
-                              borderRadius: "6px",
-                              fontSize: "11px",
-                              fontWeight: 700,
-                              cursor: "pointer",
+                              borderBottom: "1px solid #f1f5f9",
+                              backgroundColor: "#ffffff",
                               transition: "all 0.2s",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "5px",
-                              boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                              height: "50px",
                             }}
                             onMouseEnter={(e) => {
-                              e.target.style.transform = "translateY(-1px)";
-                              e.target.style.boxShadow =
-                                "0 4px 10px rgba(245, 158, 11, 0.35)";
+                              e.currentTarget.style.backgroundColor =
+                                "#f0f9ff";
                             }}
                             onMouseLeave={(e) => {
-                              e.target.style.transform = "translateY(0)";
-                              e.target.style.boxShadow =
-                                "0 2px 6px rgba(245, 158, 11, 0.25)";
+                              e.currentTarget.style.backgroundColor =
+                                "#ffffff";
                             }}
                           >
-                            <svg
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
+                            {columns.map((col) => (
+                              <td
+                                key={`${getRowId(item)}-${col}`}
+                                className={
+                                  col === "email_pic" ? "allow-lowercase" : ""
+                                }
+                                style={{
+                                  padding: "10px 14px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {col === "status_aktif" ? (
+                                  <span
+                                    onClick={() => {
+                                      // Toggle status logic
+                                      const currentStatus =
+                                        item.status_aktif === 1 ||
+                                        item.status_aktif === true;
+                                      handleToggleStatus(
+                                        item,
+                                        !currentStatus,
+                                      );
+                                    }}
+                                    style={{
+                                      backgroundColor: getStatusColor(
+                                        item[col],
+                                      ).bg,
+                                      color: getStatusColor(item[col]).text,
+                                      padding: "4px 10px",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      fontWeight: 600,
+                                      cursor: "pointer",
+                                      display: "inline-block",
+                                    }}
+                                  >
+                                    {getStatusColor(item[col]).label}
+                                  </span>
+                                ) : (
+                                  item[col]
+                                )}
+                              </td>
+                            ))}
+                            <td
+                              style={{
+                                padding: "10px 14px",
+                                textAlign: "center",
+                              }}
                             >
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Edit
-                          </button>
-                        </div>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  style={{
+                                    padding: "6px 14px",
+                                    background:
+                                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow:
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.target.style.transform =
+                                      "translateY(-1px)";
+                                    e.target.style.boxShadow =
+                                      "0 4px 10px rgba(245, 158, 11, 0.35)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.target.style.transform =
+                                      "translateY(0)";
+                                    e.target.style.boxShadow =
+                                      "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                  }}
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                  </svg>
+                                  Edit
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
+                    );
+                  });
+                })()
+                : filteredData.map((item, index) => (
+                  <tr
+                    key={getRowId(item) ?? index}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      backgroundColor:
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc",
+                      transition: "all 0.2s",
+                      height: "50px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f0f9ff";
+                      e.currentTarget.style.transform = "scale(1.001)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor =
+                        index % 2 === 0 ? "#ffffff" : "#fafbfc";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={`${getRowId(item)}-${col}`}
+                        className={
+                          col === "email_pic" ? "allow-lowercase" : ""
+                        }
+                        style={{
+                          padding: "10px 14px",
+                          color: "#334155",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {col === "status_aktif" ? (
+                          <span
+                            style={{
+                              backgroundColor: getStatusColor(item[col]).bg,
+                              color: getStatusColor(item[col]).text,
+                              padding: "4px 10px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              display: "inline-block",
+                            }}
+                          >
+                            {getStatusColor(item[col]).label}
+                          </span>
+                        ) : fkDropdownData[col] ? (
+                          fkDropdownData[col].find(
+                            (opt) => String(opt.value) === String(item[col]),
+                          )?.label || item[col]
+                        ) : (
+                          item[col]
+                        )}
                       </td>
-                    </tr>
-                  ))}
+                    ))}
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <button
+                          onClick={() => handleEdit(item)}
+                          style={{
+                            padding: "6px 14px",
+                            background:
+                              "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                            color: "#ffffff",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            boxShadow: "0 2px 6px rgba(245, 158, 11, 0.25)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.transform = "translateY(-1px)";
+                            e.target.style.boxShadow =
+                              "0 4px 10px rgba(245, 158, 11, 0.35)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.transform = "translateY(0)";
+                            e.target.style.boxShadow =
+                              "0 2px 6px rgba(245, 158, 11, 0.25)";
+                          }}
+                        >
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                          </svg>
+                          Edit
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -2602,81 +2679,99 @@ function MasterDataSection() {
                             Pilih data dari daftar
                           </div>
                         ) : (
-                          <>
-                            {/* Render Hierarchical Fields */}
-                            {selectedFieldIds.map((id) => {
-                              const nodeName = findFieldNameById(
-                                id,
-                                hierarchicalFields,
-                              );
-                              // Filter out headers/groups from display list
-                              const nodeObj = findNodeById(
-                                id,
-                                hierarchicalFields,
-                              );
-                              const isHeader =
-                                nodeObj?.children &&
-                                nodeObj.children.length > 0;
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <SortableContext
+                              items={selectedFieldIds}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              {selectedFieldIds.map((id) => {
+                                const nodeName = findFieldNameById(
+                                  id,
+                                  hierarchicalFields,
+                                );
+                                // Filter out headers/groups from display list
+                                const nodeObj = findNodeById(
+                                  id,
+                                  hierarchicalFields,
+                                );
+                                const isHeader =
+                                  nodeObj?.children &&
+                                  nodeObj.children.length > 0;
 
-                              if (!nodeName || isHeader) return null;
-                              return (
-                                <div
-                                  key={`hier-${id}`}
-                                  onClick={() => {
-                                    const node = findNodeById(
-                                      id,
-                                      hierarchicalFields,
-                                    );
-                                    if (node) toggleHierarchicalField(node);
-                                  }}
-                                  style={{
-                                    padding: "10px 12px",
-                                    marginBottom: "6px",
-                                    background:
-                                      "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
-                                    borderRadius: "8px",
-                                    border: "1px solid #86efac",
-                                    cursor: "pointer",
-                                    fontSize: "13px",
-                                    color: "#166534",
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
-                                    transition: "all 0.2s",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor =
-                                      "#fee2e2";
-                                    e.currentTarget.style.borderColor =
-                                      "#fca5a5";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.background =
-                                      "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
-                                    e.currentTarget.style.borderColor =
-                                      "#86efac";
-                                  }}
-                                >
-                                  <span style={{ fontWeight: 500 }}>
-                                    {nodeName}
-                                  </span>
-                                  <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  >
-                                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                                  </svg>
-                                </div>
-                              );
-                            })}
-                          </>
+                                if (!nodeName || isHeader) return null;
+                                return (
+                                  <SortableItem key={id} id={id}>
+                                    <div
+                                      onClick={() => {
+                                        const node = findNodeById(
+                                          id,
+                                          hierarchicalFields,
+                                        );
+                                        if (node) toggleHierarchicalField(node);
+                                      }}
+                                      style={{
+                                        padding: "10px 12px",
+                                        background:
+                                          "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)",
+                                        borderRadius: "8px",
+                                        border: "1px solid #86efac",
+                                        cursor: "grab",
+                                        fontSize: "13px",
+                                        color: "#166534",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        transition: "all 0.2s",
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor =
+                                          "#fee2e2";
+                                        e.currentTarget.style.borderColor =
+                                          "#fca5a5";
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.background =
+                                          "linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)";
+                                        e.currentTarget.style.borderColor =
+                                          "#86efac";
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 500 }}>
+                                        {nodeName}
+                                      </span>
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <line
+                                          x1="18"
+                                          y1="6"
+                                          x2="6"
+                                          y2="18"
+                                        ></line>
+                                        <line
+                                          x1="6"
+                                          y1="6"
+                                          x2="18"
+                                          y2="18"
+                                        ></line>
+                                      </svg>
+                                    </div>
+                                  </SortableItem>
+                                );
+                              })}
+                            </SortableContext>
+                          </DndContext>
                         )}
                       </div>
                     </div>
