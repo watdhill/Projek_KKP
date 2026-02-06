@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const fs = require("fs").promises;
 const path = require("path");
+const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
 
 // Helper: Generate CREATE TABLE SQL dari definisi kolom
 const generateCreateTableSQL = (tableName, columns, idField) => {
@@ -507,6 +508,19 @@ exports.createMasterTable = async (req, res) => {
         sql: createTableSQL,
       },
     });
+    
+    // Log audit untuk CREATE dynamic table
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'master_table_registry',
+      action: 'CREATE',
+      recordId: registryId,
+      newValues: { table_name, display_name, id_field_name },
+      detail: `Dynamic table created: ${table_name}`,
+      description: `Tabel dinamis ${table_name} berhasil dibuat`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   } catch (error) {
     await connection.rollback();
     console.error("❌ Error creating table:", error);
@@ -733,6 +747,20 @@ exports.updateMasterTable = async (req, res) => {
         alterations: alterStatements.length,
       },
     });
+    
+    // Log audit untuk UPDATE dynamic table
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'master_table_registry',
+      action: 'UPDATE',
+      recordId: registryId,
+      newValues: { table_name: tableName, display_name: displayName, id_field_name: idFieldName },
+      changes: 'schema update',
+      detail: `Dynamic table updated: ${tableName}`,
+      description: `Tabel dinamis ${tableName} berhasil diupdate`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
   } catch (error) {
     await connection.rollback();
     console.error("❌ Error updating table:", error);
@@ -837,6 +865,18 @@ exports.deleteMasterTable = async (req, res) => {
     res.json({
       success: true,
       message: `Tabel '${tableName}' dan semua datanya berhasil dihapus`,
+    });
+    
+    // Log audit untuk DELETE dynamic table
+    await logAudit({
+      userId: req.user?.userId,
+      tableName: 'master_table_registry',
+      action: 'DELETE',
+      recordId: registryId,
+      detail: `Dynamic table deleted: ${tableName}`,
+      description: `Tabel dinamis ${tableName} berhasil dihapus`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
     });
   } catch (error) {
     await connection.rollback();

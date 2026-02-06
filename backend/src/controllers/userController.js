@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../middleware/auth");
+const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
 
 // Reset Password - via token
 exports.resetPassword = async (req, res) => {
@@ -208,6 +209,16 @@ exports.login = async (req, res) => {
       upt_id: user.upt_id,
     });
 
+    // Log audit untuk login berhasil
+    await logAudit({
+      userId: user.user_id,
+      action: 'LOGIN',
+      detail: `User ${user.nama} (${user.email}) logged in successfully`,
+      description: `Login berhasil dari role ${user.nama_role}`,
+      ipAddress: getIpAddress(req),
+      userAgent: getUserAgent(req),
+    });
+
     res.json({
       success: true,
       message: "Login berhasil",
@@ -395,6 +406,19 @@ exports.createUser = async (req, res) => {
         hashedPassword,
       ],
     );
+      // Log audit untuk CREATE user
+      await logAudit({
+        userId: req.user?.userId,
+        tableName: 'users',
+        action: 'CREATE',
+        recordId: result.insertId,
+        newValues: { role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak },
+        detail: `New user created: ${nama} (${email})`,
+        description: `User ${nama} ditambahkan ke sistem`,
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+      });
+    
     res.status(201).json({
       success: true,
       message: "User berhasil ditambahkan",
@@ -512,6 +536,21 @@ exports.updateUser = async (req, res) => {
         message: "User tidak ditemukan",
       });
     }
+      // Log audit untuk UPDATE user
+      const changedFields = password ? 'nama, email, role_id, status_aktif, password' : 'nama, email, role_id, status_aktif';
+      await logAudit({
+        userId: req.user?.userId,
+        tableName: 'users',
+        action: 'UPDATE',
+        recordId: req.params.id,
+        newValues: { role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak, status_aktif },
+        changes: changedFields,
+        detail: `User updated: ${nama} (${email})`,
+        description: `Data user ${nama} diubah`,
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+      });
+    
     res.json({
       success: true,
       message: "User berhasil diupdate",
@@ -554,6 +593,18 @@ exports.deleteUser = async (req, res) => {
       "UPDATE users SET status_aktif = 0 WHERE user_id = ?",
       [req.params.id],
     );
+      // Log audit untuk DELETE (deactivate) user
+      await logAudit({
+        userId: req.user?.userId,
+        tableName: 'users',
+        action: 'DELETE',
+        recordId: req.params.id,
+        detail: `User deactivated: ${checkUser[0].user_id}`,
+        description: `User ${checkUser[0].user_id} dinonaktifkan dari sistem`,
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+      });
+    
     res.json({
       success: true,
       message: "User berhasil dinonaktifkan",
@@ -612,6 +663,20 @@ exports.updateProfile = async (req, res) => {
         message: "User tidak ditemukan",
       });
     }
+    
+      // Log audit untuk UPDATE profile
+      await logAudit({
+        userId: req.user?.userId,
+        tableName: 'users',
+        action: 'UPDATE',
+        recordId: userId,
+        newValues: { nama, nip, email, jabatan, kontak },
+        changes: 'nama, nip, email, jabatan, kontak',
+        detail: `Profile updated: ${nama} (${email})`,
+        description: `Profil user ${nama} diperbarui`,
+        ipAddress: getIpAddress(req),
+        userAgent: getUserAgent(req),
+      });
 
     // Ambil data user yang sudah diupdate
     const [updatedUser] = await pool.query(
