@@ -575,7 +575,7 @@ exports.createMasterData = async (req, res) => {
       message: "Master data berhasil ditambahkan",
       data: { id: newId, ...req.body },
     });
-    
+
     // Log audit untuk CREATE master data
     await logAudit({
       userId: req.user?.userId,
@@ -657,6 +657,34 @@ exports.updateMasterData = async (req, res) => {
           val = JSON.stringify(val);
         }
         values.push(val);
+      }
+    }
+
+    // Check for duplicate names based on type (excluding current record)
+    const nameField = {
+      eselon1: "nama_eselon1",
+      eselon2: "nama_eselon2",
+      upt: "nama_upt",
+      frekuensi_pemakaian: "nama_frekuensi",
+      status_aplikasi: "nama_status",
+      environment: "jenis_environment",
+      cara_akses: "nama_cara_akses",
+      pdn: "kode_pdn",
+      format_laporan: "nama_format",
+      pic_eksternal: "nama_pic_eksternal",
+      pic_internal: "nama_pic_internal",
+    };
+
+    if (nameField[type] && req.body[nameField[type]]) {
+      const [duplicateCheck] = await pool.query(
+        `SELECT ${config.idField} FROM ${config.tableName} WHERE ${nameField[type]} = ? AND ${config.idField} != ?`,
+        [req.body[nameField[type]], req.params.id],
+      );
+      if (duplicateCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`,
+        });
       }
     }
 
@@ -772,7 +800,7 @@ exports.updateMasterData = async (req, res) => {
       success: true,
       message: "Master data berhasil diupdate",
     });
-    
+
     // Log audit untuk UPDATE master data
     await logAudit({
       userId: req.user?.userId,
@@ -841,7 +869,7 @@ exports.toggleStatus = async (req, res) => {
       success: true,
       message: `Status berhasil diubah menjadi ${status_aktif ? "Aktif" : "Nonaktif"}`,
     });
-    
+
     // Log audit untuk UPDATE status master data
     await logAudit({
       userId: req.user?.userId,
@@ -884,7 +912,7 @@ exports.deleteMasterData = async (req, res) => {
       success: true,
       message: "Master data berhasil dihapus",
     });
-    
+
     // Log audit untuk DELETE master data
     await logAudit({
       userId: req.user?.userId,

@@ -1,0 +1,48 @@
+Database terhubung dengan sukses
+
+Structure of pic_internal:
+┌─────────┬───────────────────────┬───────────────────────┬───────┬───────┬───────────────────────┬─────────────────────────────────┐
+│ (index) │ Field                 │ Type                  │ Null  │ Key   │ Default               │ Extra                           │
+├─────────┼───────────────────────┼───────────────────────┼───────┼───────┼───────────────────────┼─────────────────────────────────┤
+│ 0       │ 'pic_internal_id'     │ 'bigint(20) unsigned' │ 'NO'  │ 'PRI' │ null                  │ 'auto_increment'                │
+│ 1       │ 'eselon2_id'          │ 'bigint(20) unsigned' │ 'YES' │ 'MUL' │ null                  │ ''                              │
+│ 2       │ 'upt_id'              │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 3       │ 'nama_pic_internal'   │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 4       │ 'email_pic'           │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 5       │ 'kontak_pic_internal' │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 6       │ 'status_aktif'        │ 'tinyint(1)'          │ 'YES' │ ''    │ '1'                   │ ''                              │
+│ 7       │ 'created_by'          │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 8       │ 'updated_by'          │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 9       │ 'created_at'          │ 'timestamp'           │ 'NO'  │ ''    │ 'current_timestamp()' │ ''                              │
+│ 10      │ 'updated_at'          │ 'timestamp'           │ 'NO'  │ ''    │ 'current_timestamp()' │ 'on update current_timestamp()' │
+└─────────┴───────────────────────┴───────────────────────┴───────┴───────┴───────────────────────┴─────────────────────────────────┘
+Foreign keys for pic_internal:
+┌─────────┬──────────────┬───────────────────────┬───────────────────────┬────────────────────────┐
+│ (index) │ COLUMN_NAME  │ CONSTRAINT_NAME       │ REFERENCED_TABLE_NAME │ REFERENCED_COLUMN_NAME │
+├─────────┼──────────────┼───────────────────────┼───────────────────────┼────────────────────────┤
+│ 0       │ 'eselon2_id' │ 'pic_internal_ibfk_1' │ 'master_eselon2'      │ 'eselon2_id'           │
+└─────────┴──────────────┴───────────────────────┴───────────────────────┴────────────────────────┘
+
+Structure of pic_eksternal:
+┌─────────┬────────────────────────┬───────────────────────┬───────┬───────┬───────────────────────┬─────────────────────────────────┐
+│ (index) │ Field                  │ Type                  │ Null  │ Key   │ Default               │ Extra                           │
+├─────────┼────────────────────────┼───────────────────────┼───────┼───────┼───────────────────────┼─────────────────────────────────┤
+│ 0       │ 'pic_eksternal_id'     │ 'bigint(20) unsigned' │ 'NO'  │ 'PRI' │ null                  │ 'auto_increment'                │
+│ 1       │ 'eselon2_id'           │ 'bigint(20) unsigned' │ 'YES' │ 'MUL' │ null                  │ ''                              │
+│ 2       │ 'upt_id'               │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 3       │ 'nama_pic_eksternal'   │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 4       │ 'email_pic'            │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 5       │ 'keterangan'           │ 'text'                │ 'YES' │ ''    │ null                  │ ''                              │
+│ 6       │ 'kontak_pic_eksternal' │ 'varchar(150)'        │ 'YES' │ ''    │ null                  │ ''                              │
+│ 7       │ 'status_aktif'         │ 'tinyint(1)'          │ 'YES' │ ''    │ '1'                   │ ''                              │
+│ 8       │ 'created_by'           │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 9       │ 'updated_by'           │ 'int(11)'             │ 'YES' │ ''    │ null                  │ ''                              │
+│ 10      │ 'created_at'           │ 'timestamp'           │ 'NO'  │ ''    │ 'current_timestamp()' │ ''                              │
+│ 11      │ 'updated_at'           │ 'timestamp'           │ 'NO'  │ ''    │ 'current_timestamp()' │ 'on update current_timestamp()' │
+└─────────┴────────────────────────┴───────────────────────┴───────┴───────┴───────────────────────┴─────────────────────────────────┘
+Foreign keys for pic_eksternal:
+┌─────────┬──────────────┬────────────────────────┬───────────────────────┬────────────────────────┐
+│ (index) │ COLUMN_NAME  │ CONSTRAINT_NAME        │ REFERENCED_TABLE_NAME │ REFERENCED_COLUMN_NAME │
+├─────────┼──────────────┼────────────────────────┼───────────────────────┼────────────────────────┤
+│ 0       │ 'eselon2_id' │ 'pic_eksternal_ibfk_1' │ 'master_eselon2'      │ 'eselon2_id'           │
+└─────────┴──────────────┴────────────────────────┴───────────────────────┴────────────────────────┘
