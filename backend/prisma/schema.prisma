@@ -112,6 +112,7 @@ model master_eselon1 {
 
 model master_eselon2 {
   eselon2_id     BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  no             Int?
   eselon1_id     BigInt          @db.UnsignedBigInt
   nama_eselon2   String          @db.VarChar(200)
   status_aktif   Boolean?        @default(true)
@@ -121,6 +122,7 @@ model master_eselon2 {
   pic_internal   pic_internal[]
   users          users[]
 
+  @@unique([eselon1_id, no], map: "unique_eselon1_no")
   @@index([eselon1_id], map: "eselon1_id")
 }
 
