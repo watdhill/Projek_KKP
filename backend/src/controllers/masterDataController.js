@@ -24,6 +24,7 @@ const tableConfig = {
     tableName: "master_eselon2",
     idField: "eselon2_id",
     columns: [
+      "no",
       "eselon1_id",
       "nama_eselon2",
       "status_aktif",
@@ -32,7 +33,7 @@ const tableConfig = {
       "created_at",
       "updated_at",
     ],
-    displayColumns: ["Eselon 1", "Nama Eselon 2", "Status"],
+    displayColumns: ["No", "Eselon 1", "Nama Eselon 2", "Status"],
   },
   upt: {
     tableName: "master_upt",
@@ -249,6 +250,8 @@ exports.getAllMasterData = async (req, res) => {
     let orderClause = ` ORDER BY ${config.idField} DESC`;
     if (type === "eselon1") {
       orderClause = ` ORDER BY no ASC`;
+    } else if (type === "eselon2") {
+      orderClause = ` ORDER BY no ASC`;
     } else if (type === "status_aplikasi") {
       orderClause = ` ORDER BY nama_status ASC`;
     } else if (type === "environment") {
@@ -339,7 +342,7 @@ exports.createMasterData = async (req, res) => {
       }
     }
 
-    // Check for duplicate names based on type
+    // Check for duplicate names based on type (exclude PIC types)
     const nameField = {
       eselon1: "nama_eselon1",
       eselon2: "nama_eselon2",
@@ -350,8 +353,7 @@ exports.createMasterData = async (req, res) => {
       cara_akses: "nama_cara_akses",
       pdn: "kode_pdn",
       format_laporan: "nama_format",
-      pic_eksternal: "nama_pic_eksternal",
-      pic_internal: "nama_pic_internal",
+      // pic_eksternal and pic_internal removed - allow duplicate names
     };
 
     // Validate eselon2_id exists for pic types
@@ -381,6 +383,29 @@ exports.createMasterData = async (req, res) => {
       }
     }
 
+    // For PIC types: validate unique combination (name + email + unit)
+    if (type === "pic_internal" || type === "pic_eksternal") {
+      const isInternal = type === "pic_internal";
+      const nameCol = isInternal ? "nama_pic_internal" : "nama_pic_eksternal";
+      const emailCol = "email_pic";
+      const unitId = req.body.eselon2_id || req.body.upt_id;
+      const unitCol = req.body.eselon2_id ? "eselon2_id" : "upt_id";
+
+      if (unitId && req.body[nameCol] && req.body[emailCol]) {
+        const [compositeCheck] = await pool.query(
+          `SELECT ${config.idField} FROM ${config.tableName} WHERE ${nameCol} = ? AND ${emailCol} = ? AND ${unitCol} = ?`,
+          [req.body[nameCol], req.body[emailCol], unitId],
+        );
+
+        if (compositeCheck.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Data PIC ini sudah terdaftar untuk unit tersebut. Tidak boleh duplikat persis.`,
+          });
+        }
+      }
+    }
+
     // Check for duplicate 'no' in eselon1 or 'no_urutan' in eselon2
     if (type === "eselon1" && req.body.no !== undefined) {
       const [noCheck] = await pool.query(
@@ -394,15 +419,15 @@ exports.createMasterData = async (req, res) => {
         });
       }
     }
-    if (type === "eselon2" && req.body.no_urutan !== undefined) {
+    if (type === "eselon2" && req.body.no !== undefined && req.body.eselon1_id) {
       const [noCheck] = await pool.query(
-        "SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ?",
-        [req.body.no_urutan],
+        "SELECT eselon2_id FROM master_eselon2 WHERE no = ? AND eselon1_id = ?",
+        [req.body.no, req.body.eselon1_id],
       );
       if (noCheck.length > 0) {
         return res.status(400).json({
           success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
+          message: `No Urutan "${req.body.no}" sudah digunakan untuk Eselon 1 ini. Silakan pilih nomor lain.`,
         });
       }
     }
@@ -671,8 +696,7 @@ exports.updateMasterData = async (req, res) => {
       cara_akses: "nama_cara_akses",
       pdn: "kode_pdn",
       format_laporan: "nama_format",
-      pic_eksternal: "nama_pic_eksternal",
-      pic_internal: "nama_pic_internal",
+      // pic_eksternal and pic_internal removed - allow duplicate names
     };
 
     if (nameField[type] && req.body[nameField[type]]) {
@@ -685,6 +709,52 @@ exports.updateMasterData = async (req, res) => {
           success: false,
           message: `Data dengan nama "${req.body[nameField[type]]}" sudah ada. Tidak boleh duplikat.`,
         });
+      }
+    }
+
+    // For PIC types: validate unique combination (name + email + unit)
+    if (type === "pic_internal" || type === "pic_eksternal") {
+      const isInternal = type === "pic_internal";
+      const nameCol = isInternal ? "nama_pic_internal" : "nama_pic_eksternal";
+      const emailCol = "email_pic";
+
+      // If updating, we might not have all fields in req.body, so we might need to fetch them
+      // but usually the frontend sends the whole object for master data
+      const nameVal = req.body[nameCol];
+      const emailVal = req.body[emailCol];
+      const updatedEselon2Id = req.body.eselon2_id;
+      const updatedUptId = req.body.upt_id;
+
+      if (nameVal || emailVal || updatedEselon2Id || updatedUptId) {
+        // Fetch current values as fallback
+        const [current] = await pool.query(
+          `SELECT ${nameCol}, ${emailCol}, eselon2_id, upt_id FROM ${config.tableName} WHERE ${config.idField} = ?`,
+          [req.params.id],
+        );
+
+        if (current.length > 0) {
+          const finalName = nameVal || current[0][nameCol];
+          const finalEmail = emailVal || current[0][emailCol];
+          const finalEselon2Id = updatedEselon2Id !== undefined ? updatedEselon2Id : current[0].eselon2_id;
+          const finalUptId = updatedUptId !== undefined ? updatedUptId : current[0].upt_id;
+
+          const unitCol = finalEselon2Id ? "eselon2_id" : "upt_id";
+          const unitVal = finalEselon2Id || finalUptId;
+
+          if (unitVal) {
+            const [compositeCheck] = await pool.query(
+              `SELECT ${config.idField} FROM ${config.tableName} WHERE ${nameCol} = ? AND ${emailCol} = ? AND ${unitCol} = ? AND ${config.idField} != ?`,
+              [finalName, finalEmail, unitVal, req.params.id],
+            );
+
+            if (compositeCheck.length > 0) {
+              return res.status(400).json({
+                success: false,
+                message: `Data PIC ini sudah terdaftar untuk unit tersebut. Tidak boleh duplikat persis.`,
+              });
+            }
+          }
+        }
       }
     }
 
@@ -701,16 +771,30 @@ exports.updateMasterData = async (req, res) => {
         });
       }
     }
-    if (type === "eselon2" && req.body.no_urutan !== undefined) {
-      const [noCheck] = await pool.query(
-        "SELECT eselon2_id FROM master_eselon2 WHERE no_urutan = ? AND eselon2_id != ?",
-        [req.body.no_urutan, req.params.id],
-      );
-      if (noCheck.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `No Urutan "${req.body.no_urutan}" sudah digunakan. Silakan pilih nomor lain.`,
-        });
+    if (type === "eselon2" && req.body.no !== undefined) {
+      // Get eselon1_id: either from request body or from existing record
+      let eselon1_id = req.body.eselon1_id;
+      if (!eselon1_id) {
+        const [existing] = await pool.query(
+          "SELECT eselon1_id FROM master_eselon2 WHERE eselon2_id = ?",
+          [req.params.id]
+        );
+        if (existing.length > 0) {
+          eselon1_id = existing[0].eselon1_id;
+        }
+      }
+
+      if (eselon1_id) {
+        const [noCheck] = await pool.query(
+          "SELECT eselon2_id FROM master_eselon2 WHERE no = ? AND eselon1_id = ? AND eselon2_id != ?",
+          [req.body.no, eselon1_id, req.params.id],
+        );
+        if (noCheck.length > 0) {
+          return res.status(400).json({
+            success: false,
+            message: `No Urutan "${req.body.no}" sudah digunakan untuk Eselon 1 ini. Silakan pilih nomor lain.`,
+          });
+        }
       }
     }
     if (type === "upt" && req.body.no_urutan !== undefined) {

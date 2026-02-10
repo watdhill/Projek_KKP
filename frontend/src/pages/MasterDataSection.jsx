@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { authFetch } from "../utils/api";
 import {
   DndContext,
@@ -93,6 +93,13 @@ const FORM_FIELDS = {
     },
   ],
   eselon2: [
+    {
+      name: "no",
+      label: "No Urutan",
+      type: "number",
+      placeholder: "Nomor urutan",
+      required: true,
+    },
     {
       name: "eselon1_id",
       label: "Eselon 1",
@@ -378,7 +385,7 @@ const FORM_FIELDS = {
 // Table column configurations per type
 const TABLE_COLUMNS = {
   eselon1: ["no", "nama_eselon1", "singkatan", "status_aktif"],
-  eselon2: ["nama_eselon2", "status_aktif"],
+  eselon2: ["no", "nama_eselon2", "status_aktif"],
   upt: ["nama_upt", "status_aktif"],
   frekuensi_pemakaian: ["nama_frekuensi", "status_aktif"],
   status_aplikasi: ["nama_status", "status_aktif"],
@@ -1534,6 +1541,16 @@ function MasterDataSection() {
 
   const columns = getTableColumns();
 
+  // Adjusted columns for display if grouped by Eselon 1
+  const displayColumns =
+    (activeTab === "eselon2" ||
+      activeTab === "upt" ||
+      activeTab === "pic_internal" ||
+      activeTab === "pic_eksternal") &&
+      !selectedEselon1Filter
+      ? columns.filter((c) => c !== "nama_eselon1")
+      : columns;
+
   return (
     <section id="master-data" className="page-section">
       {/* Header */}
@@ -2021,7 +2038,7 @@ function MasterDataSection() {
                   borderBottom: "2px solid #e2e8f0",
                 }}
               >
-                {columns.map((col) => {
+                {displayColumns.map((col) => {
                   const fieldDef = dynamicFormFields.find(
                     (f) => f.name === col,
                   );
@@ -2061,8 +2078,11 @@ function MasterDataSection() {
               </tr>
             </thead>
             <tbody>
-              {/* Special rendering for Eselon 2 to group by Eselon 1 when show all */}
-              {(activeTab === "eselon2" || activeTab === "upt") &&
+              {/* Special rendering for Eselon 2, UPT, and PIC to group by Eselon 1 when show all */}
+              {(activeTab === "eselon2" ||
+                activeTab === "upt" ||
+                activeTab === "pic_internal" ||
+                activeTab === "pic_eksternal") &&
                 !selectedEselon1Filter
                 ? (() => {
                   // Group data
@@ -2073,8 +2093,19 @@ function MasterDataSection() {
                     grouped[e1Id].push(item);
                   });
 
+                  // Sort group IDs based on eselon1Options order
+                  const sortedE1Ids = Object.keys(grouped).sort((a, b) => {
+                    const idxA = eselon1Options.findIndex(
+                      (opt) => String(opt.value) === String(a),
+                    );
+                    const idxB = eselon1Options.findIndex(
+                      (opt) => String(opt.value) === String(b),
+                    );
+                    return idxA - idxB;
+                  });
+
                   // Render groups
-                  return Object.keys(grouped).map((e1Id) => {
+                  return sortedE1Ids.map((e1Id) => {
                     // Find Eselon 1 Name
                     const e1Name =
                       eselon1Options.find(
@@ -2082,7 +2113,7 @@ function MasterDataSection() {
                       )?.label || `Eselon 1 ID: ${e1Id}`;
 
                     return (
-                      <>
+                      <Fragment key={`group-container-${e1Id}`}>
                         {/* Group Header */}
                         <tr
                           key={`group-${e1Id}`}
@@ -2092,7 +2123,7 @@ function MasterDataSection() {
                           }}
                         >
                           <td
-                            colSpan={columns.length + 1}
+                            colSpan={displayColumns.length + 1}
                             style={{
                               padding: "10px 14px",
                               fontWeight: 700,
@@ -2104,133 +2135,158 @@ function MasterDataSection() {
                           </td>
                         </tr>
                         {/* Items in group */}
-                        {grouped[e1Id].map((item, index) => (
-                          <tr
-                            key={getRowId(item) ?? index}
-                            style={{
-                              borderBottom: "1px solid #f1f5f9",
-                              backgroundColor: "#ffffff",
-                              transition: "all 0.2s",
-                              height: "50px",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "#f0f9ff";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                "#ffffff";
-                            }}
-                          >
-                            {columns.map((col) => (
-                              <td
-                                key={`${getRowId(item)}-${col}`}
-                                className={
-                                  col === "email_pic" ? "allow-lowercase" : ""
-                                }
-                                style={{
-                                  padding: "10px 14px",
-                                  color: "#334155",
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {col === "status_aktif" ? (
-                                  <span
-                                    onClick={() => {
-                                      // Toggle status logic
-                                      const currentStatus =
-                                        item.status_aktif === 1 ||
-                                        item.status_aktif === true;
-                                      handleToggleStatus(
-                                        item,
-                                        !currentStatus,
-                                      );
-                                    }}
-                                    style={{
-                                      backgroundColor: getStatusColor(
-                                        item[col],
-                                      ).bg,
-                                      color: getStatusColor(item[col]).text,
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      fontSize: "11px",
-                                      fontWeight: 600,
-                                      cursor: "pointer",
-                                      display: "inline-block",
-                                    }}
-                                  >
-                                    {getStatusColor(item[col]).label}
-                                  </span>
-                                ) : (
-                                  item[col]
-                                )}
-                              </td>
-                            ))}
-                            <td
+                        {grouped[e1Id]
+                          .sort((a, b) => {
+                            // Sort by Eselon 2 name
+                            const e2A = a.nama_eselon2 || "";
+                            const e2B = b.nama_eselon2 || "";
+                            if (e2A.localeCompare(e2B) !== 0)
+                              return e2A.localeCompare(e2B);
+
+                            // Then by UPT name
+                            const uptA = a.nama_upt || "";
+                            const uptB = b.nama_upt || "";
+                            if (uptA.localeCompare(uptB) !== 0)
+                              return uptA.localeCompare(uptB);
+
+                            // Then by PIC name
+                            const nameA =
+                              a.nama_pic_internal ||
+                              a.nama_pic_eksternal ||
+                              "";
+                            const nameB =
+                              b.nama_pic_internal ||
+                              b.nama_pic_eksternal ||
+                              "";
+                            return nameA.localeCompare(nameB);
+                          })
+                          .map((item, index) => (
+                            <tr
+                              key={getRowId(item) ?? index}
                               style={{
-                                padding: "10px 14px",
-                                textAlign: "center",
+                                borderBottom: "1px solid #f1f5f9",
+                                backgroundColor: "#ffffff",
+                                transition: "all 0.2s",
+                                height: "50px",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#f0f9ff";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor =
+                                  "#ffffff";
                               }}
                             >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: "8px",
-                                  justifyContent: "center",
-                                }}
-                              >
-                                <button
-                                  onClick={() => handleEdit(item)}
+                              {displayColumns.map((col) => (
+                                <td
+                                  key={`${getRowId(item)}-${col}`}
+                                  className={
+                                    col === "email_pic" ? "allow-lowercase" : ""
+                                  }
                                   style={{
-                                    padding: "6px 14px",
-                                    background:
-                                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                                    color: "#ffffff",
-                                    border: "none",
-                                    borderRadius: "6px",
-                                    fontSize: "11px",
-                                    fontWeight: 700,
-                                    cursor: "pointer",
-                                    transition: "all 0.2s",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "5px",
-                                    boxShadow:
-                                      "0 2px 6px rgba(245, 158, 11, 0.25)",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.target.style.transform =
-                                      "translateY(-1px)";
-                                    e.target.style.boxShadow =
-                                      "0 4px 10px rgba(245, 158, 11, 0.35)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.target.style.transform =
-                                      "translateY(0)";
-                                    e.target.style.boxShadow =
-                                      "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                    padding: "10px 14px",
+                                    color: "#334155",
+                                    fontWeight: 500,
                                   }}
                                 >
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
+                                  {col === "status_aktif" ? (
+                                    <span
+                                      onClick={() => {
+                                        // Toggle status logic
+                                        const currentStatus =
+                                          item.status_aktif === 1 ||
+                                          item.status_aktif === true;
+                                        handleToggleStatus(
+                                          item,
+                                          !currentStatus,
+                                        );
+                                      }}
+                                      style={{
+                                        backgroundColor: getStatusColor(
+                                          item[col],
+                                        ).bg,
+                                        color: getStatusColor(item[col]).text,
+                                        padding: "4px 10px",
+                                        borderRadius: "6px",
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                        display: "inline-block",
+                                      }}
+                                    >
+                                      {getStatusColor(item[col]).label}
+                                    </span>
+                                  ) : (
+                                    item[col]
+                                  )}
+                                </td>
+                              ))}
+                              <td
+                                style={{
+                                  padding: "10px 14px",
+                                  textAlign: "center",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: "8px",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    style={{
+                                      padding: "6px 14px",
+                                      background:
+                                        "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                                      color: "#ffffff",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      fontSize: "11px",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      transition: "all 0.2s",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                      boxShadow:
+                                        "0 2px 6px rgba(245, 158, 11, 0.25)",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.target.style.transform =
+                                        "translateY(-1px)";
+                                      e.target.style.boxShadow =
+                                        "0 4px 10px rgba(245, 158, 11, 0.35)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.target.style.transform =
+                                        "translateY(0)";
+                                      e.target.style.boxShadow =
+                                        "0 2px 6px rgba(245, 158, 11, 0.25)";
+                                    }}
                                   >
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                  </svg>
-                                  Edit
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </>
+                                    <svg
+                                      width="12"
+                                      height="12"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    >
+                                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                    Edit
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                      </Fragment>
                     );
                   });
                 })()
@@ -2254,7 +2310,7 @@ function MasterDataSection() {
                       e.currentTarget.style.transform = "scale(1)";
                     }}
                   >
-                    {columns.map((col) => (
+                    {displayColumns.map((col) => (
                       <td
                         key={`${getRowId(item)}-${col}`}
                         className={
