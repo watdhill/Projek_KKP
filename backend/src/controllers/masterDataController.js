@@ -1,7 +1,11 @@
 const pool = require("../config/database");
 const fs = require("fs");
 const path = require("path");
-const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
+const {
+  logAudit,
+  getIpAddress,
+  getUserAgent,
+} = require("../utils/auditLogger");
 
 // Table configuration to map type to database table, columns, and ID field
 const tableConfig = {
@@ -419,7 +423,11 @@ exports.createMasterData = async (req, res) => {
         });
       }
     }
-    if (type === "eselon2" && req.body.no !== undefined && req.body.eselon1_id) {
+    if (
+      type === "eselon2" &&
+      req.body.no !== undefined &&
+      req.body.eselon1_id
+    ) {
       const [noCheck] = await pool.query(
         "SELECT eselon2_id FROM master_eselon2 WHERE no = ? AND eselon1_id = ?",
         [req.body.no, req.body.eselon1_id],
@@ -574,7 +582,7 @@ exports.createMasterData = async (req, res) => {
             });
           }
 
-          // Legacy sorting logic removed. 
+          // Legacy sorting logic removed.
           // We now strictly follow the fieldIds order from the frontend.
 
           // Use the order from field_ids directly (frontend sends correct order)
@@ -605,7 +613,7 @@ exports.createMasterData = async (req, res) => {
     await logAudit({
       userId: req.user?.userId,
       tableName: config.tableName,
-      action: 'CREATE',
+      action: "CREATE",
       recordId: newId,
       newValues: req.body,
       detail: `Master data created: ${type} (${newId})`,
@@ -735,8 +743,12 @@ exports.updateMasterData = async (req, res) => {
         if (current.length > 0) {
           const finalName = nameVal || current[0][nameCol];
           const finalEmail = emailVal || current[0][emailCol];
-          const finalEselon2Id = updatedEselon2Id !== undefined ? updatedEselon2Id : current[0].eselon2_id;
-          const finalUptId = updatedUptId !== undefined ? updatedUptId : current[0].upt_id;
+          const finalEselon2Id =
+            updatedEselon2Id !== undefined
+              ? updatedEselon2Id
+              : current[0].eselon2_id;
+          const finalUptId =
+            updatedUptId !== undefined ? updatedUptId : current[0].upt_id;
 
           const unitCol = finalEselon2Id ? "eselon2_id" : "upt_id";
           const unitVal = finalEselon2Id || finalUptId;
@@ -777,7 +789,7 @@ exports.updateMasterData = async (req, res) => {
       if (!eselon1_id) {
         const [existing] = await pool.query(
           "SELECT eselon1_id FROM master_eselon2 WHERE eselon2_id = ?",
-          [req.params.id]
+          [req.params.id],
         );
         if (existing.length > 0) {
           eselon1_id = existing[0].eselon1_id;
@@ -868,7 +880,7 @@ exports.updateMasterData = async (req, res) => {
               null, // judul
               0, // is_header
               fid, // field_id
-              index + 1 // order_index based on array position
+              index + 1, // order_index based on array position
             ]);
 
             await pool.query(
@@ -889,10 +901,10 @@ exports.updateMasterData = async (req, res) => {
     await logAudit({
       userId: req.user?.userId,
       tableName: config.tableName,
-      action: 'UPDATE',
+      action: "UPDATE",
       recordId: req.params.id,
       newValues: req.body,
-      changes: Object.keys(req.body).join(', '),
+      changes: Object.keys(req.body).join(", "),
       detail: `Master data updated: ${type} (${req.params.id})`,
       description: `Data master ${type} diubah`,
       ipAddress: getIpAddress(req),
@@ -958,10 +970,10 @@ exports.toggleStatus = async (req, res) => {
     await logAudit({
       userId: req.user?.userId,
       tableName: config.tableName,
-      action: 'UPDATE',
+      action: "UPDATE",
       recordId: req.params.id,
       newValues: { status_aktif },
-      changes: 'status_aktif',
+      changes: "status_aktif",
       detail: `Status master data updated: ${type} (${req.params.id})`,
       description: `Status ${type} diubah menjadi ${status_aktif ? "Aktif" : "Nonaktif"}`,
       ipAddress: getIpAddress(req),
@@ -1001,7 +1013,7 @@ exports.deleteMasterData = async (req, res) => {
     await logAudit({
       userId: req.user?.userId,
       tableName: config.tableName,
-      action: 'DELETE',
+      action: "DELETE",
       recordId: req.params.id,
       detail: `Master data deleted: ${type} (${req.params.id})`,
       description: `Data master ${type} dihapus`,
@@ -1042,15 +1054,16 @@ exports.getTypes = async (req, res) => {
 // Get dropdown data untuk form pengguna
 exports.getDropdownData = async (req, res) => {
   try {
-    const { eselon1_id, eselon2_id } = req.query;
+    const { eselon1_id, eselon2_id, upt_id } = req.query;
     console.log("=== GET DROPDOWN DATA ===");
     console.log("Query Params:", req.query);
     console.log("Eselon 1 ID requested:", eselon1_id);
     console.log("Eselon 2 ID requested:", eselon2_id);
+    console.log("UPT ID requested:", upt_id);
 
     const [roles] = await pool.query("SELECT * FROM roles ORDER BY role_id");
     const [eselon1] = await pool.query(
-      "SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY nama_eselon1",
+      "SELECT * FROM master_eselon1 WHERE status_aktif = 1 ORDER BY no ASC",
     );
 
     let eselon2Query = "SELECT * FROM master_eselon2 WHERE status_aktif = 1";
@@ -1061,7 +1074,7 @@ exports.getDropdownData = async (req, res) => {
       eselon2Params.push(eselon1_id);
     }
 
-    eselon2Query += " ORDER BY nama_eselon2";
+    eselon2Query += " ORDER BY eselon1_id ASC, no ASC";
 
     const [eselon2] = await pool.query(eselon2Query, eselon2Params);
 
@@ -1074,16 +1087,16 @@ exports.getDropdownData = async (req, res) => {
       uptParams.push(eselon1_id);
     }
 
-    uptQuery += " ORDER BY nama_upt";
+    uptQuery += " ORDER BY upt_id ASC";
 
     const [upt] = await pool.query(uptQuery, uptParams);
 
     // Fetch all master data needed for form dropdowns
     const [cara_akses] = await pool.query(
-      "SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY nama_cara_akses",
+      "SELECT * FROM cara_akses WHERE status_aktif = 1 ORDER BY cara_akses_id ASC",
     );
     const [frekuensi_pemakaian] = await pool.query(
-      "SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY nama_frekuensi",
+      "SELECT * FROM frekuensi_pemakaian WHERE status_aktif = 1 ORDER BY frekuensi_pemakaian ASC",
     );
     const [status_aplikasi] = await pool.query(
       "SELECT * FROM status_aplikasi ORDER BY nama_status",
@@ -1095,13 +1108,16 @@ exports.getDropdownData = async (req, res) => {
       "SELECT * FROM environment WHERE status_aktif = 1 ORDER BY jenis_environment",
     );
 
-    // Query PIC Internal dengan filter eselon2_id
+    // Query PIC Internal dengan filter eselon2_id atau upt_id
     let picInternalQuery = "SELECT * FROM pic_internal WHERE status_aktif = 1";
     const picInternalParams = [];
 
     if (eselon2_id) {
       picInternalQuery += " AND eselon2_id = ?";
       picInternalParams.push(eselon2_id);
+    } else if (upt_id) {
+      picInternalQuery += " AND upt_id = ?";
+      picInternalParams.push(upt_id);
     }
 
     picInternalQuery += " ORDER BY nama_pic_internal";
@@ -1111,7 +1127,7 @@ exports.getDropdownData = async (req, res) => {
       picInternalParams,
     );
 
-    // Query PIC Eksternal dengan filter eselon2_id
+    // Query PIC Eksternal dengan filter eselon2_id atau upt_id
     let picEksternalQuery =
       "SELECT * FROM pic_eksternal WHERE status_aktif = 1";
     const picEksternalParams = [];
@@ -1119,6 +1135,9 @@ exports.getDropdownData = async (req, res) => {
     if (eselon2_id) {
       picEksternalQuery += " AND eselon2_id = ?";
       picEksternalParams.push(eselon2_id);
+    } else if (upt_id) {
+      picEksternalQuery += " AND upt_id = ?";
+      picEksternalParams.push(upt_id);
     }
 
     picEksternalQuery += " ORDER BY nama_pic_eksternal";

@@ -1,10 +1,101 @@
 const pool = require("../config/database");
 const asyncHandler = require("../utils/asyncHandler");
-const { logAudit, getIpAddress, getUserAgent } = require("../utils/auditLogger");
+const {
+  logAudit,
+  getIpAddress,
+  getUserAgent,
+} = require("../utils/auditLogger");
+const {
+  encryptAkunPassword,
+  decryptAkunPassword,
+} = require("../utils/fieldEncryption");
 const { NotFoundError } = require("../middleware/errorHandler");
 
 const isDuplicateKeyError = (error) =>
   error && (error.code === "ER_DUP_ENTRY" || error.errno === 1062);
+
+const sanitizeAksesAkunBody = (body) => {
+  const next = { ...(body || {}) };
+
+  // Never accept encrypted password directly from client
+  if (
+    Object.prototype.hasOwnProperty.call(next, "akses_aplikasi_password_enc")
+  ) {
+    delete next.akses_aplikasi_password_enc;
+  }
+
+  if (
+    typeof next.akses_aplikasi_username === "string" &&
+    next.akses_aplikasi_username.trim() === ""
+  ) {
+    next.akses_aplikasi_username = null;
+  }
+
+  const rawPassword =
+    typeof next.akses_aplikasi_password === "string"
+      ? next.akses_aplikasi_password
+      : "";
+
+  // Konfirmasi password never stored
+  if (
+    Object.prototype.hasOwnProperty.call(
+      next,
+      "akses_aplikasi_konfirmasi_password",
+    )
+  ) {
+    delete next.akses_aplikasi_konfirmasi_password;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(next, "akses_aplikasi_password")) {
+    delete next.akses_aplikasi_password;
+  }
+
+  const trimmedPassword = rawPassword.trim();
+  if (trimmedPassword) {
+    next.akses_aplikasi_password_enc = encryptAkunPassword(trimmedPassword);
+  }
+
+  return next;
+};
+
+const stripSensitiveAkunFields = (row) => {
+  const safe = { ...(row || {}) };
+  if (
+    Object.prototype.hasOwnProperty.call(safe, "akses_aplikasi_password_enc")
+  ) {
+    delete safe.akses_aplikasi_password_enc;
+  }
+  return safe;
+};
+
+const stripSensitiveAkunFieldsWithDecryptedPassword = (row) => {
+  const safe = stripSensitiveAkunFields(row);
+
+  if (!row || !row.akses_aplikasi_password_enc) return safe;
+
+  try {
+    safe.akses_aplikasi_password = decryptAkunPassword(
+      row.akses_aplikasi_password_enc,
+    );
+  } catch (e) {
+    // Keep API functional even if key is missing/invalid or ciphertext is malformed
+    console.warn(
+      "Failed to decrypt akses_aplikasi_password_enc for aplikasi detail:",
+      e?.code || e?.message || e,
+    );
+    safe.akses_aplikasi_password = "";
+  }
+
+  return safe;
+};
+
+const stripSensitiveForAudit = (body) => {
+  const safe = { ...(body || {}) };
+  delete safe.akses_aplikasi_password_enc;
+  delete safe.akses_aplikasi_password;
+  delete safe.akses_aplikasi_konfirmasi_password;
+  return safe;
+};
 
 // Get all aplikasi dengan JOIN ke tabel master
 exports.getAllAplikasi = asyncHandler(async (req, res) => {
@@ -41,9 +132,11 @@ exports.getAllAplikasi = asyncHandler(async (req, res) => {
   const [rows] = await pool.query(query);
   console.log(`Query successful, returned ${rows.length} rows`);
 
+  const sanitizedRows = rows.map((r) => stripSensitiveAkunFields(r));
+
   res.json({
     success: true,
-    data: rows,
+    data: sanitizedRows,
   });
   // Error otomatis di-catch oleh asyncHandler dan diteruskan ke errorHandler
 });
@@ -82,16 +175,18 @@ exports.getAplikasiById = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    data: rows[0],
+    data: stripSensitiveAkunFieldsWithDecryptedPassword(rows[0]),
   });
 });
 
 // Create aplikasi
 exports.createAplikasi = asyncHandler(async (req, res) => {
+  const sanitizedBody = sanitizeAksesAkunBody(req.body);
+
   const normalizedNamaAplikasi =
-    typeof req.body.nama_aplikasi === "string"
-      ? req.body.nama_aplikasi.trim()
-      : req.body.nama_aplikasi;
+    typeof sanitizedBody.nama_aplikasi === "string"
+      ? sanitizedBody.nama_aplikasi.trim()
+      : sanitizedBody.nama_aplikasi;
 
   if (!normalizedNamaAplikasi) {
     return res.status(400).json({
@@ -100,30 +195,13 @@ exports.createAplikasi = asyncHandler(async (req, res) => {
     });
   }
 
-  // Cek domain duplikat jika domain diisi
-  if (req.body.domain && req.body.domain.trim()) {
-    const normalizedDomain = req.body.domain.trim();
-    const [existingDomain] = await pool.query(
-      "SELECT nama_aplikasi FROM data_aplikasi WHERE domain = ?",
-      [normalizedDomain],
-    );
-
-    if (existingDomain.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: `Domain '${normalizedDomain}' sudah digunakan oleh aplikasi '${existingDomain[0].nama_aplikasi}'`,
-        errorCode: "DUPLICATE_DOMAIN",
-      });
-    }
-  }
-
   // Build dynamic query to support all fields including dynamic master fields
   const fields = [];
   const values = [];
   const placeholders = [];
 
   // Process all fields from request body
-  for (const [key, value] of Object.entries(req.body)) {
+  for (const [key, value] of Object.entries(sanitizedBody)) {
     fields.push(`\`${key}\``);
     values.push(value);
     placeholders.push("?");
@@ -141,30 +219,35 @@ exports.createAplikasi = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: "Aplikasi berhasil ditambahkan",
-    data: { nama_aplikasi: normalizedNamaAplikasi, domain: req.body.domain },
+    data: {
+      nama_aplikasi: normalizedNamaAplikasi,
+      domain: sanitizedBody.domain,
+    },
   });
-  
-    // Log audit untuk CREATE aplikasi
-    await logAudit({
-      userId: req.user?.userId,
-      tableName: 'data_aplikasi',
-      action: 'CREATE',
-      recordId: result.insertId,
-      newValues: { nama_aplikasi: normalizedNamaAplikasi },
-      detail: `New application created: ${normalizedNamaAplikasi}`,
-      description: `Aplikasi ${normalizedNamaAplikasi} ditambahkan ke sistem`,
-      ipAddress: getIpAddress(req),
-      userAgent: getUserAgent(req),
-    });
+
+  // Log audit untuk CREATE aplikasi
+  await logAudit({
+    userId: req.user?.userId,
+    tableName: "data_aplikasi",
+    action: "CREATE",
+    recordId: result.insertId,
+    newValues: { nama_aplikasi: normalizedNamaAplikasi },
+    detail: `New application created: ${normalizedNamaAplikasi}`,
+    description: `Aplikasi ${normalizedNamaAplikasi} ditambahkan ke sistem`,
+    ipAddress: getIpAddress(req),
+    userAgent: getUserAgent(req),
+  });
   // Duplicate error (ER_DUP_ENTRY) otomatis di-handle oleh errorHandler
 });
 
 // Update aplikasi
 exports.updateAplikasi = asyncHandler(async (req, res) => {
+  const sanitizedBody = sanitizeAksesAkunBody(req.body);
+
   const normalizedNamaAplikasi =
-    typeof req.body.nama_aplikasi === "string"
-      ? req.body.nama_aplikasi.trim()
-      : req.body.nama_aplikasi;
+    typeof sanitizedBody.nama_aplikasi === "string"
+      ? sanitizedBody.nama_aplikasi.trim()
+      : sanitizedBody.nama_aplikasi;
 
   if (!normalizedNamaAplikasi) {
     return res.status(400).json({
@@ -173,35 +256,18 @@ exports.updateAplikasi = asyncHandler(async (req, res) => {
     });
   }
 
-  // Cek domain duplikat jika domain diisi (kecuali untuk aplikasi ini sendiri)
-  if (req.body.domain && req.body.domain.trim()) {
-    const normalizedDomain = req.body.domain.trim();
-    const [existingDomain] = await pool.query(
-      "SELECT nama_aplikasi FROM data_aplikasi WHERE domain = ? AND nama_aplikasi != ?",
-      [normalizedDomain, req.params.id],
-    );
-
-    if (existingDomain.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: `Domain '${normalizedDomain}' sudah digunakan oleh aplikasi '${existingDomain[0].nama_aplikasi}'`,
-        errorCode: "DUPLICATE_DOMAIN",
-      });
-    }
-  }
-
   // Build dynamic UPDATE query to support all fields including dynamic master fields
   const updates = [];
   const values = [];
 
   // Process all fields from request body
-  for (const [key, value] of Object.entries(req.body)) {
+  for (const [key, value] of Object.entries(sanitizedBody)) {
     updates.push(`\`${key}\` = ?`);
     values.push(value);
   }
 
   // Override nama_aplikasi with normalized version
-  const namaAplikasiIndex = Object.keys(req.body).indexOf("nama_aplikasi");
+  const namaAplikasiIndex = Object.keys(sanitizedBody).indexOf("nama_aplikasi");
   if (namaAplikasiIndex !== -1) {
     values[namaAplikasiIndex] = normalizedNamaAplikasi;
   }
@@ -223,20 +289,20 @@ exports.updateAplikasi = asyncHandler(async (req, res) => {
     success: true,
     message: "Aplikasi berhasil diupdate",
   });
-  
-    // Log audit untuk UPDATE aplikasi
-    await logAudit({
-      userId: req.user?.userId,
-      tableName: 'data_aplikasi',
-      action: 'UPDATE',
-      recordId: req.params.id,
-      newValues: req.body,
-      changes: Object.keys(req.body).join(', '),
-      detail: `Application updated: ${normalizedNamaAplikasi}`,
-      description: `Data aplikasi ${normalizedNamaAplikasi} diubah`,
-      ipAddress: getIpAddress(req),
-      userAgent: getUserAgent(req),
-    });
+
+  // Log audit untuk UPDATE aplikasi
+  await logAudit({
+    userId: req.user?.userId,
+    tableName: "data_aplikasi",
+    action: "UPDATE",
+    recordId: req.params.id,
+    newValues: stripSensitiveForAudit(sanitizedBody),
+    changes: Object.keys(stripSensitiveForAudit(sanitizedBody)).join(", "),
+    detail: `Application updated: ${normalizedNamaAplikasi}`,
+    description: `Data aplikasi ${normalizedNamaAplikasi} diubah`,
+    ipAddress: getIpAddress(req),
+    userAgent: getUserAgent(req),
+  });
   // Duplicate error otomatis di-handle oleh errorHandler
 });
 
@@ -256,18 +322,18 @@ exports.deleteAplikasi = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: "Aplikasi berhasil dihapus",
-    });
-  
-    // Log audit untuk DELETE aplikasi
-    await logAudit({
-      userId: req.user?.userId,
-      tableName: 'data_aplikasi',
-      action: 'DELETE',
-      recordId: req.params.id,
-      detail: `Application deleted: ${req.params.id}`,
-      description: `Aplikasi ${req.params.id} dihapus dari sistem`,
-      ipAddress: getIpAddress(req),
-      userAgent: getUserAgent(req),
+  });
+
+  // Log audit untuk DELETE aplikasi
+  await logAudit({
+    userId: req.user?.userId,
+    tableName: "data_aplikasi",
+    action: "DELETE",
+    recordId: req.params.id,
+    detail: `Application deleted: ${req.params.id}`,
+    description: `Aplikasi ${req.params.id} dihapus dari sistem`,
+    ipAddress: getIpAddress(req),
+    userAgent: getUserAgent(req),
   });
   // Foreign key constraint error otomatis di-handle oleh errorHandler
 });

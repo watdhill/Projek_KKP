@@ -132,6 +132,8 @@ CREATE TABLE IF NOT EXISTS data_aplikasi (
   antivirus VARCHAR(50),
   va_pt_status VARCHAR(50),
   va_pt_waktu VARCHAR(100),
+  akses_aplikasi_username VARCHAR(200),
+  akses_aplikasi_password_enc TEXT,
   alamat_ip_publik VARCHAR(100),
   keterangan TEXT,
   status_bmn VARCHAR(100),

@@ -512,14 +512,8 @@ exports.getPreviewData = async (req, res) => {
 // Export to Excel with hierarchical headers
 exports.exportExcel = async (req, res) => {
   try {
-    const {
-      format_laporan_id,
-      tahun,
-      status,
-      eselon1_id,
-      eselon2_id,
-      upt_id,
-    } = req.query;
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id, upt_id } =
+      req.query;
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "KKP System";
@@ -680,12 +674,12 @@ async function createDefaultSheet(workbook, filters) {
       status: row.status_aplikasi,
       tanggal: row.created_at
         ? new Date(row.created_at).toLocaleString("id-ID", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
         : "-",
     });
   });
@@ -947,14 +941,8 @@ async function getFilteredData(filters) {
 // Export to PDF
 exports.exportPDF = async (req, res) => {
   try {
-    const {
-      format_laporan_id,
-      tahun,
-      status,
-      eselon1_id,
-      eselon2_id,
-      upt_id,
-    } = req.query;
+    const { format_laporan_id, tahun, status, eselon1_id, eselon2_id, upt_id } =
+      req.query;
 
     // Get format details
     let formatName = "Laporan Aplikasi";

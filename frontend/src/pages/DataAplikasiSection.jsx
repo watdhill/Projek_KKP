@@ -44,10 +44,38 @@ function DataAplikasiSection() {
   const [master, setMaster] = useState({});
   const [dynamicTables, setDynamicTables] = useState([]);
   const [dynamicMasterData, setDynamicMasterData] = useState({});
-  const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [userPenggunaSelected, setUserPenggunaSelected] = useState([]);
+  const [userPenggunaLainnya, setUserPenggunaLainnya] = useState("");
+  const [unitPengembangType, setUnitPengembangType] = useState("");
+  const [unitPengembangEksternal, setUnitPengembangEksternal] = useState("");
+  const [unitOperasionalTeknologiType, setUnitOperasionalTeknologiType] =
+    useState("");
+  const [unitOperasionalTeknologiLainnya, setUnitOperasionalTeknologiLainnya] =
+    useState("");
+  const [pusatKomputasiUtamaType, setPusatKomputasiUtamaType] = useState("");
+  const [pusatKomputasiUtamaLainnya, setPusatKomputasiUtamaLainnya] =
+    useState("");
+  const [pusatKomputasiBackupType, setPusatKomputasiBackupType] = useState("");
+  const [pusatKomputasiBackupLainnya, setPusatKomputasiBackupLainnya] =
+    useState("");
+  const [mandiriKomputasiBackupType, setMandiriKomputasiBackupType] =
+    useState("");
+  const [mandiriKomputasiBackupLainnya, setMandiriKomputasiBackupLainnya] =
+    useState("");
+  const [cloudType, setCloudType] = useState("");
+  const [cloudText, setCloudText] = useState("");
+  const [sslType, setSslType] = useState("");
+  const [sslUnitKerjaText, setSslUnitKerjaText] = useState("");
+  const [antivirusType, setAntivirusType] = useState("");
+  const [antivirusText, setAntivirusText] = useState("");
+  const [showAksesPassword, setShowAksesPassword] = useState(false);
+  const [showAksesConfirmPassword, setShowAksesConfirmPassword] =
+    useState(false);
+  const [aksesPasswordTouched, setAksesPasswordTouched] = useState(false);
+  const [aksesConfirmTouched, setAksesConfirmTouched] = useState(false);
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -93,6 +121,9 @@ function DataAplikasiSection() {
     va_pt_status: "",
     va_pt_waktu: "",
     antivirus: "",
+    akses_aplikasi_username: "",
+    akses_aplikasi_password: "",
+    akses_aplikasi_konfirmasi_password: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -247,6 +278,28 @@ function DataAplikasiSection() {
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
+    setUserPenggunaSelected([]);
+    setUserPenggunaLainnya("");
+    setUnitPengembangType("");
+    setUnitPengembangEksternal("");
+    setUnitOperasionalTeknologiType("");
+    setUnitOperasionalTeknologiLainnya("");
+    setPusatKomputasiUtamaType("");
+    setPusatKomputasiUtamaLainnya("");
+    setPusatKomputasiBackupType("");
+    setPusatKomputasiBackupLainnya("");
+    setMandiriKomputasiBackupType("");
+    setMandiriKomputasiBackupLainnya("");
+    setCloudType("");
+    setCloudText("");
+    setSslType("");
+    setSslUnitKerjaText("");
+    setAntivirusType("");
+    setAntivirusText("");
+    setShowAksesPassword(false);
+    setShowAksesConfirmPassword(false);
+    setAksesPasswordTouched(false);
+    setAksesConfirmTouched(false);
 
     const baseFormData = {
       nama_aplikasi: "",
@@ -290,6 +343,9 @@ function DataAplikasiSection() {
       va_pt_status: "",
       va_pt_waktu: "",
       antivirus: "",
+      akses_aplikasi_username: "",
+      akses_aplikasi_password: "",
+      akses_aplikasi_konfirmasi_password: "",
       kontak_pic_internal: "",
       kontak_pic_eksternal: "",
     };
@@ -302,6 +358,365 @@ function DataAplikasiSection() {
 
     setFormData(baseFormData);
     setShowModal(true);
+  };
+
+  const USER_PENGGUNA_OPTIONS = [
+    { value: "internal_kkp", label: "Internal KKP" },
+    { value: "internal_eselon_1", label: "Internal Eselon 1" },
+    { value: "internal_eselon_2", label: "Internal Eselon 2" },
+    { value: "internal_unit_kerja", label: "Internal Unit Kerja" },
+    { value: "stakeholder", label: "Stakeholder" },
+    { value: "publik", label: "Publik" },
+    { value: "lainnya", label: "Lainnya" },
+  ];
+
+  const buildUserPenggunaString = (selectedValues, lainnyaText) => {
+    const selected = Array.isArray(selectedValues) ? selectedValues : [];
+    const labelByValue = new Map(
+      USER_PENGGUNA_OPTIONS.map((o) => [o.value, o.label]),
+    );
+    const parts = selected
+      .filter((v) => v !== "lainnya")
+      .map((v) => labelByValue.get(v) || v);
+
+    if (selected.includes("lainnya")) {
+      const text = (lainnyaText || "").trim();
+      if (text) parts.push(text);
+    }
+
+    return parts.join(", ");
+  };
+
+  const parseUserPenggunaString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { selected: [], lainnyaText: "" };
+
+    const tokens = raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const byLabel = new Map(
+      USER_PENGGUNA_OPTIONS.filter((o) => o.value !== "lainnya").map((o) => [
+        norm(o.label),
+        o.value,
+      ]),
+    );
+
+    const selected = [];
+    const others = [];
+    for (const t of tokens) {
+      const mapped = byLabel.get(norm(t));
+      if (mapped) selected.push(mapped);
+      else others.push(t);
+    }
+
+    const uniqueSelected = Array.from(new Set(selected));
+    if (others.length > 0) uniqueSelected.push("lainnya");
+
+    return {
+      selected: uniqueSelected,
+      lainnyaText: others.join(", "),
+    };
+  };
+
+  const UNIT_PENGEMBANG_OPTIONS = [
+    { value: "set_sekretariat_eselon_1", label: "Set Sekretariat Eselon 1" },
+    { value: "internal_eselon_2", label: "Internal Eselon 2" },
+    { value: "eksternal", label: "Eksternal" },
+  ];
+
+  const buildUnitPengembangString = (type, eksternalText) => {
+    if (type === "eksternal") return (eksternalText || "").trim();
+    const opt = UNIT_PENGEMBANG_OPTIONS.find((o) => o.value === type);
+    return opt ? opt.label : "";
+  };
+
+  const parseUnitPengembangString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", eksternalText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const mapped = UNIT_PENGEMBANG_OPTIONS.find(
+      (o) => o.value !== "eksternal" && norm(o.label) === norm(raw),
+    );
+
+    if (mapped) return { type: mapped.value, eksternalText: "" };
+    return { type: "eksternal", eksternalText: raw };
+  };
+
+  const UNIT_OPERASIONAL_TEKNOLOGI_OPTIONS = [
+    { value: "pusdatin", label: "Pusdatin" },
+    { value: "lainnya", label: "Lainnya" },
+  ];
+
+  const buildUnitOperasionalTeknologiString = (type, lainnyaText) => {
+    if (type === "pusdatin") return "Pusdatin";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    return "";
+  };
+
+  const parseUnitOperasionalTeknologiString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (norm(raw) === norm("Pusdatin")) {
+      return { type: "pusdatin", lainnyaText: "" };
+    }
+
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const PUSAT_KOMPUTASI_UTAMA_OPTIONS = [
+    { value: "dc_gambir", label: "DC Gambir" },
+    { value: "dc_cyber", label: "DC Cyber" },
+    { value: "lainnya", label: "Lainnya" },
+    { value: "tidak_ada", label: "Tidak Ada (untuk android dan desktop)" },
+  ];
+
+  const buildPusatKomputasiUtamaString = (type, lainnyaText) => {
+    if (type === "dc_gambir") return "DC Gambir";
+    if (type === "dc_cyber") return "DC Cyber";
+    if (type === "tidak_ada") return "Tidak Ada";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    return "";
+  };
+
+  const parsePusatKomputasiUtamaString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const rawNorm = norm(raw);
+
+    if (rawNorm === norm("DC Gambir"))
+      return { type: "dc_gambir", lainnyaText: "" };
+    if (rawNorm === norm("DC Cyber"))
+      return { type: "dc_cyber", lainnyaText: "" };
+    if (
+      rawNorm === norm("Tidak Ada") ||
+      rawNorm.startsWith(norm("Tidak Ada"))
+    ) {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const PUSAT_KOMPUTASI_BACKUP_OPTIONS = [
+    { value: "dc_gambir", label: "DC Gambir" },
+    { value: "dc_cyber", label: "DC Cyber" },
+    { value: "lainnya", label: "Lainnya" },
+    { value: "tidak_ada", label: "Tidak Ada (untuk android dan desktop)" },
+  ];
+
+  const buildPusatKomputasiBackupString = (type, lainnyaText) => {
+    if (type === "dc_gambir") return "DC Gambir";
+    if (type === "dc_cyber") return "DC Cyber";
+    if (type === "tidak_ada") return "Tidak Ada";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    return "";
+  };
+
+  const parsePusatKomputasiBackupString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const rawNorm = norm(raw);
+
+    if (rawNorm === norm("DC Gambir"))
+      return { type: "dc_gambir", lainnyaText: "" };
+    if (rawNorm === norm("DC Cyber"))
+      return { type: "dc_cyber", lainnyaText: "" };
+    if (
+      rawNorm === norm("Tidak Ada") ||
+      rawNorm.startsWith(norm("Tidak Ada"))
+    ) {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const MANDIRI_KOMPUTASI_BACKUP_OPTIONS = [
+    { value: "ex_storage", label: "Ex STORAGE" },
+    { value: "in_storage", label: "In STORAGE" },
+    { value: "ex_cloud", label: "Ex CLOUD" },
+    { value: "tidak_ada", label: "TIDAK ADA" },
+    { value: "lainnya", label: "LAINNYA" },
+  ];
+
+  const buildMandiriKomputasiBackupString = (type, lainnyaText) => {
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    const opt = MANDIRI_KOMPUTASI_BACKUP_OPTIONS.find((o) => o.value === type);
+    return opt ? opt.label : "";
+  };
+
+  const parseMandiriKomputasiBackupString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .replace(/["']/g, "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const rawNorm = norm(raw);
+
+    for (const opt of MANDIRI_KOMPUTASI_BACKUP_OPTIONS) {
+      if (opt.value === "lainnya") continue;
+      if (rawNorm === norm(opt.label)) {
+        return { type: opt.value, lainnyaText: "" };
+      }
+    }
+
+    // tolerate common variants
+    if (
+      rawNorm === norm("tidak ada") ||
+      rawNorm.startsWith(norm("tidak ada"))
+    ) {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const CLOUD_OPTIONS = [
+    { value: "ya", label: "Ya" },
+    { value: "tidak", label: "Tidak" },
+  ];
+
+  const buildCloudString = (type, text) => {
+    if (type === "tidak") return "Tidak";
+    if (type === "ya") return (text || "").trim();
+    return "";
+  };
+
+  const parseCloudString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", text: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    if (norm(raw) === norm("Tidak")) return { type: "tidak", text: "" };
+    return { type: "ya", text: raw };
+  };
+
+  const SSL_OPTIONS = [
+    { value: "aktif_pusdatin", label: "Aktif/Pusdatin" },
+    { value: "aktif_unit_kerja", label: "Aktif/Unit Kerja" },
+  ];
+
+  const buildSslString = (type, unitKerjaText) => {
+    if (type === "aktif_pusdatin") return "SSL Aktif/Pusdatin";
+    if (type === "aktif_unit_kerja") {
+      const text = (unitKerjaText || "").trim();
+      if (!text) return "SSL Aktif/Unit Kerja";
+      return `SSL Aktif/Unit Kerja - ${text}`;
+    }
+    return "";
+  };
+
+  const parseSslString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", unitKerjaText: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const rawNorm = norm(raw);
+
+    if (
+      rawNorm === norm("SSL Aktif/Pusdatin") ||
+      rawNorm === norm("pusdatin")
+    ) {
+      return { type: "aktif_pusdatin", unitKerjaText: "" };
+    }
+
+    const unitKerjaPrefixNorm = norm("SSL Aktif/Unit Kerja");
+
+    if (
+      rawNorm === norm("Aktif/Unit Kerja") ||
+      rawNorm === unitKerjaPrefixNorm
+    ) {
+      return { type: "aktif_unit_kerja", unitKerjaText: "" };
+    }
+
+    if (rawNorm.startsWith(unitKerjaPrefixNorm)) {
+      // Accept formats:
+      // - "SSL Aktif/Unit Kerja - <unit>"
+      // - "SSL Aktif/Unit Kerja: <unit>"
+      // - "SSL Aktif/Unit Kerja <unit>" (fallback)
+      const withoutPrefix = raw.slice("SSL Aktif/Unit Kerja".length).trim();
+      const cleaned = withoutPrefix.replace(/^[-:]+\s*/, "").trim();
+      return { type: "aktif_unit_kerja", unitKerjaText: cleaned };
+    }
+
+    return { type: "aktif_unit_kerja", unitKerjaText: raw };
+  };
+
+  const ANTIVIRUS_OPTIONS = [
+    { value: "ya", label: "Ya" },
+    { value: "tidak", label: "Tidak" },
+  ];
+
+  const buildAntivirusString = (type, text) => {
+    if (type === "tidak") return "Tidak";
+    if (type === "ya") return (text || "").trim();
+    return "";
+  };
+
+  const parseAntivirusString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", text: "" };
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const rawNorm = norm(raw);
+    if (rawNorm === norm("Tidak")) return { type: "tidak", text: "" };
+    if (rawNorm === norm("Ya")) return { type: "ya", text: "" };
+    return { type: "ya", text: raw };
   };
 
   // Open edit modal with pre-filled data
@@ -405,6 +820,9 @@ function DataAplikasiSection() {
         va_pt_status: app.va_pt_status || "",
         va_pt_waktu: app.va_pt_waktu || "",
         antivirus: app.antivirus || "",
+        akses_aplikasi_username: app.akses_aplikasi_username || "",
+        akses_aplikasi_password: app.akses_aplikasi_password || "",
+        akses_aplikasi_konfirmasi_password: "",
       };
 
       // Add dynamic fields with prefill from database
@@ -413,7 +831,109 @@ function DataAplikasiSection() {
         baseFormData[fieldName] = app[fieldName] ? String(app[fieldName]) : "";
       });
 
+      // Sync User/Pengguna checkbox state from existing data
+      const parsedUserPengguna = parseUserPenggunaString(
+        baseFormData.user_pengguna,
+      );
+      setUserPenggunaSelected(parsedUserPengguna.selected);
+      setUserPenggunaLainnya(parsedUserPengguna.lainnyaText);
+      baseFormData.user_pengguna = buildUserPenggunaString(
+        parsedUserPengguna.selected,
+        parsedUserPengguna.lainnyaText,
+      );
+
+      // Sync Unit Pengembang radio state from existing data
+      const parsedUnitPengembang = parseUnitPengembangString(
+        baseFormData.unit_pengembang,
+      );
+      setUnitPengembangType(parsedUnitPengembang.type);
+      setUnitPengembangEksternal(parsedUnitPengembang.eksternalText);
+      baseFormData.unit_pengembang = buildUnitPengembangString(
+        parsedUnitPengembang.type,
+        parsedUnitPengembang.eksternalText,
+      );
+
+      // Sync Unit Operasional Teknologi radio state from existing data
+      const parsedUnitOperasionalTeknologi =
+        parseUnitOperasionalTeknologiString(
+          baseFormData.unit_operasional_teknologi,
+        );
+      setUnitOperasionalTeknologiType(parsedUnitOperasionalTeknologi.type);
+      setUnitOperasionalTeknologiLainnya(
+        parsedUnitOperasionalTeknologi.lainnyaText,
+      );
+      baseFormData.unit_operasional_teknologi =
+        buildUnitOperasionalTeknologiString(
+          parsedUnitOperasionalTeknologi.type,
+          parsedUnitOperasionalTeknologi.lainnyaText,
+        );
+
+      // Sync Pusat Komputasi Utama radio state from existing data
+      const parsedPusatKomputasiUtama = parsePusatKomputasiUtamaString(
+        baseFormData.pusat_komputasi_utama,
+      );
+      setPusatKomputasiUtamaType(parsedPusatKomputasiUtama.type);
+      setPusatKomputasiUtamaLainnya(parsedPusatKomputasiUtama.lainnyaText);
+      baseFormData.pusat_komputasi_utama = buildPusatKomputasiUtamaString(
+        parsedPusatKomputasiUtama.type,
+        parsedPusatKomputasiUtama.lainnyaText,
+      );
+
+      // Sync Pusat Komputasi Backup radio state from existing data
+      const parsedPusatKomputasiBackup = parsePusatKomputasiBackupString(
+        baseFormData.pusat_komputasi_backup,
+      );
+      setPusatKomputasiBackupType(parsedPusatKomputasiBackup.type);
+      setPusatKomputasiBackupLainnya(parsedPusatKomputasiBackup.lainnyaText);
+      baseFormData.pusat_komputasi_backup = buildPusatKomputasiBackupString(
+        parsedPusatKomputasiBackup.type,
+        parsedPusatKomputasiBackup.lainnyaText,
+      );
+
+      // Sync Mandiri Komputasi Backup radio state from existing data
+      const parsedMandiriKomputasiBackup = parseMandiriKomputasiBackupString(
+        baseFormData.mandiri_komputasi_backup,
+      );
+      setMandiriKomputasiBackupType(parsedMandiriKomputasiBackup.type);
+      setMandiriKomputasiBackupLainnya(
+        parsedMandiriKomputasiBackup.lainnyaText,
+      );
+      baseFormData.mandiri_komputasi_backup = buildMandiriKomputasiBackupString(
+        parsedMandiriKomputasiBackup.type,
+        parsedMandiriKomputasiBackup.lainnyaText,
+      );
+
+      // Sync Cloud radio state from existing data
+      const parsedCloud = parseCloudString(baseFormData.cloud);
+      setCloudType(parsedCloud.type);
+      setCloudText(parsedCloud.text);
+      baseFormData.cloud = buildCloudString(parsedCloud.type, parsedCloud.text);
+
+      // Sync SSL radio state from existing data
+      const parsedSsl = parseSslString(baseFormData.ssl);
+      setSslType(parsedSsl.type);
+      setSslUnitKerjaText(parsedSsl.unitKerjaText);
+      baseFormData.ssl = buildSslString(
+        parsedSsl.type,
+        parsedSsl.unitKerjaText,
+      );
+
+      // Sync Antivirus radio state from existing data
+      const parsedAntivirus = parseAntivirusString(baseFormData.antivirus);
+      setAntivirusType(parsedAntivirus.type);
+      setAntivirusText(parsedAntivirus.text);
+      baseFormData.antivirus = buildAntivirusString(
+        parsedAntivirus.type,
+        parsedAntivirus.text,
+      );
+
       setFormData(baseFormData);
+
+      // Akses Aplikasi (Akun) state helpers
+      setShowAksesPassword(false);
+      setShowAksesConfirmPassword(false);
+      setAksesPasswordTouched(false);
+      setAksesConfirmTouched(false);
 
       // Fetch PIC berdasarkan eselon2_id atau upt_id (prioritas UPT)
       if (app.upt_id) {
@@ -468,6 +988,13 @@ function DataAplikasiSection() {
 
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+
+    if (k === "akses_aplikasi_password") {
+      setAksesPasswordTouched(true);
+    }
+    if (k === "akses_aplikasi_konfirmasi_password") {
+      setAksesConfirmTouched(true);
+    }
 
     // Jika pic_internal berubah, auto-fill kontak dari master
     if (k === "pic_internal") {
@@ -710,8 +1237,120 @@ function DataAplikasiSection() {
         if (key === "waf_lainnya") continue;
         // va_pt_waktu only required when va_pt_status === 'ya'
         if (key === "va_pt_waktu") continue;
+        // nilai_pengembangan_aplikasi optional (untuk kebutuhan BPK)
+        if (key === "nilai_pengembangan_aplikasi") continue;
         // eselon2_id dan upt_id akan divalidasi terpisah dengan XOR logic
         if (key === "eselon2_id" || key === "upt_id") continue;
+
+        // user_pengguna: jika pilih "Lainnya" maka freetext wajib diisi
+        if (key === "user_pengguna") {
+          const hasLainnya = (userPenggunaSelected || []).includes("lainnya");
+          if (
+            hasLainnya &&
+            (!userPenggunaLainnya || userPenggunaLainnya.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // unit_pengembang: jika pilih "Eksternal" maka freetext wajib diisi
+        if (key === "unit_pengembang") {
+          if (
+            unitPengembangType === "eksternal" &&
+            (!unitPengembangEksternal || unitPengembangEksternal.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // unit_operasional_teknologi: jika pilih "Lainnya" maka freetext wajib diisi
+        if (key === "unit_operasional_teknologi") {
+          if (
+            unitOperasionalTeknologiType === "lainnya" &&
+            (!unitOperasionalTeknologiLainnya ||
+              unitOperasionalTeknologiLainnya.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // pusat_komputasi_utama: jika pilih "Lainnya" maka freetext wajib diisi
+        if (key === "pusat_komputasi_utama") {
+          if (
+            pusatKomputasiUtamaType === "lainnya" &&
+            (!pusatKomputasiUtamaLainnya ||
+              pusatKomputasiUtamaLainnya.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // pusat_komputasi_backup: jika pilih "Lainnya" maka freetext wajib diisi
+        if (key === "pusat_komputasi_backup") {
+          if (
+            pusatKomputasiBackupType === "lainnya" &&
+            (!pusatKomputasiBackupLainnya ||
+              pusatKomputasiBackupLainnya.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // mandiri_komputasi_backup: jika pilih "LAINNYA" maka freetext wajib diisi
+        if (key === "mandiri_komputasi_backup") {
+          if (
+            mandiriKomputasiBackupType === "lainnya" &&
+            (!mandiriKomputasiBackupLainnya ||
+              mandiriKomputasiBackupLainnya.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // cloud: jika pilih "Ya" maka freetext wajib diisi
+        if (key === "cloud") {
+          if (cloudType === "ya" && (!cloudText || cloudText.trim() === "")) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // ssl: jika pilih "Aktif/Unit Kerja" maka freetext wajib diisi
+        if (key === "ssl") {
+          if (
+            sslType === "aktif_unit_kerja" &&
+            (!sslUnitKerjaText || sslUnitKerjaText.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
+
+        // antivirus: jika pilih "Ya" maka freetext wajib diisi
+        if (key === "antivirus") {
+          if (
+            antivirusType === "ya" &&
+            (!antivirusText || antivirusText.trim() === "")
+          ) {
+            missing.push(fieldLabels[key]);
+            missingErrors[key] = true;
+            continue;
+          }
+        }
 
         // Special check for cara_akses_id (array)
         if (key === "cara_akses_id") {
@@ -796,6 +1435,53 @@ function DataAplikasiSection() {
       if (Object.keys(fieldErrors || {}).length > 0) setFieldErrors({});
 
       // Additional client-side validation
+      // Akses Aplikasi (Akun) - optional.
+      // Password+confirm are only required if user modifies password/confirm in this session.
+      const aksesUsername = (formData.akses_aplikasi_username || "").trim();
+      const aksesPassword = formData.akses_aplikasi_password || "";
+      const aksesConfirm = formData.akses_aplikasi_konfirmasi_password || "";
+
+      const aksesNeedsValidation = aksesPasswordTouched || aksesConfirmTouched;
+      if (aksesNeedsValidation) {
+        const aksesErrors = {};
+
+        if (aksesUsername === "") {
+          aksesErrors.akses_aplikasi_username = true;
+        }
+
+        if (aksesPassword.trim() === "") {
+          aksesErrors.akses_aplikasi_password = true;
+        }
+
+        if (aksesConfirm.trim() === "") {
+          aksesErrors.akses_aplikasi_konfirmasi_password = true;
+        }
+
+        if (
+          aksesPassword.trim() !== "" &&
+          aksesConfirm.trim() !== "" &&
+          aksesPassword !== aksesConfirm
+        ) {
+          aksesErrors.akses_aplikasi_konfirmasi_password = true;
+        }
+
+        if (Object.keys(aksesErrors).length > 0) {
+          const merged = { ...fieldErrors, ...aksesErrors };
+          setFieldErrors(merged);
+          focusFirstInvalidField(aksesErrors, [
+            "akses_aplikasi_username",
+            "akses_aplikasi_password",
+            "akses_aplikasi_konfirmasi_password",
+          ]);
+          showMessage(
+            "error",
+            "Akses Aplikasi (Akun) belum valid. Jika mengubah password, maka username dan konfirmasi password harus diisi dan sama.",
+            6500,
+          );
+          return false;
+        }
+      }
+
       if (
         formData.alamat_ip_publik &&
         formData.alamat_ip_publik.trim() !== ""
@@ -904,7 +1590,20 @@ function DataAplikasiSection() {
         va_pt_status: formData.va_pt_status || null,
         va_pt_waktu:
           formData.va_pt_status === "ya" ? formData.va_pt_waktu : null,
+        akses_aplikasi_username:
+          formData.akses_aplikasi_username &&
+          formData.akses_aplikasi_username.trim() !== ""
+            ? formData.akses_aplikasi_username.trim()
+            : null,
       };
+
+      // Only send password if user intentionally modified it.
+      if (aksesPasswordTouched) {
+        const trimmed = (formData.akses_aplikasi_password || "").trim();
+        if (trimmed !== "") {
+          payload.akses_aplikasi_password = formData.akses_aplikasi_password;
+        }
+      }
 
       // Add dynamic fields to payload
       dynamicTables.forEach((table) => {
@@ -2682,7 +3381,9 @@ function DataAplikasiSection() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gridTemplateColumns: "repeat(3, minmax(0, 280px))",
+                      justifyContent: "space-between",
+                      alignItems: "start",
                       gap: "14px",
                       marginBottom: "14px",
                     }}
@@ -2697,6 +3398,8 @@ function DataAplikasiSection() {
                           fontSize: "12px",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
+                          minHeight: "32px",
+                          lineHeight: "1.25",
                         }}
                       >
                         Eselon 1
@@ -2766,6 +3469,8 @@ function DataAplikasiSection() {
                           fontSize: "12px",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
+                          minHeight: "32px",
+                          lineHeight: "1.25",
                         }}
                       >
                         Eselon 2{" "}
@@ -2847,6 +3552,8 @@ function DataAplikasiSection() {
                           fontSize: "12px",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
+                          minHeight: "32px",
+                          lineHeight: "1.25",
                         }}
                       >
                         UPT{" "}
@@ -2918,11 +3625,11 @@ function DataAplikasiSection() {
                       </select>
                     </div>
 
-                    <div style={{ position: "relative" }}>
+                    <div style={{ gridColumn: "1 / -1" }}>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "10px",
                           fontWeight: 600,
                           color: "#475569",
                           fontSize: "12px",
@@ -2934,211 +3641,144 @@ function DataAplikasiSection() {
                       </label>
                       <div
                         data-field="cara_akses_id"
-                        tabIndex={0}
-                        role="button"
-                        onClick={() =>
-                          setShowCaraAksesDropdown(!showCaraAksesDropdown)
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setShowCaraAksesDropdown(!showCaraAksesDropdown);
-                          }
-                        }}
                         style={{
-                          width: "100%",
-                          padding: "10px 14px",
+                          padding: "14px",
                           borderRadius: "8px",
                           border: "1px solid #e2e8f0",
-                          fontSize: "13px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          color: "#0f172a",
-                          backgroundColor: showCaraAksesDropdown
-                            ? "#fff"
-                            : "#fafbfc",
+                          backgroundColor: "#fafbfc",
                           borderColor: fieldErrors.cara_akses_id
                             ? errorBorderColor
-                            : showCaraAksesDropdown
-                              ? "#0ea5e9"
-                              : "#e2e8f0",
+                            : "#e2e8f0",
                           boxShadow: fieldErrors.cara_akses_id
                             ? errorRing
-                            : showCaraAksesDropdown
-                              ? "0 0 0 3px rgba(14, 165, 233, 0.08)"
-                              : "none",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          minHeight: "41px",
+                            : "none",
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            color:
-                              (formData.cara_akses_id || []).length > 0
-                                ? "#0f172a"
-                                : "#0f172a",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            flex: 1,
+                            display: "grid",
+                            gridAutoFlow: "column",
+                            gridAutoColumns: "max-content",
+                            gridTemplateRows: "repeat(2, auto)",
+                            gap: "8px",
+                            overflowX: "auto",
                           }}
                         >
-                          {(formData.cara_akses_id || []).length > 0
-                            ? `${
-                                (formData.cara_akses_id || []).length
-                              } cara akses dipilih`
-                            : "-Pilih-"}
-                        </span>
-                        <svg
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            transform: showCaraAksesDropdown
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                            transition: "transform 0.2s",
-                            flexShrink: 0,
-                          }}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
+                          {(() => {
+                            const options = (master.cara_akses || []).filter(
+                              (x) =>
+                                x.status_aktif === 1 || x.status_aktif === true,
+                            );
 
-                      {showCaraAksesDropdown && (
-                        <>
-                          <div
-                            onClick={() => setShowCaraAksesDropdown(false)}
-                            style={{
-                              position: "fixed",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              zIndex: 998,
-                            }}
-                          />
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: 0,
-                              right: 0,
-                              marginTop: "4px",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              backgroundColor: "#fff",
-                              boxShadow:
-                                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                              maxHeight: "240px",
-                              overflowY: "auto",
-                              zIndex: 999,
-                              padding: "8px",
-                            }}
-                          >
-                            <div
+                            // Karena grid-nya 2 baris dan autoFlow-nya "column",
+                            // kita interleave agar urutan master tampil dari kiri (baris atas dulu).
+                            const cols = Math.ceil(options.length / 2) || 1;
+                            const row1 = options.slice(0, cols);
+                            const row2 = options.slice(cols);
+                            const interleaved = [];
+                            for (let i = 0; i < cols; i += 1) {
+                              if (row1[i]) interleaved.push(row1[i]);
+                              if (row2[i]) interleaved.push(row2[i]);
+                            }
+
+                            return interleaved;
+                          })().map((x) => (
+                            <label
+                              key={x.cara_akses_id}
                               style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 1fr",
-                                gap: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "8px 10px",
+                                cursor: "pointer",
+                                borderRadius: "6px",
+                                backgroundColor: (
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))
+                                  ? "#e0f2fe"
+                                  : "#fff",
+                                border: (formData.cara_akses_id || []).includes(
+                                  String(x.cara_akses_id),
+                                )
+                                  ? "1px solid #0ea5e9"
+                                  : "1px solid #e2e8f0",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#fff";
+                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                }
                               }}
                             >
-                              {(master.cara_akses || [])
-                                .filter(
-                                  (x) =>
-                                    x.status_aktif === 1 ||
-                                    x.status_aktif === true,
-                                )
-                                .map((x) => (
-                                  <label
-                                    key={x.cara_akses_id}
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      padding: "6px 8px",
-                                      cursor: "pointer",
-                                      borderRadius: "6px",
-                                      transition: "background-color 0.15s",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "#f1f5f9";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "transparent";
-                                    }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={(
-                                        formData.cara_akses_id || []
-                                      ).includes(String(x.cara_akses_id))}
-                                      onChange={(e) => {
-                                        const id = String(x.cara_akses_id);
-                                        const current =
-                                          formData.cara_akses_id || [];
-                                        const updated = e.target.checked
-                                          ? [...current, id]
-                                          : current.filter(
-                                              (item) => item !== id,
-                                            );
-                                        handleFormChange(
-                                          "cara_akses_id",
-                                          updated,
-                                        );
-                                      }}
-                                      style={{
-                                        width: "14px",
-                                        height: "14px",
-                                        marginRight: "8px",
-                                        cursor: "pointer",
-                                        accentColor: "#0ea5e9",
-                                        flexShrink: 0,
-                                      }}
-                                    />
-                                    <span
-                                      style={{
-                                        fontSize: "12.5px",
-                                        color: "#334155",
-                                        lineHeight: "1.3",
-                                      }}
-                                    >
-                                      {x.nama_cara_akses}
-                                    </span>
-                                  </label>
-                                ))}
-                            </div>
-                            {(!master.cara_akses ||
-                              master.cara_akses.filter(
-                                (x) =>
-                                  x.status_aktif === 1 ||
-                                  x.status_aktif === true,
-                              ).length === 0) && (
-                              <div
+                              <input
+                                type="checkbox"
+                                checked={(
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))}
+                                onChange={(e) => {
+                                  const id = String(x.cara_akses_id);
+                                  const current = formData.cara_akses_id || [];
+                                  const updated = e.target.checked
+                                    ? [...current, id]
+                                    : current.filter((item) => item !== id);
+                                  handleFormChange("cara_akses_id", updated);
+                                }}
                                 style={{
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                  textAlign: "center",
-                                  padding: "12px",
+                                  width: "16px",
+                                  height: "16px",
+                                  marginRight: "10px",
+                                  cursor: "pointer",
+                                  accentColor: "#0ea5e9",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                  lineHeight: "1.3",
+                                  whiteSpace: "nowrap",
                                 }}
                               >
-                                Tidak ada data Cara Akses
-                              </div>
-                            )}
+                                {x.nama_cara_akses}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                        {(!master.cara_akses ||
+                          master.cara_akses.filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          ).length === 0) && (
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#94a3b8",
+                              textAlign: "center",
+                              padding: "20px",
+                            }}
+                          >
+                            Tidak ada data Cara Akses
                           </div>
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3284,7 +3924,7 @@ function DataAplikasiSection() {
                           fontWeight: 600,
                         }}
                       >
-                        Environment
+                        Ekosistem
                       </label>
                       <select
                         data-field="environment_id"
@@ -3645,6 +4285,7 @@ function DataAplikasiSection() {
                       Domain
                     </label>
                     <input
+                      type="text"
                       data-field="domain"
                       value={formData.domain}
                       onChange={(e) =>
@@ -3659,6 +4300,7 @@ function DataAplikasiSection() {
                         borderColor: fieldErrors.domain
                           ? errorBorderColor
                           : "#e6eef6",
+                        textTransform: "none",
                       }}
                     />
                   </div>
@@ -3673,24 +4315,145 @@ function DataAplikasiSection() {
                     >
                       User / Pengguna
                     </label>
-                    <textarea
+                    <div
                       data-field="user_pengguna"
-                      value={formData.user_pengguna}
-                      onChange={(e) =>
-                        handleFormChange("user_pengguna", e.target.value)
-                      }
-                      placeholder="Contoh: Pegawai internal, masyarakat umum"
-                      rows={2}
                       style={{
-                        width: "100%",
-                        padding: "10px",
+                        padding: "12px",
                         borderRadius: "8px",
                         border: "1px solid #e6eef6",
                         borderColor: fieldErrors.user_pengguna
                           ? errorBorderColor
                           : "#e6eef6",
+                        backgroundColor: "#fff",
                       }}
-                    />
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                          gap: "8px",
+                        }}
+                      >
+                        {USER_PENGGUNA_OPTIONS.map((opt) => {
+                          const checked = (userPenggunaSelected || []).includes(
+                            opt.value,
+                          );
+
+                          return (
+                            <label
+                              key={opt.value}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "10px 12px",
+                                cursor: "pointer",
+                                borderRadius: "8px",
+                                backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                border: checked
+                                  ? "1px solid #0ea5e9"
+                                  : "1px solid #e2e8f0",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!checked) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!checked) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#fff";
+                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                }
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const nextSelected = e.target.checked
+                                    ? Array.from(
+                                        new Set([
+                                          ...(userPenggunaSelected || []),
+                                          opt.value,
+                                        ]),
+                                      )
+                                    : (userPenggunaSelected || []).filter(
+                                        (v) => v !== opt.value,
+                                      );
+
+                                  let nextLainnya = userPenggunaLainnya;
+                                  if (!nextSelected.includes("lainnya")) {
+                                    nextLainnya = "";
+                                    setUserPenggunaLainnya("");
+                                  }
+
+                                  setUserPenggunaSelected(nextSelected);
+                                  handleFormChange(
+                                    "user_pengguna",
+                                    buildUserPenggunaString(
+                                      nextSelected,
+                                      nextLainnya,
+                                    ),
+                                  );
+                                }}
+                                style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  marginRight: "10px",
+                                  cursor: "pointer",
+                                  accentColor: "#0ea5e9",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                  lineHeight: "1.3",
+                                }}
+                              >
+                                {opt.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+
+                      {(userPenggunaSelected || []).includes("lainnya") && (
+                        <div style={{ marginTop: "10px" }}>
+                          <input
+                            type="text"
+                            value={userPenggunaLainnya}
+                            onChange={(e) => {
+                              const text = e.target.value;
+                              setUserPenggunaLainnya(text);
+                              handleFormChange(
+                                "user_pengguna",
+                                buildUserPenggunaString(
+                                  userPenggunaSelected,
+                                  text,
+                                ),
+                              );
+                            }}
+                            placeholder="Isi lainnya..."
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              borderColor: fieldErrors.user_pengguna
+                                ? errorBorderColor
+                                : "#e6eef6",
+                              textTransform: "none",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ marginTop: "12px" }}>
@@ -3868,23 +4631,137 @@ function DataAplikasiSection() {
                       >
                         Unit Pengembang
                       </label>
-                      <input
+                      <div
                         data-field="unit_pengembang"
-                        value={formData.unit_pengembang}
-                        onChange={(e) =>
-                          handleFormChange("unit_pengembang", e.target.value)
-                        }
-                        placeholder="Contoh: Pusdatin, Tim IT Internal"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
                             : "#e6eef6",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {UNIT_PENGEMBANG_OPTIONS.map((opt) => {
+                            const checked = unitPengembangType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="unit_pengembang"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setUnitPengembangType(opt.value);
+                                    if (opt.value !== "eksternal") {
+                                      setUnitPengembangEksternal("");
+                                      handleFormChange(
+                                        "unit_pengembang",
+                                        buildUnitPengembangString(
+                                          opt.value,
+                                          "",
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "unit_pengembang",
+                                      buildUnitPengembangString(
+                                        "eksternal",
+                                        unitPengembangEksternal,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {unitPengembangType === "eksternal" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={unitPengembangEksternal}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setUnitPengembangEksternal(text);
+                                handleFormChange(
+                                  "unit_pengembang",
+                                  buildUnitPengembangString("eksternal", text),
+                                );
+                              }}
+                              placeholder="Isi unit pengembang eksternal..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.unit_pengembang
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -3906,19 +4783,10 @@ function DataAplikasiSection() {
                       >
                         Unit Operasional Teknologi
                       </label>
-                      <input
+                      <div
                         data-field="unit_operasional_teknologi"
-                        value={formData.unit_operasional_teknologi}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "unit_operasional_teknologi",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Subbag TI, Divisi Infrastruktur"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.unit_operasional_teknologi
@@ -3927,8 +4795,138 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {UNIT_OPERASIONAL_TEKNOLOGI_OPTIONS.map((opt) => {
+                            const checked =
+                              unitOperasionalTeknologiType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="unit_operasional_teknologi"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setUnitOperasionalTeknologiType(opt.value);
+
+                                    if (opt.value === "pusdatin") {
+                                      setUnitOperasionalTeknologiLainnya("");
+                                      handleFormChange(
+                                        "unit_operasional_teknologi",
+                                        buildUnitOperasionalTeknologiString(
+                                          "pusdatin",
+                                          "",
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "unit_operasional_teknologi",
+                                      buildUnitOperasionalTeknologiString(
+                                        "lainnya",
+                                        unitOperasionalTeknologiLainnya,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {unitOperasionalTeknologiType === "lainnya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={unitOperasionalTeknologiLainnya}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setUnitOperasionalTeknologiLainnya(text);
+                                handleFormChange(
+                                  "unit_operasional_teknologi",
+                                  buildUnitOperasionalTeknologiString(
+                                    "lainnya",
+                                    text,
+                                  ),
+                                );
+                              }}
+                              placeholder="Isi unit operasional teknologi lainnya..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor:
+                                  fieldErrors.unit_operasional_teknologi
+                                    ? errorBorderColor
+                                    : "#e6eef6",
+                                boxShadow:
+                                  fieldErrors.unit_operasional_teknologi
+                                    ? errorBoxShadow
+                                    : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3938,7 +4936,17 @@ function DataAplikasiSection() {
                           fontWeight: 600,
                         }}
                       >
-                        Nilai Pengembangan Aplikasi
+                        <div>Nilai Pengembangan Aplikasi</div>
+                        <div
+                          style={{
+                            marginTop: "2px",
+                            fontSize: "12px",
+                            fontWeight: 500,
+                            color: "#64748b",
+                          }}
+                        >
+                          untuk kebutuhan BPK
+                        </div>
                       </label>
                       <input
                         data-field="nilai_pengembangan_aplikasi"
@@ -3984,19 +4992,10 @@ function DataAplikasiSection() {
                       >
                         Pusat Komputasi Utama
                       </label>
-                      <input
+                      <div
                         data-field="pusat_komputasi_utama"
-                        value={formData.pusat_komputasi_utama}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_utama",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Jakarta"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.pusat_komputasi_utama
@@ -4005,8 +5004,136 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {PUSAT_KOMPUTASI_UTAMA_OPTIONS.map((opt) => {
+                            const checked =
+                              pusatKomputasiUtamaType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="pusat_komputasi_utama"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setPusatKomputasiUtamaType(opt.value);
+
+                                    if (opt.value !== "lainnya") {
+                                      setPusatKomputasiUtamaLainnya("");
+                                      handleFormChange(
+                                        "pusat_komputasi_utama",
+                                        buildPusatKomputasiUtamaString(
+                                          opt.value,
+                                          "",
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "pusat_komputasi_utama",
+                                      buildPusatKomputasiUtamaString(
+                                        "lainnya",
+                                        pusatKomputasiUtamaLainnya,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {pusatKomputasiUtamaType === "lainnya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={pusatKomputasiUtamaLainnya}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setPusatKomputasiUtamaLainnya(text);
+                                handleFormChange(
+                                  "pusat_komputasi_utama",
+                                  buildPusatKomputasiUtamaString(
+                                    "lainnya",
+                                    text,
+                                  ),
+                                );
+                              }}
+                              placeholder="Isi pusat komputasi utama lainnya..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.pusat_komputasi_utama
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors.pusat_komputasi_utama
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -4018,19 +5145,10 @@ function DataAplikasiSection() {
                       >
                         Pusat Komputasi Backup
                       </label>
-                      <input
+                      <div
                         data-field="pusat_komputasi_backup"
-                        value={formData.pusat_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Surabaya"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.pusat_komputasi_backup
@@ -4039,8 +5157,136 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {PUSAT_KOMPUTASI_BACKUP_OPTIONS.map((opt) => {
+                            const checked =
+                              pusatKomputasiBackupType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="pusat_komputasi_backup"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setPusatKomputasiBackupType(opt.value);
+
+                                    if (opt.value !== "lainnya") {
+                                      setPusatKomputasiBackupLainnya("");
+                                      handleFormChange(
+                                        "pusat_komputasi_backup",
+                                        buildPusatKomputasiBackupString(
+                                          opt.value,
+                                          "",
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "pusat_komputasi_backup",
+                                      buildPusatKomputasiBackupString(
+                                        "lainnya",
+                                        pusatKomputasiBackupLainnya,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {pusatKomputasiBackupType === "lainnya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={pusatKomputasiBackupLainnya}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setPusatKomputasiBackupLainnya(text);
+                                handleFormChange(
+                                  "pusat_komputasi_backup",
+                                  buildPusatKomputasiBackupString(
+                                    "lainnya",
+                                    text,
+                                  ),
+                                );
+                              }}
+                              placeholder="Isi pusat komputasi backup lainnya..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.pusat_komputasi_backup
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors.pusat_komputasi_backup
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -4052,19 +5298,10 @@ function DataAplikasiSection() {
                       >
                         Mandiri Komputasi Backup
                       </label>
-                      <input
+                      <div
                         data-field="mandiri_komputasi_backup"
-                        value={formData.mandiri_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "mandiri_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Server Lokal Kantor"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.mandiri_komputasi_backup
@@ -4073,8 +5310,137 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {MANDIRI_KOMPUTASI_BACKUP_OPTIONS.map((opt) => {
+                            const checked =
+                              mandiriKomputasiBackupType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="mandiri_komputasi_backup"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setMandiriKomputasiBackupType(opt.value);
+
+                                    if (opt.value !== "lainnya") {
+                                      setMandiriKomputasiBackupLainnya("");
+                                      handleFormChange(
+                                        "mandiri_komputasi_backup",
+                                        buildMandiriKomputasiBackupString(
+                                          opt.value,
+                                          "",
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "mandiri_komputasi_backup",
+                                      buildMandiriKomputasiBackupString(
+                                        "lainnya",
+                                        mandiriKomputasiBackupLainnya,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {mandiriKomputasiBackupType === "lainnya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={mandiriKomputasiBackupLainnya}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setMandiriKomputasiBackupLainnya(text);
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  buildMandiriKomputasiBackupString(
+                                    "lainnya",
+                                    text,
+                                  ),
+                                );
+                              }}
+                              placeholder="Isi mandiri komputasi backup lainnya..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor:
+                                  fieldErrors.mandiri_komputasi_backup
+                                    ? errorBorderColor
+                                    : "#e6eef6",
+                                boxShadow: fieldErrors.mandiri_komputasi_backup
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -4127,16 +5493,10 @@ function DataAplikasiSection() {
                       >
                         Cloud
                       </label>
-                      <input
+                      <div
                         data-field="cloud"
-                        value={formData.cloud}
-                        onChange={(e) =>
-                          handleFormChange("cloud", e.target.value)
-                        }
-                        placeholder="Contoh: AWS, Google Cloud, Azure"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.cloud
@@ -4145,8 +5505,126 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {CLOUD_OPTIONS.map((opt) => {
+                            const checked = cloudType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="cloud"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setCloudType(opt.value);
+
+                                    if (opt.value === "tidak") {
+                                      setCloudText("");
+                                      handleFormChange(
+                                        "cloud",
+                                        buildCloudString("tidak", ""),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "cloud",
+                                      buildCloudString("ya", cloudText),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {cloudType === "ya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={cloudText}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setCloudText(text);
+                                handleFormChange(
+                                  "cloud",
+                                  buildCloudString("ya", text),
+                                );
+                              }}
+                              placeholder="Contoh: AWS, Google Cloud, Azure"
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.cloud
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors.cloud
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -4168,24 +5646,139 @@ function DataAplikasiSection() {
                       >
                         SSL
                       </label>
-                      <input
+                      <div
                         data-field="ssl"
-                        value={formData.ssl}
-                        onChange={(e) =>
-                          handleFormChange("ssl", e.target.value)
-                        }
-                        placeholder="Contoh: Let's Encrypt, Comodo SSL"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.ssl
                             ? errorBorderColor
                             : "#e6eef6",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {SSL_OPTIONS.map((opt) => {
+                            const checked = sslType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="ssl"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setSslType(opt.value);
+
+                                    if (opt.value === "aktif_pusdatin") {
+                                      setSslUnitKerjaText("");
+                                      handleFormChange(
+                                        "ssl",
+                                        buildSslString("aktif_pusdatin", ""),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "ssl",
+                                      buildSslString(
+                                        "aktif_unit_kerja",
+                                        sslUnitKerjaText,
+                                      ),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {sslType === "aktif_unit_kerja" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={sslUnitKerjaText}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setSslUnitKerjaText(text);
+                                handleFormChange(
+                                  "ssl",
+                                  buildSslString("aktif_unit_kerja", text),
+                                );
+                              }}
+                              placeholder="Isi unit kerja..."
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.ssl
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors.ssl
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -4238,16 +5831,10 @@ function DataAplikasiSection() {
                       >
                         Antivirus
                       </label>
-                      <input
+                      <div
                         data-field="antivirus"
-                        value={formData.antivirus}
-                        onChange={(e) =>
-                          handleFormChange("antivirus", e.target.value)
-                        }
-                        placeholder="Contoh: Kaspersky, Norton, Avast"
                         style={{
-                          width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
                           border: "1px solid #e6eef6",
                           borderColor: fieldErrors.antivirus
@@ -4256,8 +5843,126 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#fff",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "8px",
+                          }}
+                        >
+                          {ANTIVIRUS_OPTIONS.map((opt) => {
+                            const checked = antivirusType === opt.value;
+                            return (
+                              <label
+                                key={opt.value}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "10px 12px",
+                                  cursor: "pointer",
+                                  borderRadius: "8px",
+                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  border: checked
+                                    ? "1px solid #0ea5e9"
+                                    : "1px solid #e2e8f0",
+                                  transition: "all 0.15s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                    e.currentTarget.style.borderColor =
+                                      "#cbd5e1";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!checked) {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#fff";
+                                    e.currentTarget.style.borderColor =
+                                      "#e2e8f0";
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name="antivirus"
+                                  checked={checked}
+                                  onChange={() => {
+                                    setAntivirusType(opt.value);
+
+                                    if (opt.value === "tidak") {
+                                      setAntivirusText("");
+                                      handleFormChange(
+                                        "antivirus",
+                                        buildAntivirusString("tidak", ""),
+                                      );
+                                      return;
+                                    }
+
+                                    handleFormChange(
+                                      "antivirus",
+                                      buildAntivirusString("ya", antivirusText),
+                                    );
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    fontWeight: 500,
+                                    lineHeight: "1.3",
+                                  }}
+                                >
+                                  {opt.label}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+
+                        {antivirusType === "ya" && (
+                          <div style={{ marginTop: "10px" }}>
+                            <input
+                              type="text"
+                              value={antivirusText}
+                              onChange={(e) => {
+                                const text = e.target.value;
+                                setAntivirusText(text);
+                                handleFormChange(
+                                  "antivirus",
+                                  buildAntivirusString("ya", text),
+                                );
+                              }}
+                              placeholder="Contoh: Kaspersky, Norton, Avast"
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #e6eef6",
+                                borderColor: fieldErrors.antivirus
+                                  ? errorBorderColor
+                                  : "#e6eef6",
+                                boxShadow: fieldErrors.antivirus
+                                  ? errorBoxShadow
+                                  : "none",
+                                textTransform: "none",
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -4756,6 +6461,372 @@ function DataAplikasiSection() {
                     </div>
                   </div>
                 )}
+
+                <div
+                  style={{
+                    marginTop: "20px",
+                    paddingTop: "20px",
+                    borderTop: "1px solid #f1f5f9",
+                  }}
+                >
+                  <h3
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: 700,
+                      color: "#0f172a",
+                      marginBottom: "16px",
+                      marginTop: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "4px",
+                        height: "16px",
+                        background:
+                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
+                        borderRadius: "2px",
+                      }}
+                    ></div>
+                    <span>Akses Aplikasi (Akun)</span>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: "#64748b",
+                        fontWeight: 500,
+                      }}
+                    >
+                      (untuk kebutuhan BPK)
+                    </span>
+                  </h3>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: "14px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "7px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          fontSize: "12px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        Username
+                      </label>
+                      <input
+                        type="text"
+                        data-field="akses_aplikasi_username"
+                        value={formData.akses_aplikasi_username}
+                        onChange={(e) =>
+                          handleFormChange(
+                            "akses_aplikasi_username",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="Username"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          borderColor: fieldErrors.akses_aplikasi_username
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.akses_aplikasi_username
+                            ? errorBoxShadow
+                            : "none",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "7px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          fontSize: "12px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={showAksesPassword ? "text" : "password"}
+                          data-field="akses_aplikasi_password"
+                          value={formData.akses_aplikasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Password"
+                          style={{
+                            width: "100%",
+                            padding: "10px 40px 10px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor: fieldErrors.akses_aplikasi_password
+                              ? errorBorderColor
+                              : "#e6eef6",
+                            boxShadow: fieldErrors.akses_aplikasi_password
+                              ? errorBoxShadow
+                              : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            showAksesPassword
+                              ? "Sembunyikan password"
+                              : "Tampilkan password"
+                          }
+                          onClick={() => setShowAksesPassword((s) => !s)}
+                          style={{
+                            position: "absolute",
+                            right: 10,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "transparent",
+                            border: "none",
+                            padding: 4,
+                            cursor: "pointer",
+                            color: "#64748b",
+                            lineHeight: 0,
+                          }}
+                        >
+                          {showAksesPassword ? (
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M3 3l18 18"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M10.58 10.58a2 2 0 0 0 2.83 2.83"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M9.88 5.08A10.94 10.94 0 0 1 12 5c5 0 9.27 3.11 11 7-0.64 1.44-1.64 2.77-2.9 3.9"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M6.11 6.11C4.36 7.4 3 9.1 2 12c1.73 3.89 6 7 10 7 1.13 0 2.21-0.2 3.2-0.57"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 9a3 3 0 0 1 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "7px",
+                          fontWeight: 600,
+                          color: "#475569",
+                          fontSize: "12px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        Konfirmasi Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={showAksesConfirmPassword ? "text" : "password"}
+                          data-field="akses_aplikasi_konfirmasi_password"
+                          value={formData.akses_aplikasi_konfirmasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_konfirmasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Konfirmasi Password"
+                          style={{
+                            width: "100%",
+                            padding: "10px 40px 10px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBorderColor
+                                : "#e6eef6",
+                            boxShadow:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBoxShadow
+                                : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            showAksesConfirmPassword
+                              ? "Sembunyikan konfirmasi password"
+                              : "Tampilkan konfirmasi password"
+                          }
+                          onClick={() => setShowAksesConfirmPassword((s) => !s)}
+                          style={{
+                            position: "absolute",
+                            right: 10,
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "transparent",
+                            border: "none",
+                            padding: 4,
+                            cursor: "pointer",
+                            color: "#64748b",
+                            lineHeight: 0,
+                          }}
+                        >
+                          {showAksesConfirmPassword ? (
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M3 3l18 18"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M10.58 10.58a2 2 0 0 0 2.83 2.83"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M9.88 5.08A10.94 10.94 0 0 1 12 5c5 0 9.27 3.11 11 7-0.64 1.44-1.64 2.77-2.9 3.9"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M6.11 6.11C4.36 7.4 3 9.1 2 12c1.73 3.89 6 7 10 7 1.13 0 2.21-0.2 3.2-0.57"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M12 9a3 3 0 0 1 3 3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          ) : (
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="3"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <small
+                    style={{
+                      display: "block",
+                      marginTop: "6px",
+                      fontSize: "12px",
+                      color: "#64748b",
+                    }}
+                  >
+                    Opsional. Jika mengisi password, konfirmasi harus sama.
+                  </small>
+                </div>
 
                 <div
                   style={{
