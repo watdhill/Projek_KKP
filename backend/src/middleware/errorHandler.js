@@ -65,7 +65,7 @@ const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
   error.statusCode = err.statusCode || 500;
-  error.errorCode = err.errorCode || "INTERNAL_SERVER_ERROR";
+  error.errorCode = err.errorCode || err.code || "INTERNAL_SERVER_ERROR";
 
   // Log error untuk debugging
   console.error({
@@ -136,6 +136,23 @@ const errorHandler = (err, req, res, next) => {
   // Bcrypt errors
   if (err.name === "bcrypt Error") {
     error = new BadRequestError("Error saat memproses password");
+  }
+
+  // Encryption / configuration errors
+  if (err.code === "ENCRYPTION_KEY_MISSING") {
+    error = new AppError(
+      "Konfigurasi enkripsi belum di-set. Set env AKUN_PASSWORD_ENCRYPTION_KEY (32-byte hex(64) atau base64), lalu restart backend.",
+      500,
+      "ENCRYPTION_KEY_MISSING",
+    );
+  }
+
+  if (err.code === "ENCRYPTION_FORMAT_INVALID") {
+    error = new AppError(
+      "Format data terenkripsi tidak valid. Hubungi admin atau periksa data di database.",
+      500,
+      "ENCRYPTION_FORMAT_INVALID",
+    );
   }
 
   // Validation errors dari express-validator (jika ada)

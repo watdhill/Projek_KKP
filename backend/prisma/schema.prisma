@@ -50,6 +50,8 @@ model data_aplikasi {
   waf                                                                        String?              @db.VarChar(50)
   waf_lainnya                                                                String?              @db.VarChar(200)
   antivirus                                                                  String?              @db.VarChar(50)
+  akses_aplikasi_username                                                     String?              @db.VarChar(200)
+  akses_aplikasi_password_enc                                                 String?              @db.Text
   va_pt_status                                                               String?              @db.VarChar(50)
   va_pt_waktu                                                                String?              @db.VarChar(100)
   alamat_ip_publik                                                           String?              @db.VarChar(100)
