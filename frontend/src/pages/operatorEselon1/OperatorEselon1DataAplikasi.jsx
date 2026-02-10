@@ -16,10 +16,35 @@ function OperatorEselon1DataAplikasi() {
   const [master, setMaster] = useState({});
   const [dynamicTables, setDynamicTables] = useState([]);
   const [dynamicMasterData, setDynamicMasterData] = useState({});
-  const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [userPenggunaSelected, setUserPenggunaSelected] = useState([]);
+  const [userPenggunaLainnya, setUserPenggunaLainnya] = useState("");
+  const [unitPengembangType, setUnitPengembangType] = useState("");
+  const [unitPengembangEksternal, setUnitPengembangEksternal] = useState("");
+  const [unitOperasionalTeknologiType, setUnitOperasionalTeknologiType] =
+    useState("");
+  const [unitOperasionalTeknologiLainnya, setUnitOperasionalTeknologiLainnya] =
+    useState("");
+  const [pusatKomputasiUtamaType, setPusatKomputasiUtamaType] = useState("");
+  const [pusatKomputasiUtamaLainnya, setPusatKomputasiUtamaLainnya] =
+    useState("");
+  const [pusatKomputasiBackupType, setPusatKomputasiBackupType] = useState("");
+  const [pusatKomputasiBackupLainnya, setPusatKomputasiBackupLainnya] =
+    useState("");
+  const [mandiriKomputasiBackupType, setMandiriKomputasiBackupType] =
+    useState("");
+  const [mandiriKomputasiBackupLainnya, setMandiriKomputasiBackupLainnya] =
+    useState("");
+  const [cloudType, setCloudType] = useState("");
+  const [cloudYaText, setCloudYaText] = useState("");
+  const [sslType, setSslType] = useState("");
+  const [sslUnitKerja, setSslUnitKerja] = useState("");
+  const [antivirusType, setAntivirusType] = useState("");
+  const [antivirusYaText, setAntivirusYaText] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showKonfirmasiPassword, setShowKonfirmasiPassword] = useState(false);
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -64,6 +89,9 @@ function OperatorEselon1DataAplikasi() {
     va_pt_status: "",
     va_pt_waktu: "",
     antivirus: "",
+    akses_aplikasi_username: "",
+    akses_aplikasi_password: "",
+    akses_aplikasi_konfirmasi_password: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -94,6 +122,273 @@ function OperatorEselon1DataAplikasi() {
   const userNamaEselon1 = localStorage.getItem("namaEselon1");
 
   const isActiveFlag = (v) => v === true || v === 1 || v === "1";
+
+  const USER_PENGGUNA_OPTIONS = [
+    { value: "internal_kkp", label: "Internal KKP" },
+    { value: "internal_eselon_1", label: "Internal Eselon 1" },
+    { value: "internal_eselon_2", label: "Internal Eselon 2" },
+    { value: "internal_unit_kerja", label: "Internal Unit Kerja" },
+    { value: "stakeholder", label: "Stakeholder" },
+    { value: "publik", label: "Publik" },
+    { value: "lainnya", label: "Lainnya" },
+  ];
+
+  const buildUserPenggunaString = (selectedValues, lainnyaText) => {
+    const selected = Array.isArray(selectedValues) ? selectedValues : [];
+    const labelByValue = new Map(
+      USER_PENGGUNA_OPTIONS.map((o) => [o.value, o.label]),
+    );
+    const parts = selected
+      .filter((v) => v !== "lainnya")
+      .map((v) => labelByValue.get(v) || v);
+
+    if (selected.includes("lainnya")) {
+      const text = (lainnyaText || "").trim();
+      if (text) parts.push(text);
+    }
+
+    return parts.join(", ");
+  };
+
+  const parseUserPenggunaString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { selected: [], lainnyaText: "" };
+
+    const tokens = raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    const norm = (s) =>
+      String(s || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
+    const valueByNorm = new Map();
+    USER_PENGGUNA_OPTIONS.forEach((opt) => {
+      valueByNorm.set(norm(opt.label), opt.value);
+    });
+
+    const selected = [];
+    const unknown = [];
+
+    tokens.forEach((token) => {
+      const n = norm(token);
+      const val = valueByNorm.get(n);
+      if (val) {
+        if (!selected.includes(val)) selected.push(val);
+      } else {
+        unknown.push(token);
+      }
+    });
+
+    let lainnyaText = "";
+    if (unknown.length > 0) {
+      lainnyaText = unknown.join(", ");
+      if (!selected.includes("lainnya")) selected.push("lainnya");
+    }
+
+    return { selected, lainnyaText };
+  };
+
+  const buildUnitPengembangString = (type, eksternalText) => {
+    if (type === "sekretariat_eselon_1") return "Sekretariat Eselon 1";
+    if (type === "internal_eselon_2") return "Internal Eselon 2";
+    if (type === "eksternal") return (eksternalText || "").trim();
+    return "";
+  };
+
+  const parseUnitPengembangString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", eksternalText: "" };
+
+    const lower = raw.toLowerCase();
+    if (
+      lower.includes("sekretariat") &&
+      lower.includes("eselon") &&
+      lower.includes("1")
+    ) {
+      return { type: "sekretariat_eselon_1", eksternalText: "" };
+    }
+    if (
+      lower.includes("internal") &&
+      lower.includes("eselon") &&
+      lower.includes("2")
+    ) {
+      return { type: "internal_eselon_2", eksternalText: "" };
+    }
+    // Default to eksternal for any other value
+    return { type: "eksternal", eksternalText: raw };
+  };
+
+  const buildUnitOperasionalTeknologiString = (type, lainnyaText) => {
+    if (type === "pusdatin") return "Pusdatin";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    return "";
+  };
+
+  const parseUnitOperasionalTeknologiString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "pusdatin") {
+      return { type: "pusdatin", lainnyaText: "" };
+    }
+    // Default to lainnya for any other value
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const buildPusatKomputasiUtamaString = (type, lainnyaText) => {
+    if (type === "dc_gambir") return "DC Gambir";
+    if (type === "dc_cyber") return "DC Cyber";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    if (type === "tidak_ada") return "Tidak Ada";
+    return "";
+  };
+
+  const parsePusatKomputasiUtamaString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "dc gambir" || lower === "dcgambir") {
+      return { type: "dc_gambir", lainnyaText: "" };
+    }
+    if (lower === "dc cyber" || lower === "dccyber") {
+      return { type: "dc_cyber", lainnyaText: "" };
+    }
+    if (lower === "tidak ada") {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+    // Default to lainnya for any other value
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const buildPusatKomputasiBackupString = (type, lainnyaText) => {
+    if (type === "dc_gambir") return "DC Gambir";
+    if (type === "dc_cyber") return "DC Cyber";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    if (type === "tidak_ada") return "Tidak Ada";
+    return "";
+  };
+
+  const parsePusatKomputasiBackupString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "dc gambir" || lower === "dcgambir") {
+      return { type: "dc_gambir", lainnyaText: "" };
+    }
+    if (lower === "dc cyber" || lower === "dccyber") {
+      return { type: "dc_cyber", lainnyaText: "" };
+    }
+    if (lower === "tidak ada") {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+    // Default to lainnya for any other value
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const buildMandiriKomputasiBackupString = (type, lainnyaText) => {
+    if (type === "ex_storage") return "Ex STORAGE";
+    if (type === "in_storage") return "In STORAGE";
+    if (type === "ex_cloud") return "Ex CLOUD";
+    if (type === "tidak_ada") return "TIDAK ADA";
+    if (type === "lainnya") return (lainnyaText || "").trim();
+    return "";
+  };
+
+  const parseMandiriKomputasiBackupString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "ex storage" || lower === "exstorage") {
+      return { type: "ex_storage", lainnyaText: "" };
+    }
+    if (lower === "in storage" || lower === "instorage") {
+      return { type: "in_storage", lainnyaText: "" };
+    }
+    if (lower === "ex cloud" || lower === "excloud") {
+      return { type: "ex_cloud", lainnyaText: "" };
+    }
+    if (lower === "tidak ada") {
+      return { type: "tidak_ada", lainnyaText: "" };
+    }
+    // Default to lainnya for any other value
+    return { type: "lainnya", lainnyaText: raw };
+  };
+
+  const buildCloudString = (type, yaText) => {
+    if (type === "ya") return (yaText || "").trim();
+    if (type === "tidak") return "Tidak";
+    return "";
+  };
+
+  const parseCloudString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", yaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "tidak") {
+      return { type: "tidak", yaText: "" };
+    }
+    // Any other value is considered as "Ya" with text
+    return { type: "ya", yaText: raw };
+  };
+
+  const buildSslString = (type, unitKerjaText) => {
+    if (type === "aktif_pusdatin") return "Aktif/Pusdatin";
+    if (type === "aktif_unit_kerja") {
+      return unitKerjaText ? `Aktif/${unitKerjaText}` : "Aktif/Unit Kerja";
+    }
+    return "";
+  };
+
+  const parseSslString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", unitKerjaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "aktif/pusdatin" || lower === "aktifpusdatin") {
+      return { type: "aktif_pusdatin", unitKerjaText: "" };
+    }
+    // Check if it starts with "Aktif/"
+    if (lower.startsWith("aktif/")) {
+      const afterSlash = raw.substring(6).trim(); // Get text after "Aktif/"
+      if (afterSlash && afterSlash.toLowerCase() !== "pusdatin") {
+        return { type: "aktif_unit_kerja", unitKerjaText: afterSlash };
+      }
+    }
+    // If contains "aktif/unit kerja" pattern (old format)
+    if (lower.includes("aktif/unit kerja")) {
+      const match = raw.match(/aktif\/unit kerja(?:\s*-\s*(.+))?/i);
+      const unitKerjaText = match && match[1] ? match[1].trim() : "";
+      return { type: "aktif_unit_kerja", unitKerjaText };
+    }
+    // Default to aktif_unit_kerja with the raw value as unit kerja
+    return { type: "aktif_unit_kerja", unitKerjaText: raw };
+  };
+
+  const buildAntivirusString = (type, yaText) => {
+    if (type === "ya") return (yaText || "").trim();
+    if (type === "tidak") return "Tidak";
+    return "";
+  };
+
+  const parseAntivirusString = (value) => {
+    const raw = (value || "").trim();
+    if (!raw) return { type: "", yaText: "" };
+
+    const lower = raw.toLowerCase();
+    if (lower === "tidak") {
+      return { type: "tidak", yaText: "" };
+    }
+    // Any other value is considered as "Ya" with text
+    return { type: "ya", yaText: raw };
+  };
 
   // fetch apps function (reusable)
   const fetchApps = async () => {
@@ -284,6 +579,24 @@ function OperatorEselon1DataAplikasi() {
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
+    setUserPenggunaSelected([]);
+    setUserPenggunaLainnya("");
+    setUnitPengembangType("");
+    setUnitPengembangEksternal("");
+    setUnitOperasionalTeknologiType("");
+    setUnitOperasionalTeknologiLainnya("");
+    setPusatKomputasiUtamaType("");
+    setPusatKomputasiUtamaLainnya("");
+    setPusatKomputasiBackupType("");
+    setPusatKomputasiBackupLainnya("");
+    setMandiriKomputasiBackupType("");
+    setMandiriKomputasiBackupLainnya("");
+    setCloudType("");
+    setCloudYaText("");
+    setSslType("");
+    setSslUnitKerja("");
+    setAntivirusType("");
+    setAntivirusYaText("");
     // Auto-set eselon1_id dari operator
     const baseFormData = {
       nama_aplikasi: "",
@@ -329,6 +642,9 @@ function OperatorEselon1DataAplikasi() {
       va_pt_status: "",
       va_pt_waktu: "",
       antivirus: "",
+      akses_aplikasi_username: "",
+      akses_aplikasi_password: "",
+      akses_aplikasi_konfirmasi_password: "",
     };
 
     // Add dynamic fields
@@ -346,6 +662,24 @@ function OperatorEselon1DataAplikasi() {
     try {
       await fetchMasterDropdowns();
       setFieldErrors({});
+      setUserPenggunaSelected([]);
+      setUserPenggunaLainnya("");
+      setUnitPengembangType("");
+      setUnitPengembangEksternal("");
+      setUnitOperasionalTeknologiType("");
+      setUnitOperasionalTeknologiLainnya("");
+      setPusatKomputasiUtamaType("");
+      setPusatKomputasiUtamaLainnya("");
+      setPusatKomputasiBackupType("");
+      setPusatKomputasiBackupLainnya("");
+      setMandiriKomputasiBackupType("");
+      setMandiriKomputasiBackupLainnya("");
+      setCloudType("");
+      setCloudYaText("");
+      setSslType("");
+      setSslUnitKerja("");
+      setAntivirusType("");
+      setAntivirusYaText("");
       const res = await fetch(
         `http://localhost:5000/api/aplikasi/${encodeURIComponent(appName)}`,
       );
@@ -424,6 +758,9 @@ function OperatorEselon1DataAplikasi() {
         va_pt_status: app.va_pt_status || "",
         va_pt_waktu: app.va_pt_waktu || "",
         antivirus: app.antivirus || "",
+        akses_aplikasi_username: app.akses_aplikasi_username || "",
+        akses_aplikasi_password: app.akses_aplikasi_password || "",
+        akses_aplikasi_konfirmasi_password: app.akses_aplikasi_password || "",
       };
 
       // Add dynamic fields with prefill from database
@@ -433,6 +770,63 @@ function OperatorEselon1DataAplikasi() {
       });
 
       setFormData(baseFormData);
+
+      // Parse user_pengguna untuk checkbox
+      const parsed = parseUserPenggunaString(app.user_pengguna);
+      setUserPenggunaSelected(parsed.selected);
+      setUserPenggunaLainnya(parsed.lainnyaText);
+
+      // Parse unit_pengembang untuk radio button
+      const parsedUnitPengembang = parseUnitPengembangString(
+        app.unit_pengembang,
+      );
+      setUnitPengembangType(parsedUnitPengembang.type);
+      setUnitPengembangEksternal(parsedUnitPengembang.eksternalText);
+
+      // Parse unit_operasional_teknologi untuk radio button
+      const parsedUnitOperasional = parseUnitOperasionalTeknologiString(
+        app.unit_operasional_teknologi,
+      );
+      setUnitOperasionalTeknologiType(parsedUnitOperasional.type);
+      setUnitOperasionalTeknologiLainnya(parsedUnitOperasional.lainnyaText);
+
+      // Parse pusat_komputasi_utama untuk radio button
+      const parsedPusatKomputasiUtama = parsePusatKomputasiUtamaString(
+        app.pusat_komputasi_utama,
+      );
+      setPusatKomputasiUtamaType(parsedPusatKomputasiUtama.type);
+      setPusatKomputasiUtamaLainnya(parsedPusatKomputasiUtama.lainnyaText);
+
+      // Parse pusat_komputasi_backup untuk radio button
+      const parsedPusatKomputasiBackup = parsePusatKomputasiBackupString(
+        app.pusat_komputasi_backup,
+      );
+      setPusatKomputasiBackupType(parsedPusatKomputasiBackup.type);
+      setPusatKomputasiBackupLainnya(parsedPusatKomputasiBackup.lainnyaText);
+
+      // Parse mandiri_komputasi_backup untuk radio button
+      const parsedMandiriKomputasiBackup = parseMandiriKomputasiBackupString(
+        app.mandiri_komputasi_backup,
+      );
+      setMandiriKomputasiBackupType(parsedMandiriKomputasiBackup.type);
+      setMandiriKomputasiBackupLainnya(
+        parsedMandiriKomputasiBackup.lainnyaText,
+      );
+
+      // Parse cloud untuk radio button
+      const parsedCloud = parseCloudString(app.cloud);
+      setCloudType(parsedCloud.type);
+      setCloudYaText(parsedCloud.yaText);
+
+      // Parse ssl untuk radio button
+      const parsedSsl = parseSslString(app.ssl);
+      setSslType(parsedSsl.type);
+      setSslUnitKerja(parsedSsl.unitKerjaText);
+
+      // Parse antivirus untuk radio button
+      const parsedAntivirus = parseAntivirusString(app.antivirus);
+      setAntivirusType(parsedAntivirus.type);
+      setAntivirusYaText(parsedAntivirus.yaText);
 
       // Fetch PIC berdasarkan eselon2_id atau upt_id (prioritas UPT)
       if (app.upt_id) {
@@ -688,6 +1082,8 @@ function OperatorEselon1DataAplikasi() {
         if (key === "va_pt_waktu") continue;
         // eselon2_id dan upt_id akan divalidasi terpisah dengan XOR logic
         if (key === "eselon2_id" || key === "upt_id") continue;
+        // nilai_pengembangan_aplikasi is optional (not mandatory)
+        if (key === "nilai_pengembangan_aplikasi") continue;
 
         // Special check for cara_akses_id (array)
         if (key === "cara_akses_id") {
@@ -761,6 +1157,30 @@ function OperatorEselon1DataAplikasi() {
           7000,
         );
         return false;
+      }
+
+      // Validasi password dan konfirmasi_password (opsional, tapi jika diisi harus sama)
+      if (
+        formData.akses_aplikasi_password ||
+        formData.akses_aplikasi_konfirmasi_password
+      ) {
+        if (
+          formData.akses_aplikasi_password !==
+          formData.akses_aplikasi_konfirmasi_password
+        ) {
+          const pwErrors = {
+            ...missingErrors,
+            akses_aplikasi_password: true,
+            akses_aplikasi_konfirmasi_password: true,
+          };
+          setFieldErrors(pwErrors);
+          showMessage(
+            "error",
+            "Password dan Konfirmasi Password tidak sama. Silakan periksa kembali.",
+            6000,
+          );
+          return false;
+        }
       }
 
       if (missing.length > 0) {
@@ -886,6 +1306,8 @@ function OperatorEselon1DataAplikasi() {
         va_pt_status: formData.va_pt_status || null,
         va_pt_waktu:
           formData.va_pt_status === "ya" ? formData.va_pt_waktu : null,
+        akses_aplikasi_username: formData.akses_aplikasi_username || null,
+        akses_aplikasi_password: formData.akses_aplikasi_password || null,
       };
 
       // Add dynamic fields to payload
@@ -2717,223 +3139,129 @@ function OperatorEselon1DataAplikasi() {
                       </select>
                     </div>
 
-                    <div style={{ position: "relative" }}>
+                    <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Cara Akses Aplikasi
                       </label>
                       <div
                         data-field="cara_akses_id"
-                        tabIndex={0}
-                        role="button"
-                        onClick={() =>
-                          setShowCaraAksesDropdown(!showCaraAksesDropdown)
-                        }
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setShowCaraAksesDropdown(!showCaraAksesDropdown);
-                          }
-                        }}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
-                          fontSize: "13px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          color: "#0f172a",
-                          backgroundColor: showCaraAksesDropdown
-                            ? "#fff"
-                            : "#fafbfc",
-                          borderColor: fieldErrors.cara_akses_id
-                            ? errorBorderColor
-                            : showCaraAksesDropdown
-                              ? "#0ea5e9"
-                              : "#e2e8f0",
+                          border: fieldErrors.cara_akses_id
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.cara_akses_id
-                            ? errorRing
-                            : showCaraAksesDropdown
-                              ? "0 0 0 3px rgba(14, 165, 233, 0.08)"
-                              : "none",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          minHeight: "41px",
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            color:
-                              (formData.cara_akses_id || []).length > 0
-                                ? "#0f172a"
-                                : "#0f172a",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            flex: 1,
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, 1fr)",
+                            gap: "8px",
+                            maxHeight: "200px",
+                            overflowY: "auto",
                           }}
                         >
-                          {(formData.cara_akses_id || []).length > 0
-                            ? `${
-                                (formData.cara_akses_id || []).length
-                              } cara akses dipilih`
-                            : "-Pilih-"}
-                        </span>
-                        <svg
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            transform: showCaraAksesDropdown
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                            transition: "transform 0.2s",
-                            flexShrink: 0,
-                          }}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
-
-                      {showCaraAksesDropdown && (
-                        <>
-                          <div
-                            onClick={() => setShowCaraAksesDropdown(false)}
-                            style={{
-                              position: "fixed",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              zIndex: 998,
-                            }}
-                          />
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: 0,
-                              right: 0,
-                              marginTop: "4px",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              backgroundColor: "#fff",
-                              boxShadow:
-                                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                              maxHeight: "240px",
-                              overflowY: "auto",
-                              zIndex: 999,
-                              padding: "8px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 1fr",
-                                gap: "4px",
-                              }}
-                            >
-                              {(master.cara_akses || [])
-                                .filter(
-                                  (x) =>
-                                    x.status_aktif === 1 ||
-                                    x.status_aktif === true,
-                                )
-                                .map((x) => (
-                                  <label
-                                    key={x.cara_akses_id}
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      padding: "6px 8px",
-                                      cursor: "pointer",
-                                      borderRadius: "6px",
-                                      transition: "background-color 0.15s",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "#f1f5f9";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "transparent";
-                                    }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={(
-                                        formData.cara_akses_id || []
-                                      ).includes(String(x.cara_akses_id))}
-                                      onChange={(e) => {
-                                        const id = String(x.cara_akses_id);
-                                        const current =
-                                          formData.cara_akses_id || [];
-                                        const updated = e.target.checked
-                                          ? [...current, id]
-                                          : current.filter(
-                                              (item) => item !== id,
-                                            );
-                                        handleFormChange(
-                                          "cara_akses_id",
-                                          updated,
-                                        );
-                                      }}
-                                      style={{
-                                        width: "14px",
-                                        height: "14px",
-                                        marginRight: "8px",
-                                        cursor: "pointer",
-                                        accentColor: "#0ea5e9",
-                                        flexShrink: 0,
-                                      }}
-                                    />
-                                    <span
-                                      style={{
-                                        fontSize: "12.5px",
-                                        color: "#334155",
-                                        lineHeight: "1.3",
-                                      }}
-                                    >
-                                      {x.nama_cara_akses}
-                                    </span>
-                                  </label>
-                                ))}
-                            </div>
-                            {(!master.cara_akses ||
-                              master.cara_akses.filter(
-                                (x) =>
-                                  x.status_aktif === 1 ||
-                                  x.status_aktif === true,
-                              ).length === 0) && (
-                              <div
+                          {(master.cara_akses || [])
+                            .filter(
+                              (x) =>
+                                x.status_aktif === 1 || x.status_aktif === true,
+                            )
+                            .sort((a, b) => {
+                              const orderA =
+                                a.order_index ?? a.cara_akses_id ?? 0;
+                              const orderB =
+                                b.order_index ?? b.cara_akses_id ?? 0;
+                              return orderA - orderB;
+                            })
+                            .map((x) => (
+                              <label
+                                key={x.cara_akses_id}
                                 style={{
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                  textAlign: "center",
-                                  padding: "12px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  padding: "8px 10px",
+                                  cursor: "pointer",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#fff",
+                                  border: "1px solid #e2e8f0",
+                                  transition: "all 0.15s ease",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#fff";
+                                  e.currentTarget.style.borderColor = "#e2e8f0";
                                 }}
                               >
-                                Tidak ada data Cara Akses
-                              </div>
-                            )}
+                                <input
+                                  type="checkbox"
+                                  checked={(
+                                    formData.cara_akses_id || []
+                                  ).includes(String(x.cara_akses_id))}
+                                  onChange={(e) => {
+                                    const id = String(x.cara_akses_id);
+                                    const current =
+                                      formData.cara_akses_id || [];
+                                    const updated = e.target.checked
+                                      ? [...current, id]
+                                      : current.filter((item) => item !== id);
+                                    handleFormChange("cara_akses_id", updated);
+                                  }}
+                                  style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    marginRight: "10px",
+                                    cursor: "pointer",
+                                    accentColor: "#0ea5e9",
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: "13px",
+                                    color: "#334155",
+                                    lineHeight: "1.4",
+                                  }}
+                                >
+                                  {x.nama_cara_akses}
+                                </span>
+                              </label>
+                            ))}
+                        </div>
+                        {(!master.cara_akses ||
+                          master.cara_akses.filter(
+                            (x) =>
+                              x.status_aktif === 1 || x.status_aktif === true,
+                          ).length === 0) && (
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#94a3b8",
+                              textAlign: "center",
+                              padding: "12px",
+                            }}
+                          >
+                            Tidak ada data Cara Akses
                           </div>
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3085,7 +3413,7 @@ function OperatorEselon1DataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Environment
+                        Ekosistem
                       </label>
                       <select
                         data-field="environment_id"
@@ -3468,6 +3796,7 @@ function OperatorEselon1DataAplikasi() {
                           ? errorBorderColor
                           : "#e6eef6",
                         boxShadow: fieldErrors.domain ? errorBoxShadow : "none",
+                        textTransform: "none",
                       }}
                     />
                   </div>
@@ -3476,33 +3805,128 @@ function OperatorEselon1DataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#0f172a",
                       }}
                     >
                       User / Pengguna
                     </label>
-                    <textarea
+                    <div
                       data-field="user_pengguna"
-                      value={formData.user_pengguna}
-                      onChange={(e) =>
-                        handleFormChange("user_pengguna", e.target.value)
-                      }
-                      placeholder="Contoh: Pegawai internal, masyarakat umum"
-                      rows={2}
                       style={{
                         width: "100%",
-                        padding: "10px",
+                        padding: "12px",
                         borderRadius: "8px",
-                        border: "1px solid #e6eef6",
-                        borderColor: fieldErrors.user_pengguna
-                          ? errorBorderColor
-                          : "#e6eef6",
+                        border: fieldErrors.user_pengguna
+                          ? `1px solid ${errorBorderColor}`
+                          : "1px solid #e2e8f0",
+                        backgroundColor: "#fafbfc",
                         boxShadow: fieldErrors.user_pengguna
                           ? errorBoxShadow
                           : "none",
                       }}
-                    />
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(2, 1fr)",
+                          gap: "8px",
+                        }}
+                      >
+                        {USER_PENGGUNA_OPTIONS.map((option) => (
+                          <label
+                            key={option.value}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={userPenggunaSelected.includes(
+                                option.value,
+                              )}
+                              onChange={(e) => {
+                                const value = option.value;
+                                const updated = e.target.checked
+                                  ? [...userPenggunaSelected, value]
+                                  : userPenggunaSelected.filter(
+                                      (v) => v !== value,
+                                    );
+                                setUserPenggunaSelected(updated);
+
+                                // Build final string
+                                const finalString = buildUserPenggunaString(
+                                  updated,
+                                  userPenggunaLainnya,
+                                );
+                                handleFormChange("user_pengguna", finalString);
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              {option.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {userPenggunaSelected.includes("lainnya") && (
+                        <div style={{ marginTop: "10px" }}>
+                          <input
+                            type="text"
+                            value={userPenggunaLainnya}
+                            onChange={(e) => {
+                              const text = e.target.value;
+                              setUserPenggunaLainnya(text);
+
+                              // Build final string
+                              const finalString = buildUserPenggunaString(
+                                userPenggunaSelected,
+                                text,
+                              );
+                              handleFormChange("user_pengguna", finalString);
+                            }}
+                            placeholder="Sebutkan lainnya..."
+                            style={{
+                              width: "100%",
+                              padding: "8px 12px",
+                              borderRadius: "6px",
+                              border: "1px solid #cbd5e1",
+                              fontSize: "13px",
+                              outline: "none",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ marginTop: "12px" }}>
@@ -3689,32 +4113,220 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Unit Pengembang
                       </label>
-                      <input
+                      <div
                         data-field="unit_pengembang"
-                        value={formData.unit_pengembang}
-                        onChange={(e) =>
-                          handleFormChange("unit_pengembang", e.target.value)
-                        }
-                        placeholder="Contoh: Pusdatin, Tim IT Internal"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.unit_pengembang
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.unit_pengembang
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.unit_pengembang
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="unit_pengembang"
+                              checked={
+                                unitPengembangType === "sekretariat_eselon_1"
+                              }
+                              onChange={() => {
+                                setUnitPengembangType("sekretariat_eselon_1");
+                                setUnitPengembangEksternal("");
+                                handleFormChange(
+                                  "unit_pengembang",
+                                  "Sekretariat Eselon 1",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Sekretariat Eselon 1
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="unit_pengembang"
+                              checked={
+                                unitPengembangType === "internal_eselon_2"
+                              }
+                              onChange={() => {
+                                setUnitPengembangType("internal_eselon_2");
+                                setUnitPengembangEksternal("");
+                                handleFormChange(
+                                  "unit_pengembang",
+                                  "Internal Eselon 2",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Internal Eselon 2
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="unit_pengembang"
+                              checked={unitPengembangType === "eksternal"}
+                              onChange={() => {
+                                setUnitPengembangType("eksternal");
+                                handleFormChange(
+                                  "unit_pengembang",
+                                  unitPengembangEksternal,
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Eksternal (Lainnya)
+                            </span>
+                          </label>
+
+                          {unitPengembangType === "eksternal" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={unitPengembangEksternal}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setUnitPengembangEksternal(text);
+                                  handleFormChange("unit_pengembang", text);
+                                }}
+                                placeholder="Sebutkan nama eksternal..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -3730,35 +4342,171 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Unit Operasional Teknologi
                       </label>
-                      <input
+                      <div
                         data-field="unit_operasional_teknologi"
-                        value={formData.unit_operasional_teknologi}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "unit_operasional_teknologi",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Subbag TI, Divisi Infrastruktur"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.unit_operasional_teknologi
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.unit_operasional_teknologi
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="unit_operasional_teknologi"
+                              checked={
+                                unitOperasionalTeknologiType === "pusdatin"
+                              }
+                              onChange={() => {
+                                setUnitOperasionalTeknologiType("pusdatin");
+                                setUnitOperasionalTeknologiLainnya("");
+                                handleFormChange(
+                                  "unit_operasional_teknologi",
+                                  "Pusdatin",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Pusdatin
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="unit_operasional_teknologi"
+                              checked={
+                                unitOperasionalTeknologiType === "lainnya"
+                              }
+                              onChange={() => {
+                                setUnitOperasionalTeknologiType("lainnya");
+                                handleFormChange(
+                                  "unit_operasional_teknologi",
+                                  unitOperasionalTeknologiLainnya,
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Lainnya
+                            </span>
+                          </label>
+
+                          {unitOperasionalTeknologiType === "lainnya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={unitOperasionalTeknologiLainnya}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setUnitOperasionalTeknologiLainnya(text);
+                                  handleFormChange(
+                                    "unit_operasional_teknologi",
+                                    text,
+                                  );
+                                }}
+                                placeholder="Sebutkan unit operasional teknologi..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3808,103 +4556,871 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Pusat Komputasi Utama
                       </label>
-                      <input
+                      <div
                         data-field="pusat_komputasi_utama"
-                        value={formData.pusat_komputasi_utama}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_utama",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Jakarta"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.pusat_komputasi_utama
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.pusat_komputasi_utama
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama"
+                              checked={pusatKomputasiUtamaType === "dc_gambir"}
+                              onChange={() => {
+                                setPusatKomputasiUtamaType("dc_gambir");
+                                setPusatKomputasiUtamaLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_utama",
+                                  "DC Gambir",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              DC Gambir
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama"
+                              checked={pusatKomputasiUtamaType === "dc_cyber"}
+                              onChange={() => {
+                                setPusatKomputasiUtamaType("dc_cyber");
+                                setPusatKomputasiUtamaLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_utama",
+                                  "DC Cyber",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              DC Cyber
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama"
+                              checked={pusatKomputasiUtamaType === "lainnya"}
+                              onChange={() => {
+                                setPusatKomputasiUtamaType("lainnya");
+                                handleFormChange(
+                                  "pusat_komputasi_utama",
+                                  pusatKomputasiUtamaLainnya,
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Lainnya
+                            </span>
+                          </label>
+
+                          {pusatKomputasiUtamaType === "lainnya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={pusatKomputasiUtamaLainnya}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setPusatKomputasiUtamaLainnya(text);
+                                  handleFormChange(
+                                    "pusat_komputasi_utama",
+                                    text,
+                                  );
+                                }}
+                                placeholder="Sebutkan pusat komputasi utama..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama"
+                              checked={pusatKomputasiUtamaType === "tidak_ada"}
+                              onChange={() => {
+                                setPusatKomputasiUtamaType("tidak_ada");
+                                setPusatKomputasiUtamaLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_utama",
+                                  "Tidak Ada",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Tidak Ada (untuk Android & Desktop)
+                            </span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Pusat Komputasi Backup
                       </label>
-                      <input
+                      <div
                         data-field="pusat_komputasi_backup"
-                        value={formData.pusat_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Surabaya"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.pusat_komputasi_backup
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.pusat_komputasi_backup
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup"
+                              checked={pusatKomputasiBackupType === "dc_gambir"}
+                              onChange={() => {
+                                setPusatKomputasiBackupType("dc_gambir");
+                                setPusatKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_backup",
+                                  "DC Gambir",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              DC Gambir
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup"
+                              checked={pusatKomputasiBackupType === "dc_cyber"}
+                              onChange={() => {
+                                setPusatKomputasiBackupType("dc_cyber");
+                                setPusatKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_backup",
+                                  "DC Cyber",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              DC Cyber
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup"
+                              checked={pusatKomputasiBackupType === "lainnya"}
+                              onChange={() => {
+                                setPusatKomputasiBackupType("lainnya");
+                                handleFormChange(
+                                  "pusat_komputasi_backup",
+                                  pusatKomputasiBackupLainnya,
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Lainnya
+                            </span>
+                          </label>
+
+                          {pusatKomputasiBackupType === "lainnya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={pusatKomputasiBackupLainnya}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setPusatKomputasiBackupLainnya(text);
+                                  handleFormChange(
+                                    "pusat_komputasi_backup",
+                                    text,
+                                  );
+                                }}
+                                placeholder="Sebutkan pusat komputasi backup..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup"
+                              checked={pusatKomputasiBackupType === "tidak_ada"}
+                              onChange={() => {
+                                setPusatKomputasiBackupType("tidak_ada");
+                                setPusatKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "pusat_komputasi_backup",
+                                  "Tidak Ada",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Tidak Ada (untuk Android & Desktop)
+                            </span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Mandiri Komputasi Backup
                       </label>
-                      <input
+                      <div
                         data-field="mandiri_komputasi_backup"
-                        value={formData.mandiri_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "mandiri_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Server Lokal Kantor"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.mandiri_komputasi_backup
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.mandiri_komputasi_backup
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup"
+                              checked={
+                                mandiriKomputasiBackupType === "ex_storage"
+                              }
+                              onChange={() => {
+                                setMandiriKomputasiBackupType("ex_storage");
+                                setMandiriKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  "Ex STORAGE",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Ex STORAGE
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup"
+                              checked={
+                                mandiriKomputasiBackupType === "in_storage"
+                              }
+                              onChange={() => {
+                                setMandiriKomputasiBackupType("in_storage");
+                                setMandiriKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  "In STORAGE",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              In STORAGE
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup"
+                              checked={
+                                mandiriKomputasiBackupType === "ex_cloud"
+                              }
+                              onChange={() => {
+                                setMandiriKomputasiBackupType("ex_cloud");
+                                setMandiriKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  "Ex CLOUD",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Ex CLOUD
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup"
+                              checked={
+                                mandiriKomputasiBackupType === "tidak_ada"
+                              }
+                              onChange={() => {
+                                setMandiriKomputasiBackupType("tidak_ada");
+                                setMandiriKomputasiBackupLainnya("");
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  "TIDAK ADA",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              TIDAK ADA
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup"
+                              checked={mandiriKomputasiBackupType === "lainnya"}
+                              onChange={() => {
+                                setMandiriKomputasiBackupType("lainnya");
+                                handleFormChange(
+                                  "mandiri_komputasi_backup",
+                                  mandiriKomputasiBackupLainnya,
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              LAINNYA
+                            </span>
+                          </label>
+
+                          {mandiriKomputasiBackupType === "lainnya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={mandiriKomputasiBackupLainnya}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setMandiriKomputasiBackupLainnya(text);
+                                  handleFormChange(
+                                    "mandiri_komputasi_backup",
+                                    text,
+                                  );
+                                }}
+                                placeholder="Sebutkan mandiri komputasi backup..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -3951,32 +5467,158 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Cloud
                       </label>
-                      <input
+                      <div
                         data-field="cloud"
-                        value={formData.cloud}
-                        onChange={(e) =>
-                          handleFormChange("cloud", e.target.value)
-                        }
-                        placeholder="Contoh: AWS, Google Cloud, Azure"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.cloud
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.cloud
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="cloud"
+                              checked={cloudType === "ya"}
+                              onChange={() => {
+                                setCloudType("ya");
+                                handleFormChange("cloud", cloudYaText);
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Ya
+                            </span>
+                          </label>
+
+                          {cloudType === "ya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={cloudYaText}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setCloudYaText(text);
+                                  handleFormChange("cloud", text);
+                                }}
+                                placeholder="Contoh: AWS, Google Cloud, Azure"
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="cloud"
+                              checked={cloudType === "tidak"}
+                              onChange={() => {
+                                setCloudType("tidak");
+                                setCloudYaText("");
+                                handleFormChange("cloud", "Tidak");
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Tidak
+                            </span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -3992,30 +5634,164 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         SSL
                       </label>
-                      <input
+                      <div
                         data-field="ssl"
-                        value={formData.ssl}
-                        onChange={(e) =>
-                          handleFormChange("ssl", e.target.value)
-                        }
-                        placeholder="Contoh: Let's Encrypt, Comodo SSL"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.ssl
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.ssl
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="ssl"
+                              checked={sslType === "aktif_pusdatin"}
+                              onChange={() => {
+                                setSslType("aktif_pusdatin");
+                                setSslUnitKerja("");
+                                handleFormChange("ssl", "Aktif/Pusdatin");
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Aktif/Pusdatin
+                            </span>
+                          </label>
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="ssl"
+                              checked={sslType === "aktif_unit_kerja"}
+                              onChange={() => {
+                                setSslType("aktif_unit_kerja");
+                                handleFormChange(
+                                  "ssl",
+                                  sslUnitKerja
+                                    ? `Aktif/${sslUnitKerja}`
+                                    : "Aktif/Unit Kerja",
+                                );
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Aktif/Unit Kerja
+                            </span>
+                          </label>
+
+                          {sslType === "aktif_unit_kerja" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={sslUnitKerja}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setSslUnitKerja(text);
+                                  handleFormChange(
+                                    "ssl",
+                                    text ? `Aktif/${text}` : "Aktif/Unit Kerja",
+                                  );
+                                }}
+                                placeholder="Sebutkan unit kerja pengelola SSL..."
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label
@@ -4062,32 +5838,158 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#0f172a",
                         }}
                       >
                         Antivirus
                       </label>
-                      <input
+                      <div
                         data-field="antivirus"
-                        value={formData.antivirus}
-                        onChange={(e) =>
-                          handleFormChange("antivirus", e.target.value)
-                        }
-                        placeholder="Contoh: Kaspersky, Norton, Avast"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
-                          borderColor: fieldErrors.antivirus
-                            ? errorBorderColor
-                            : "#e6eef6",
+                          border: fieldErrors.antivirus
+                            ? `1px solid ${errorBorderColor}`
+                            : "1px solid #e2e8f0",
+                          backgroundColor: "#fafbfc",
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="antivirus"
+                              checked={antivirusType === "ya"}
+                              onChange={() => {
+                                setAntivirusType("ya");
+                                handleFormChange("antivirus", antivirusYaText);
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Ya
+                            </span>
+                          </label>
+
+                          {antivirusType === "ya" && (
+                            <div
+                              style={{ marginTop: "4px", paddingLeft: "26px" }}
+                            >
+                              <input
+                                type="text"
+                                value={antivirusYaText}
+                                onChange={(e) => {
+                                  const text = e.target.value;
+                                  setAntivirusYaText(text);
+                                  handleFormChange("antivirus", text);
+                                }}
+                                placeholder="Contoh: Kaspersky, Norton, Avast"
+                                style={{
+                                  width: "100%",
+                                  padding: "8px 12px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #cbd5e1",
+                                  fontSize: "13px",
+                                  outline: "none",
+                                }}
+                              />
+                            </div>
+                          )}
+
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 10px",
+                              cursor: "pointer",
+                              borderRadius: "6px",
+                              backgroundColor: "#fff",
+                              border: "1px solid #e2e8f0",
+                              transition: "all 0.15s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "#fff";
+                              e.currentTarget.style.borderColor = "#e2e8f0";
+                            }}
+                          >
+                            <input
+                              type="radio"
+                              name="antivirus"
+                              checked={antivirusType === "tidak"}
+                              onChange={() => {
+                                setAntivirusType("tidak");
+                                setAntivirusYaText("");
+                                handleFormChange("antivirus", "Tidak");
+                              }}
+                              style={{
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                color: "#334155",
+                                lineHeight: "1.4",
+                              }}
+                            >
+                              Tidak
+                            </span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -4586,6 +6488,218 @@ function OperatorEselon1DataAplikasi() {
                     </div>
                   </div>
                 )}
+
+                {/* AKSES APLIKASI (AKUN) - Untuk kebutuhan BPK */}
+                <div
+                  style={{
+                    marginTop: "24px",
+                    paddingTop: "24px",
+                    borderTop: "2px solid #e2e8f0",
+                  }}
+                >
+                  <div
+                    style={{
+                      marginBottom: "16px",
+                      padding: "12px 16px",
+                      backgroundColor: "#f8fafc",
+                      borderLeft: "4px solid #6366f1",
+                      borderRadius: "6px",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "#1e293b",
+                        margin: 0,
+                        marginBottom: "4px",
+                      }}
+                    >
+                      AKSES APLIKASI (AKUN)
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        color: "#64748b",
+                        margin: 0,
+                        fontStyle: "italic",
+                      }}
+                    >
+                      (UNTUK KEBUTUHAN BPK)
+                    </p>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      gap: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Username
+                      </label>
+                      <input
+                        data-field="akses_aplikasi_username"
+                        value={formData.akses_aplikasi_username}
+                        onChange={(e) =>
+                          handleFormChange(
+                            "akses_aplikasi_username",
+                            e.target.value.toLowerCase(),
+                          )
+                        }
+                        placeholder="Masukkan username"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          textTransform: "none",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          data-field="akses_aplikasi_password"
+                          value={formData.akses_aplikasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Masukkan password"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            paddingRight: "40px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor: fieldErrors.akses_aplikasi_password
+                              ? errorBorderColor
+                              : "#e6eef6",
+                            boxShadow: fieldErrors.akses_aplikasi_password
+                              ? errorBoxShadow
+                              : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            color: "#64748b",
+                            fontSize: "18px",
+                          }}
+                        >
+                          {showPassword ? "👁️" : "👁️‍🗨️"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Konfirmasi Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={showKonfirmasiPassword ? "text" : "password"}
+                          data-field="akses_aplikasi_konfirmasi_password"
+                          value={formData.akses_aplikasi_konfirmasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_konfirmasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Konfirmasi password"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            paddingRight: "40px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBorderColor
+                                : "#e6eef6",
+                            boxShadow:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBoxShadow
+                                : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowKonfirmasiPassword(!showKonfirmasiPassword)
+                          }
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            color: "#64748b",
+                            fontSize: "18px",
+                          }}
+                        >
+                          {showKonfirmasiPassword ? "👁️" : "👁️‍🗨️"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: "#64748b",
+                      marginTop: "8px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    OPSIONAL. JIKA MENGISI PASSWORD, KONFIRMASI HARUS SAMA.
+                  </p>
+                </div>
 
                 <div
                   style={{
