@@ -14,7 +14,10 @@ function mapFieldName(kodeField) {
   const fieldMapping = {
     // PDN fields
     pdn_utama: "pdn_id",
-    pdn_backup: "pdn_id", // Same as utama, just different context
+    pusat_komputasi_utama_pdn: "pdn_id",
+
+    // PDN Backup - maps to actual pdn_backup column
+    pdn_backup: "pdn_backup",
 
     // Mandiri field
     mandiri: "mandiri_komputasi_backup",
@@ -31,6 +34,9 @@ function mapFieldName(kodeField) {
     waktu_va_pt: "va_pt_waktu",
     waktu: "va_pt_waktu",
 
+    // Keamanan SSL field from hierarchical seed
+    api_internal_status_ssl: "ssl",
+
     // PIC contact fields (these don't exist in data_aplikasi)
     kontak_pic_internal: null, // No column for this
     kontak_pic_eksternal: null, // No column for this
@@ -39,8 +45,18 @@ function mapFieldName(kodeField) {
     eselon_1: "nama_eselon1",
     eselon_2: "nama_eselon2",
     framework: "kerangka_pengembangan",
-    api_internal_integrasi: "api_internal_status",
-    frekuensi_update_data: "frekuensi_pemakaian", // Fix "Frekuensi Update Data" mapping
+    frekuensi_update_data: "frekuensi_pemakaian",
+
+    // Dynamic master table FK mappings
+    eselon1_id: "eselon1_id",
+    eselon2_id: "eselon2_id",
+    upt_id: "upt_id",
+    cara_akses_id: "cara_akses_id",
+    frekuensi_pemakaian_id: "frekuensi_pemakaian",
+    status_aplikasi_id: "status_aplikasi",
+    environment_id: "environment_id",
+    pic_internal_id: "pic_internal_id",
+    pic_eksternal_id: "pic_eksternal_id",
 
     // Default: return as-is
   };

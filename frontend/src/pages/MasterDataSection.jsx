@@ -539,8 +539,12 @@ function TreeNode({ node, selectedIds, onToggle, searchTerm }) {
     return null;
   }
 
+  // Determine if this is a root-level node (either hierarchical category or flat field)
+  // Root nodes: Level 1 (categories) OR Level 3 with no parent (flat fields)
+  const isRootNode = node.level === 1 || (node.level === 3 && node.parent_id === null);
+
   return (
-    <div style={{ marginLeft: node.level === 1 ? 0 : "18px" }}>
+    <div style={{ marginLeft: isRootNode ? 0 : "18px" }}>
       <div
         style={{
           display: "flex",

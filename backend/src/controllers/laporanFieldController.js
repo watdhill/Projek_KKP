@@ -39,7 +39,7 @@ exports.getHierarchicalFields = async (req, res) => {
                     kode_field: `${table.table_name}_id`,
                     parent_id: null, // Flat structure
                     level: 3,
-                    urutan: 100 + index, // Appear at the bottom
+                    urutan: 100 + index,
                     children: []
                 };
                 tree.push(fieldsMap[tableFieldId]);
@@ -47,9 +47,22 @@ exports.getHierarchicalFields = async (req, res) => {
         }
         // ---------------------------------------------------------
 
+        // ---------------------------------------------------------
+        // REORDER: Flat fields (no children) first, then hierarchical (with children)
+        // ---------------------------------------------------------
+        const flatFields = tree.filter(node => !node.children || node.children.length === 0);
+        const hierarchicalFields = tree.filter(node => node.children && node.children.length > 0);
+
+        // Sort flat fields alphabetically for cleaner display
+        flatFields.sort((a, b) => a.urutan - b.urutan);
+        hierarchicalFields.sort((a, b) => a.urutan - b.urutan);
+
+        const sortedTree = [...flatFields, ...hierarchicalFields];
+        // ---------------------------------------------------------
+
         res.json({
             success: true,
-            data: tree
+            data: sortedTree
         });
     } catch (error) {
         res.status(500).json({
