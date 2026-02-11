@@ -209,11 +209,11 @@ function DataAplikasiSection() {
     const status = (app.nama_status || "Aktif").toLowerCase();
     if (status === "aktif")
       return { label: "Aktif", bg: "#dcfce7", color: "#166534" };
-    if (status.includes("pengembang") || status.includes("pengembangan"))
+    if (status.includes("pengembang") || status.includes("pengembangan") || status.includes("dibangun"))
       return {
         label: app.nama_status || "Pengembangan",
         bg: "#fff7ed",
-        color: "#b45309",
+        color: "#ea580c",
       };
     return {
       label: app.nama_status || "Tidak Aktif",
@@ -3271,7 +3271,7 @@ function DataAplikasiSection() {
                         fontSize: "14px",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         outline: "none",
-                        backgroundColor: "#fff",
+                        backgroundColor: "#f8fafc",
                         boxShadow: fieldErrors.nama_aplikasi
                           ? errorRing
                           : "none",
@@ -3325,7 +3325,7 @@ function DataAplikasiSection() {
                         outline: "none",
                         fontFamily: "inherit",
                         resize: "vertical",
-                        backgroundColor: "#fff",
+                        backgroundColor: "#f8fafc",
                         lineHeight: "1.6",
                         boxShadow: fieldErrors.deskripsi_fungsi
                           ? errorRing
@@ -3419,7 +3419,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.eselon1_id
                             ? errorRing
                             : "none",
@@ -3486,9 +3486,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: formData.upt_id ? "not-allowed" : "pointer",
-                          backgroundColor: formData.upt_id
-                            ? "#f8fafc"
-                            : "#fff",
+                          backgroundColor: "#f8fafc",
                           opacity: formData.upt_id ? 0.6 : 1,
                           boxShadow: fieldErrors.eselon2_id
                             ? errorRing
@@ -3567,9 +3565,7 @@ function DataAplikasiSection() {
                           cursor: formData.eselon2_id
                             ? "not-allowed"
                             : "pointer",
-                          backgroundColor: formData.eselon2_id
-                            ? "#f8fafc"
-                            : "#fff",
+                          backgroundColor: "#f8fafc",
                           opacity: formData.eselon2_id ? 0.6 : 1,
                           boxShadow: fieldErrors.upt_id ? errorRing : "none",
                         }}
@@ -3837,7 +3833,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -3899,7 +3895,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -3964,7 +3960,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4037,7 +4033,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4096,7 +4092,7 @@ function DataAplikasiSection() {
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4422,6 +4418,7 @@ function DataAplikasiSection() {
                           ? errorBorderColor
                           : "#cbd5e1",
                         textTransform: "none",
+                        backgroundColor: "#f8fafc",
                       }}
                     />
                   </div>
@@ -4447,7 +4444,7 @@ function DataAplikasiSection() {
                         borderColor: fieldErrors.user_pengguna
                           ? errorBorderColor
                           : "#cbd5e1",
-                        backgroundColor: "#fff",
+                        backgroundColor: "#f8fafc",
                       }}
                     >
                       <div
@@ -4585,6 +4582,7 @@ function DataAplikasiSection() {
                                 ? errorBorderColor
                                 : "#cbd5e1",
                               textTransform: "none",
+                              backgroundColor: "#f8fafc",
                             }}
                           />
                         </div>
@@ -4620,6 +4618,7 @@ function DataAplikasiSection() {
                         borderColor: fieldErrors.data_digunakan
                           ? errorBorderColor
                           : "#cbd5e1",
+                        backgroundColor: "#f8fafc",
                       }}
                     />
                   </div>
@@ -4652,6 +4651,7 @@ function DataAplikasiSection() {
                         borderColor: fieldErrors.luaran_output
                           ? errorBorderColor
                           : "#cbd5e1",
+                        backgroundColor: "#f8fafc",
                       }}
                     />
                   </div>
@@ -4694,7 +4694,7 @@ function DataAplikasiSection() {
                           fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4740,7 +4740,7 @@ function DataAplikasiSection() {
                           fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4792,7 +4792,7 @@ function DataAplikasiSection() {
                           fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                         onFocus={(e) => {
                           e.currentTarget.style.borderColor = "#6366f1";
@@ -4833,7 +4833,7 @@ function DataAplikasiSection() {
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
                             : "#cbd5e1",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -4963,6 +4963,7 @@ function DataAplikasiSection() {
                                   ? errorBorderColor
                                   : "#cbd5e1",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -4997,7 +4998,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -5137,6 +5138,7 @@ function DataAplikasiSection() {
                                     ? errorBoxShadow
                                     : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -5186,6 +5188,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.nilai_pengembangan_aplikasi
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       />
                     </div>
@@ -5223,7 +5226,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -5348,6 +5351,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -5378,7 +5382,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -5503,6 +5507,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -5533,7 +5538,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -5659,6 +5664,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -5705,6 +5711,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.perangkat_lunak
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       />
                     </div>
@@ -5732,7 +5739,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -5847,6 +5854,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -5885,7 +5893,7 @@ function DataAplikasiSection() {
                             ? errorBorderColor
                             : "#cbd5e1",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -6003,6 +6011,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -6039,6 +6048,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.ssl_expired
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       />
                     </div>
@@ -6076,7 +6086,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <div
@@ -6191,6 +6201,7 @@ function DataAplikasiSection() {
                                   ? errorBoxShadow
                                   : "none",
                                 textTransform: "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             />
                           </div>
@@ -6236,6 +6247,7 @@ function DataAplikasiSection() {
                             ? errorBoxShadow
                             : "none",
                           fontFamily: "monospace",
+                          backgroundColor: "#f8fafc",
                         }}
                       />
                       <small
@@ -6279,6 +6291,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.keterangan
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       />
                     </div>
@@ -6321,6 +6334,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.status_bmn
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -6357,6 +6371,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.server_aplikasi
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -6408,6 +6423,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.tipe_lisensi_bahasa
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -6447,6 +6463,7 @@ function DataAplikasiSection() {
                           boxShadow: fieldErrors.api_internal_status
                             ? errorBoxShadow
                             : "none",
+                          backgroundColor: "#f8fafc",
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -6494,6 +6511,7 @@ function DataAplikasiSection() {
                             boxShadow: fieldErrors.waf
                               ? errorBoxShadow
                               : "none",
+                            backgroundColor: "#f8fafc",
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -6520,6 +6538,7 @@ function DataAplikasiSection() {
                               boxShadow: fieldErrors.waf_lainnya
                                 ? errorBoxShadow
                                 : "none",
+                              backgroundColor: "#f8fafc",
                             }}
                           />
                         )}
@@ -6555,6 +6574,7 @@ function DataAplikasiSection() {
                             boxShadow: fieldErrors.va_pt_status
                               ? errorBoxShadow
                               : "none",
+                            backgroundColor: "#f8fafc",
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -6580,6 +6600,7 @@ function DataAplikasiSection() {
                               boxShadow: fieldErrors.va_pt_waktu
                                 ? errorBoxShadow
                                 : "none",
+                              backgroundColor: "#f8fafc",
                             }}
                           />
                         )}
@@ -6683,6 +6704,7 @@ function DataAplikasiSection() {
                                 boxShadow: fieldErrors[fieldName]
                                   ? errorBoxShadow
                                   : "none",
+                                backgroundColor: "#f8fafc",
                               }}
                             >
                               <option value="">
@@ -6792,7 +6814,7 @@ function DataAplikasiSection() {
                           fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
-                          backgroundColor: "#fff",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.akses_aplikasi_username
                             ? errorBoxShadow
                             : "none",
@@ -6835,7 +6857,7 @@ function DataAplikasiSection() {
                             fontSize: "14px",
                             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             outline: "none",
-                            backgroundColor: "#fff",
+                            backgroundColor: "#f8fafc",
                             boxShadow: fieldErrors.akses_aplikasi_password
                               ? errorBoxShadow
                               : "none",
@@ -6970,7 +6992,7 @@ function DataAplikasiSection() {
                             fontSize: "14px",
                             transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             outline: "none",
-                            backgroundColor: "#fff",
+                            backgroundColor: "#f8fafc",
                             boxShadow:
                               fieldErrors.akses_aplikasi_konfirmasi_password
                                 ? errorBoxShadow

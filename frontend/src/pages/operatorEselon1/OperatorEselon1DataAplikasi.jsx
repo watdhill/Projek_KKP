@@ -1378,12 +1378,32 @@ function OperatorEselon1DataAplikasi() {
 
   return (
     <section
+      className="oe1-aplikasi-page"
       style={{
         padding: "24px",
         backgroundColor: "#f8fafc",
         minHeight: "100vh",
       }}
     >
+      <style>{`
+        .oe1-aplikasi-page input:not([type="checkbox"]):not([type="radio"]),
+        .oe1-aplikasi-page select,
+        .oe1-aplikasi-page textarea {
+          background-color: #f8fafc !important;
+        }
+
+        .oe1-aplikasi-page input:not([type="checkbox"]):not([type="radio"]):focus,
+        .oe1-aplikasi-page select:focus,
+        .oe1-aplikasi-page textarea:focus {
+          background-color: #f8fafc !important;
+        }
+
+        .oe1-aplikasi-page input:disabled:not([type="checkbox"]):not([type="radio"]),
+        .oe1-aplikasi-page select:disabled,
+        .oe1-aplikasi-page textarea:disabled {
+          background-color: #f3f4f6 !important;
+        }
+      `}</style>
       {!!message?.text && (
         <div
           role="status"
@@ -2524,11 +2544,12 @@ function OperatorEselon1DataAplikasi() {
       {/* Modal for input/edit */}
       {showModal && (
         <div
+          className="oe1-aplikasi-modal"
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.6)",
-            backdropFilter: "blur(4px)",
+            backgroundColor: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -2539,14 +2560,39 @@ function OperatorEselon1DataAplikasi() {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
         >
+          <style>{`
+            .oe1-aplikasi-modal input:not([type="checkbox"]):not([type="radio"]),
+            .oe1-aplikasi-modal select,
+            .oe1-aplikasi-modal textarea {
+              background-color: #f8fafc !important;
+              border-radius: 10px !important;
+              border-width: 1.5px !important;
+              border-style: solid !important;
+              padding: 10px 12px !important;
+              font-size: 14px !important;
+            }
+
+            .oe1-aplikasi-modal input:not([type="checkbox"]):not([type="radio"]):focus,
+            .oe1-aplikasi-modal select:focus,
+            .oe1-aplikasi-modal textarea:focus {
+              border-color: #6366f1 !important;
+              box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08) !important;
+            }
+
+            .oe1-aplikasi-modal input:disabled:not([type="checkbox"]):not([type="radio"]),
+            .oe1-aplikasi-modal select:disabled,
+            .oe1-aplikasi-modal textarea:disabled {
+              background-color: #f3f4f6 !important;
+            }
+          `}</style>
           <div
             style={{
               width: "100%",
-              maxWidth: "850px",
-              background: "#fff",
-              borderRadius: "14px",
+              maxWidth: "900px",
+              background: "#ffffff",
+              borderRadius: "16px",
               boxShadow:
-                "0 12px 40px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.1)",
+                "0 20px 60px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.05)",
               maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
@@ -2555,29 +2601,31 @@ function OperatorEselon1DataAplikasi() {
           >
             <div
               style={{
-                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                padding: "16px 20px",
-                borderTopLeftRadius: "14px",
-                borderTopRightRadius: "14px",
+                background: "#ffffff",
+                borderBottom: "1px solid #f1f5f9",
+                padding: "20px 28px",
+                borderTopLeftRadius: "16px",
+                borderTopRightRadius: "16px",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
               }}
             >
               <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                style={{ display: "flex", alignItems: "center", gap: "14px" }}
               >
                 <div
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "rgba(255, 255, 255, 0.2)",
-                    borderRadius: "9px",
+                    width: "40px",
+                    height: "40px",
+                    background:
+                      "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    borderRadius: "10px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
                   }}
                 >
                   {editMode ? (
@@ -2655,10 +2703,10 @@ function OperatorEselon1DataAplikasi() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#fff",
-                    fontSize: "16px",
+                    color: "#0f172a",
+                    fontSize: "18px",
                     fontWeight: 700,
-                    letterSpacing: "-0.01em",
+                    letterSpacing: "-0.02em",
                   }}
                 >
                   {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
@@ -2667,28 +2715,30 @@ function OperatorEselon1DataAplikasi() {
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
+                  background: "#f8fafc",
                   border: "none",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "7px",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
                   cursor: "pointer",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#fff",
+                  color: "#64748b",
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.color = "#64748b";
                 }}
               >
                 <svg
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -2696,7 +2746,7 @@ function OperatorEselon1DataAplikasi() {
                   <path
                     d="M18 6L6 18M6 6L18 18"
                     stroke="currentColor"
-                    strokeWidth="2.5"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                 </svg>
@@ -2708,36 +2758,42 @@ function OperatorEselon1DataAplikasi() {
                 flex: 1,
               }}
             >
-              <form onSubmit={handleSubmitForm} style={{ padding: "24px" }}>
+              <form onSubmit={handleSubmitForm} style={{ padding: "32px" }}>
                 {/* Informasi Dasar */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
                     Informasi Dasar
                   </h3>
 
@@ -2859,53 +2915,56 @@ function OperatorEselon1DataAplikasi() {
                 {/* Lokasi & Penggunaan */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Lokasi & Penggunaan
                   </h3>
 
+                  {/* Eselon 1 dan Eselon 2 - 2 kolom untuk lebih rapi */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
-                      marginBottom: "14px",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "16px",
+                      marginBottom: "18px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 1
@@ -2920,36 +2979,32 @@ function OperatorEselon1DataAplikasi() {
                         }}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.eselon1_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fafbfc",
-                          boxShadow: fieldErrors.eselon1_id
-                            ? errorRing
-                            : "none",
+                          backgroundColor: "#f8fafc",
+                          boxShadow: fieldErrors.eselon1_id ? errorRing : "none",
                         }}
                         disabled
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
-                          e.currentTarget.style.backgroundColor = "#fff";
+                          e.currentTarget.style.borderColor = "#6366f1";
                           e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
                         }}
                         onBlur={(e) => {
-                          e.currentTarget.style.borderColor =
-                            fieldErrors.eselon1_id
-                              ? errorBorderColor
-                              : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
-                          e.currentTarget.style.boxShadow =
-                            fieldErrors.eselon1_id ? errorRing : "none";
+                          e.currentTarget.style.borderColor = fieldErrors.eselon1_id
+                            ? errorBorderColor
+                            : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.eselon1_id
+                            ? errorRing
+                            : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -2981,12 +3036,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 2{" "}
@@ -2994,8 +3047,7 @@ function OperatorEselon1DataAplikasi() {
                           style={{
                             color: "#94a3b8",
                             fontWeight: 400,
-                            textTransform: "none",
-                            letterSpacing: "normal",
+                            fontSize: "12px",
                           }}
                         >
                           (opsional jika UPT diisi)
@@ -3010,34 +3062,34 @@ function OperatorEselon1DataAplikasi() {
                         disabled={!!formData.upt_id}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.eselon2_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: formData.upt_id ? "not-allowed" : "pointer",
-                          backgroundColor: formData.upt_id ? "#f8fafc" : "#fff",
+                          backgroundColor: "#f8fafc",
                           opacity: formData.upt_id ? 0.6 : 1,
-                          boxShadow: fieldErrors.eselon2_id
-                            ? errorRing
-                            : "none",
+                          boxShadow: fieldErrors.eselon2_id ? errorRing : "none",
                         }}
                         onFocus={(e) => {
                           if (!formData.upt_id) {
-                            e.target.style.borderColor = "#0ea5e9";
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
                           }
                         }}
                         onBlur={(e) => {
-                          if (!fieldErrors.eselon2_id) {
-                            e.target.style.borderColor = "#e2e8f0";
-                            e.target.style.boxShadow = "none";
-                          }
+                          e.currentTarget.style.borderColor = fieldErrors.eselon2_id
+                            ? errorBorderColor
+                            : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.eselon2_id
+                            ? errorRing
+                            : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3056,17 +3108,18 @@ function OperatorEselon1DataAplikasi() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* UPT - Full width untuk lebih jelas */}
+                  <div style={{ marginBottom: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         UPT{" "}
@@ -3074,8 +3127,7 @@ function OperatorEselon1DataAplikasi() {
                           style={{
                             color: "#94a3b8",
                             fontWeight: 400,
-                            textTransform: "none",
-                            letterSpacing: "normal",
+                            fontSize: "12px",
                           }}
                         >
                           (opsional jika Eselon 2 diisi)
@@ -3090,36 +3142,36 @@ function OperatorEselon1DataAplikasi() {
                         disabled={!!formData.eselon2_id}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.upt_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: formData.eselon2_id
                             ? "not-allowed"
                             : "pointer",
-                          backgroundColor: formData.eselon2_id
-                            ? "#f8fafc"
-                            : "#fff",
+                          backgroundColor: "#f8fafc",
                           opacity: formData.eselon2_id ? 0.6 : 1,
                           boxShadow: fieldErrors.upt_id ? errorRing : "none",
                         }}
                         onFocus={(e) => {
                           if (!formData.eselon2_id) {
-                            e.target.style.borderColor = "#0ea5e9";
-                            e.target.style.boxShadow =
-                              "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
                           }
                         }}
                         onBlur={(e) => {
-                          if (!fieldErrors.upt_id) {
-                            e.target.style.borderColor = "#e2e8f0";
-                            e.target.style.boxShadow = "none";
-                          }
+                          e.currentTarget.style.borderColor = fieldErrors.upt_id
+                            ? errorBorderColor
+                            : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.upt_id
+                            ? errorRing
+                            : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3139,13 +3191,14 @@ function OperatorEselon1DataAplikasi() {
                       </select>
                     </div>
 
-                    <div>
+                    <div style={{ marginTop: "16px" }}>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "8px",
+                          marginBottom: "10px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cara Akses Aplikasi
@@ -3153,109 +3206,135 @@ function OperatorEselon1DataAplikasi() {
                       <div
                         data-field="cara_akses_id"
                         style={{
-                          width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: fieldErrors.cara_akses_id
-                            ? `1px solid ${errorBorderColor}`
-                            : "1px solid #e2e8f0",
+                          padding: "16px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           backgroundColor: "#fafbfc",
+                          borderColor: fieldErrors.cara_akses_id
+                            ? errorBorderColor
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.cara_akses_id
-                            ? errorBoxShadow
+                            ? errorRing
                             : "none",
                         }}
                       >
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(2, 1fr)",
+                            gridAutoFlow: "column",
+                            gridAutoColumns: "max-content",
+                            gridTemplateRows: "repeat(2, auto)",
                             gap: "8px",
-                            maxHeight: "200px",
-                            overflowY: "auto",
+                            overflowX: "auto",
                           }}
                         >
-                          {(master.cara_akses || [])
-                            .filter(
-                              (x) =>
-                                x.status_aktif === 1 || x.status_aktif === true,
-                            )
-                            .sort((a, b) => {
-                              const orderA =
-                                a.order_index ?? a.cara_akses_id ?? 0;
-                              const orderB =
-                                b.order_index ?? b.cara_akses_id ?? 0;
-                              return orderA - orderB;
-                            })
-                            .map((x) => (
-                              <label
-                                key={x.cara_akses_id}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  padding: "8px 10px",
-                                  cursor: "pointer",
-                                  borderRadius: "6px",
-                                  backgroundColor: "#fff",
-                                  border: "1px solid #e2e8f0",
-                                  transition: "all 0.15s ease",
-                                }}
-                                onMouseEnter={(e) => {
+                          {(() => {
+                            const options = (master.cara_akses || []).filter(
+                              (x) => isActiveFlag(x.status_aktif),
+                            );
+
+                            const cols = Math.ceil(options.length / 2) || 1;
+                            const row1 = options.slice(0, cols);
+                            const row2 = options.slice(cols);
+                            const interleaved = [];
+                            for (let i = 0; i < cols; i += 1) {
+                              if (row1[i]) interleaved.push(row1[i]);
+                              if (row2[i]) interleaved.push(row2[i]);
+                            }
+
+                            return interleaved;
+                          })().map((x) => (
+                            <label
+                              key={x.cara_akses_id}
+                              style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                padding: "8px 10px",
+                                cursor: "pointer",
+                                borderRadius: "6px",
+                                backgroundColor: (
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))
+                                  ? "#e0f2fe"
+                                  : "#fff",
+                                border: (formData.cara_akses_id || []).includes(
+                                  String(x.cara_akses_id),
+                                )
+                                  ? "1px solid #0ea5e9"
+                                  : "1px solid #cbd5e1",
+                                transition: "all 0.15s",
+                                minHeight: "38px",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
                                   e.currentTarget.style.backgroundColor =
                                     "#f1f5f9";
                                   e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
+                                  e.currentTarget.style.backgroundColor = "#fff";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={(
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))}
+                                onChange={(e) => {
+                                  const id = String(x.cara_akses_id);
+                                  const current = formData.cara_akses_id || [];
+                                  const updated = e.target.checked
+                                    ? [...current, id]
+                                    : current.filter((item) => item !== id);
+                                  handleFormChange("cara_akses_id", updated);
                                 }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor =
-                                    "#fff";
-                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  marginRight: "10px",
+                                  marginTop: "1px",
+                                  cursor: "pointer",
+                                  accentColor: "#0ea5e9",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                  lineHeight: "1.4",
+                                  wordBreak: "break-word",
+                                  flex: 1,
                                 }}
                               >
-                                <input
-                                  type="checkbox"
-                                  checked={(
-                                    formData.cara_akses_id || []
-                                  ).includes(String(x.cara_akses_id))}
-                                  onChange={(e) => {
-                                    const id = String(x.cara_akses_id);
-                                    const current =
-                                      formData.cara_akses_id || [];
-                                    const updated = e.target.checked
-                                      ? [...current, id]
-                                      : current.filter((item) => item !== id);
-                                    handleFormChange("cara_akses_id", updated);
-                                  }}
-                                  style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
-                                    cursor: "pointer",
-                                    accentColor: "#0ea5e9",
-                                    flexShrink: 0,
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    fontSize: "13px",
-                                    color: "#334155",
-                                    lineHeight: "1.4",
-                                  }}
-                                >
-                                  {x.nama_cara_akses}
-                                </span>
-                              </label>
-                            ))}
+                                {x.nama_cara_akses}
+                              </span>
+                            </label>
+                          ))}
                         </div>
                         {(!master.cara_akses ||
-                          master.cara_akses.filter(
-                            (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
+                          (master.cara_akses || []).filter((x) =>
+                            isActiveFlag(x.status_aktif),
                           ).length === 0) && (
                           <div
                             style={{
                               fontSize: "12px",
                               color: "#94a3b8",
                               textAlign: "center",
-                              padding: "12px",
+                              padding: "20px",
                             }}
                           >
                             Tidak ada data Cara Akses
@@ -3269,53 +3348,56 @@ function OperatorEselon1DataAplikasi() {
                 {/* Detail Teknis */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M12 1v22" />
+                      <path d="M17 5H9.5a2.5 2.5 0 0 0 0 5H14a2.5 2.5 0 0 1 0 5H6" />
+                    </svg>
                     Detail Teknis
                   </h3>
 
+                  {/* Frekuensi dan Status - 2 kolom */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
-                      marginTop: "14px",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "16px",
+                      marginBottom: "18px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Frekuensi Pemakaian
@@ -3331,23 +3413,34 @@ function OperatorEselon1DataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.frekuensi_pemakaian
                             ? errorBorderColor
-                            : "#e6eef6",
-                          boxShadow: fieldErrors.frekuensi_pemakaian
-                            ? errorBoxShadow
-                            : "none",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.frekuensi_pemakaian
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
                         {(master.frekuensi_pemakaian || [])
-                          .filter(
-                            (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
-                          )
+                          .filter((x) => isActiveFlag(x.status_aktif))
                           .map((x) => (
                             <option
                               key={x.frekuensi_pemakaian}
@@ -3363,8 +3456,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status Aplikasi
@@ -3377,23 +3472,34 @@ function OperatorEselon1DataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.status_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
-                          boxShadow: fieldErrors.status_aplikasi
-                            ? errorBoxShadow
-                            : "none",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.status_aplikasi
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
                         {(master.status_aplikasi || [])
-                          .filter(
-                            (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
-                          )
+                          .filter((x) => isActiveFlag(x.status_aktif))
                           .map((x) => (
                             <option
                               key={x.status_aplikasi_id}
@@ -3404,13 +3510,18 @@ function OperatorEselon1DataAplikasi() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* Ekosistem - Full width untuk lebih prominent */}
+                  <div style={{ marginBottom: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Ekosistem
@@ -3423,23 +3534,34 @@ function OperatorEselon1DataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.environment_id
                             ? errorBorderColor
-                            : "#e6eef6",
-                          boxShadow: fieldErrors.environment_id
-                            ? errorBoxShadow
-                            : "none",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.environment_id
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
                         {(master.environment || [])
-                          .filter(
-                            (x) =>
-                              x.status_aktif === 1 || x.status_aktif === true,
-                          )
+                          .filter((x) => isActiveFlag(x.status_aktif))
                           .map((x) => (
                             <option
                               key={x.environment_id}
@@ -3456,16 +3578,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Utama
@@ -3507,8 +3631,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Backup
@@ -3551,16 +3677,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Internal
@@ -3632,8 +3760,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Eksternal
@@ -3707,16 +3837,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Internal
@@ -3744,8 +3876,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Eksternal
@@ -3770,12 +3904,14 @@ function OperatorEselon1DataAplikasi() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Domain
@@ -3801,13 +3937,14 @@ function OperatorEselon1DataAplikasi() {
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
                         marginBottom: "8px",
                         fontWeight: 600,
-                        color: "#0f172a",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       User / Pengguna
@@ -3816,12 +3953,13 @@ function OperatorEselon1DataAplikasi() {
                       data-field="user_pengguna"
                       style={{
                         width: "100%",
-                        padding: "12px",
-                        borderRadius: "8px",
-                        border: fieldErrors.user_pengguna
-                          ? `1px solid ${errorBorderColor}`
-                          : "1px solid #e2e8f0",
-                        backgroundColor: "#fafbfc",
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
+                        borderColor: fieldErrors.user_pengguna
+                          ? errorBorderColor
+                          : "#cbd5e1",
+                        backgroundColor: "#f8fafc",
                         boxShadow: fieldErrors.user_pengguna
                           ? errorBoxShadow
                           : "none",
@@ -3830,8 +3968,8 @@ function OperatorEselon1DataAplikasi() {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "repeat(2, 1fr)",
-                          gap: "8px",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "10px",
                         }}
                       >
                         {USER_PENGGUNA_OPTIONS.map((option) => (
@@ -3840,20 +3978,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: userPenggunaSelected.includes(option.value) ? "#eff6ff" : "#fafbfc",
+                              border: userPenggunaSelected.includes(option.value) ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (!userPenggunaSelected.includes(option.value)) {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = userPenggunaSelected.includes(option.value) ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = userPenggunaSelected.includes(option.value) ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -3882,15 +4025,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: userPenggunaSelected.includes(option.value) ? "#4338ca" : "#334155",
+                                fontWeight: userPenggunaSelected.includes(option.value) ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               {option.label}
@@ -3929,12 +4073,14 @@ function OperatorEselon1DataAplikasi() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Data Yang Digunakan
@@ -3962,12 +4108,14 @@ function OperatorEselon1DataAplikasi() {
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Luaran/Output
@@ -3999,16 +4147,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Bahasa Pemrograman
@@ -4038,8 +4188,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Basis Data
@@ -4067,20 +4219,16 @@ function OperatorEselon1DataAplikasi() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  {/* Framework - Full width */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kerangka Pengembangan / Framework
@@ -4109,13 +4257,18 @@ function OperatorEselon1DataAplikasi() {
                         }}
                       />
                     </div>
+                  </div>
+
+                  {/* Unit Pengembang - Full width */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Pengembang
@@ -4124,12 +4277,13 @@ function OperatorEselon1DataAplikasi() {
                         data-field="unit_pengembang"
                         style={{
                           width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: fieldErrors.unit_pengembang
-                            ? `1px solid ${errorBorderColor}`
-                            : "1px solid #e2e8f0",
-                          backgroundColor: "#fafbfc",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          borderColor: fieldErrors.unit_pengembang
+                            ? errorBorderColor
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.unit_pengembang
                             ? errorBoxShadow
                             : "none",
@@ -4137,8 +4291,8 @@ function OperatorEselon1DataAplikasi() {
                       >
                         <div
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                             gap: "10px",
                           }}
                         >
@@ -4146,20 +4300,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: unitPengembangType === "sekretariat_eselon_1" ? "#eff6ff" : "#fafbfc",
+                              border: unitPengembangType === "sekretariat_eselon_1" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (unitPengembangType !== "sekretariat_eselon_1") {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = unitPengembangType === "sekretariat_eselon_1" ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = unitPengembangType === "sekretariat_eselon_1" ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -4181,15 +4340,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: unitPengembangType === "sekretariat_eselon_1" ? "#4338ca" : "#334155",
+                                fontWeight: unitPengembangType === "sekretariat_eselon_1" ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               Sekretariat Eselon 1
@@ -4200,20 +4360,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: unitPengembangType === "internal_eselon_2" ? "#eff6ff" : "#fafbfc",
+                              border: unitPengembangType === "internal_eselon_2" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (unitPengembangType !== "internal_eselon_2") {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = unitPengembangType === "internal_eselon_2" ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = unitPengembangType === "internal_eselon_2" ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -4235,15 +4400,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: unitPengembangType === "internal_eselon_2" ? "#4338ca" : "#334155",
+                                fontWeight: unitPengembangType === "internal_eselon_2" ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               Internal Eselon 2
@@ -4254,20 +4420,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: unitPengembangType === "eksternal" ? "#eff6ff" : "#fafbfc",
+                              border: unitPengembangType === "eksternal" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (unitPengembangType !== "eksternal") {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = unitPengembangType === "eksternal" ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = unitPengembangType === "eksternal" ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -4286,15 +4457,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: unitPengembangType === "eksternal" ? "#4338ca" : "#334155",
+                                fontWeight: unitPengembangType === "eksternal" ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               Eksternal (Lainnya)
@@ -4330,21 +4502,16 @@ function OperatorEselon1DataAplikasi() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  {/* Unit Operasional Teknologi - Full width */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Operasional Teknologi
@@ -4353,12 +4520,13 @@ function OperatorEselon1DataAplikasi() {
                         data-field="unit_operasional_teknologi"
                         style={{
                           width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: fieldErrors.unit_operasional_teknologi
-                            ? `1px solid ${errorBorderColor}`
-                            : "1px solid #e2e8f0",
-                          backgroundColor: "#fafbfc",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          borderColor: fieldErrors.unit_operasional_teknologi
+                            ? errorBorderColor
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
@@ -4366,8 +4534,8 @@ function OperatorEselon1DataAplikasi() {
                       >
                         <div
                           style={{
-                            display: "flex",
-                            flexDirection: "column",
+                            display: "grid",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                             gap: "10px",
                           }}
                         >
@@ -4375,20 +4543,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: unitOperasionalTeknologiType === "pusdatin" ? "#eff6ff" : "#fafbfc",
+                              border: unitOperasionalTeknologiType === "pusdatin" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (unitOperasionalTeknologiType !== "pusdatin") {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = unitOperasionalTeknologiType === "pusdatin" ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = unitOperasionalTeknologiType === "pusdatin" ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -4410,15 +4583,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: unitOperasionalTeknologiType === "pusdatin" ? "#4338ca" : "#334155",
+                                fontWeight: unitOperasionalTeknologiType === "pusdatin" ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               Pusdatin
@@ -4429,20 +4603,25 @@ function OperatorEselon1DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "center",
-                              padding: "8px 10px",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              backgroundColor: "#fff",
-                              border: "1px solid #e2e8f0",
-                              transition: "all 0.15s ease",
+                              borderRadius: "10px",
+                              backgroundColor: unitOperasionalTeknologiType === "lainnya" ? "#eff6ff" : "#fafbfc",
+                              border: unitOperasionalTeknologiType === "lainnya" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
-                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              if (unitOperasionalTeknologiType !== "lainnya") {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fff";
-                              e.currentTarget.style.borderColor = "#e2e8f0";
+                              e.currentTarget.style.backgroundColor = unitOperasionalTeknologiType === "lainnya" ? "#eff6ff" : "#fafbfc";
+                              e.currentTarget.style.borderColor = unitOperasionalTeknologiType === "lainnya" ? "#6366f1" : "#cbd5e1";
+                              e.currentTarget.style.transform = "translateY(0)";
                             }}
                           >
                             <input
@@ -4463,15 +4642,16 @@ function OperatorEselon1DataAplikasi() {
                                 height: "16px",
                                 marginRight: "10px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
                             <span
                               style={{
                                 fontSize: "13px",
-                                color: "#334155",
-                                lineHeight: "1.4",
+                                color: unitOperasionalTeknologiType === "lainnya" ? "#4338ca" : "#334155",
+                                fontWeight: unitOperasionalTeknologiType === "lainnya" ? 600 : 500,
+                                lineHeight: "1.5",
                               }}
                             >
                               Lainnya
@@ -4508,16 +4688,34 @@ function OperatorEselon1DataAplikasi() {
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Nilai Pengembangan Aplikasi - Full width */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Nilai Pengembangan Aplikasi
                       </label>
+                      <span
+                        style={{
+                          display: "block",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          color: "#64748b",
+                          marginTop: "-4px",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Untuk kebutuhan BPK
+                      </span>
                       <input
                         data-field="nilai_pengembangan_aplikasi"
                         value={formData.nilai_pengembangan_aplikasi}
@@ -4548,8 +4746,8 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
@@ -4558,7 +4756,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Utama
@@ -4828,7 +5027,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Backup
@@ -5098,7 +5298,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Mandiri Komputasi Backup
@@ -5428,16 +5629,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Perangkat Lunak
@@ -5469,7 +5672,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cloud
@@ -5626,8 +5830,8 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
@@ -5636,7 +5840,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         SSL
@@ -5797,8 +6002,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tanggal Expired SSL
@@ -5830,8 +6037,8 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
@@ -5840,7 +6047,8 @@ function OperatorEselon1DataAplikasi() {
                           display: "block",
                           marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Antivirus
@@ -5997,16 +6205,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Alamat IP Publik
@@ -6045,8 +6255,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Keterangan
@@ -6078,16 +6290,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status BMN
@@ -6120,8 +6334,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Server Aplikasi
@@ -6158,16 +6374,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tipe Lisensi Bahasa Pemrograman
@@ -6203,8 +6421,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         API Internal Sistem Integrasi
@@ -6242,16 +6462,18 @@ function OperatorEselon1DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         WAF
@@ -6309,8 +6531,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         VA/PT
@@ -6402,7 +6626,7 @@ function OperatorEselon1DataAplikasi() {
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
-                        gap: "12px",
+                        gap: "14px",
                       }}
                     >
                       {dynamicTables.map((table) => {
@@ -6436,8 +6660,9 @@ function OperatorEselon1DataAplikasi() {
                             <label
                               style={{
                                 display: "block",
-                                marginBottom: "6px",
+                                marginBottom: "8px",
                                 fontWeight: 600,
+                                color: "#334155",
                                 fontSize: "13px",
                               }}
                             >
@@ -6492,56 +6717,64 @@ function OperatorEselon1DataAplikasi() {
                 {/* AKSES APLIKASI (AKUN) - Untuk kebutuhan BPK */}
                 <div
                   style={{
-                    marginTop: "24px",
-                    paddingTop: "24px",
-                    borderTop: "2px solid #e2e8f0",
+                    marginTop: "32px",
+                    paddingTop: "28px",
+                    borderTop: "1px solid #cbd5e1",
                   }}
                 >
-                  <div
+                  <h3
                     style={{
-                      marginBottom: "16px",
-                      padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
-                      borderLeft: "4px solid #6366f1",
-                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#4f46e5",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      marginBottom: "4px",
                     }}
                   >
-                    <h3
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#1e293b",
-                        margin: 0,
-                        marginBottom: "4px",
-                      }}
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#4f46e5"
+                      strokeWidth="2"
                     >
-                      AKSES APLIKASI (AKUN)
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: "11px",
-                        color: "#64748b",
-                        margin: 0,
-                        fontStyle: "italic",
-                      }}
-                    >
-                      (UNTUK KEBUTUHAN BPK)
-                    </p>
-                  </div>
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    AKSES APLIKASI (AKUN)
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "#64748b",
+                      margin: 0,
+                      marginBottom: "16px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    (untuk kebutuhan BPK)
+                  </p>
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Username
@@ -6570,8 +6803,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Password
@@ -6629,8 +6864,10 @@ function OperatorEselon1DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Konfirmasi Password
