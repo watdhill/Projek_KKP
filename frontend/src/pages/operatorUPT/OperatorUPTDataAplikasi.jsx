@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const USER_PENGGUNA_OPTIONS = [
   "Internal KKP",
@@ -2216,7 +2216,7 @@ function OperatorUPTDataAplikasi() {
               width: "32px",
               height: "32px",
               border: "3px solid #e0f2fe",
-              borderTop: "3px solid #0ea5e9",
+              borderTop: "3px solid #6366f1",
               borderRadius: "50%",
               margin: "0 auto 12px",
               animation: "spin 0.8s linear infinite",
@@ -2461,7 +2461,7 @@ function OperatorUPTDataAplikasi() {
                             rel="noreferrer"
                             style={{
                               fontSize: "11px",
-                              color: "#0ea5e9",
+                              color: "#6366f1",
                               textDecoration: "none",
                               display: "flex",
                               alignItems: "center",
@@ -2769,13 +2769,14 @@ function OperatorUPTDataAplikasi() {
             {/* Fixed Header */}
             <div
               style={{
-                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                padding: "18px 22px",
+                background: "#fff",
+                padding: "20px 24px",
                 borderRadius: "16px 16px 0 0",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexShrink: 0,
+                borderBottom: "1px solid #f1f5f9",
               }}
             >
               <div
@@ -2787,14 +2788,14 @@ function OperatorUPTDataAplikasi() {
               >
                 <div
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "rgba(255, 255, 255, 0.15)",
+                    width: "40px",
+                    height: "40px",
+                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                     borderRadius: "10px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "1.5px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
                   }}
                 >
                   {editMode ? (
@@ -2804,12 +2805,21 @@ function OperatorUPTDataAplikasi() {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
                     >
                       <path
-                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13M18.5 2.5C18.8978 2.1022 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1022 21.5 2.5C21.8978 2.8978 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.1022 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
-                        stroke="white"
+                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                        stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M18.5 2.5C18.8978 2.1022 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1022 21.5 2.5C21.8978 2.8978 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.1022 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
                     </svg>
                   ) : (
@@ -2819,6 +2829,7 @@ function OperatorUPTDataAplikasi() {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
                     >
                       <rect
                         x="3"
@@ -2826,7 +2837,7 @@ function OperatorUPTDataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -2835,7 +2846,7 @@ function OperatorUPTDataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -2844,7 +2855,7 @@ function OperatorUPTDataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -2853,7 +2864,7 @@ function OperatorUPTDataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                     </svg>
@@ -2862,9 +2873,10 @@ function OperatorUPTDataAplikasi() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#ffffff",
-                    fontSize: "17px",
+                    color: "#0f172a",
+                    fontSize: "18px",
                     fontWeight: 700,
+                    letterSpacing: "-0.02em",
                   }}
                 >
                   {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
@@ -2873,35 +2885,38 @@ function OperatorUPTDataAplikasi() {
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
-                  border: "1.5px solid rgba(255, 255, 255, 0.3)",
-                  borderRadius: "8px",
-                  width: "32px",
-                  height: "32px",
+                  background: "#f8fafc",
+                  border: "none",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
+                  color: "#64748b",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.color = "#64748b";
                 }}
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
                     d="M18 6L6 18M6 6L18 18"
-                    stroke="white"
-                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                 </svg>
@@ -2911,61 +2926,50 @@ function OperatorUPTDataAplikasi() {
             {/* Scrollable Content */}
             <div
               style={{
-                padding: "24px",
                 overflowY: "auto",
                 flex: 1,
               }}
             >
-              <form onSubmit={handleSubmitForm}>
+              <form onSubmit={handleSubmitForm} style={{ padding: "32px" }}>
                 {/* SECTION: Informasi Dasar */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "24px",
-                    borderBottom: "1.5px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
-                  <div
+                  <h3
                     style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#4f46e5",
+                      marginBottom: "20px",
+                      marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
-                      marginBottom: "16px",
+                      gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "20px",
-                        background:
-                          "linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    />
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#0f172a",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      Informasi Dasar
-                    </h3>
-                  </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
+                    Informasi Dasar
+                  </h3>
 
                   <div style={{ marginBottom: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        fontSize: "12px",
-                        color: "#475569",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Nama Aplikasi
@@ -2979,30 +2983,30 @@ function OperatorUPTDataAplikasi() {
                       placeholder="Contoh: Sistem Informasi Kepegawaian"
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
+                        padding: "10px 12px",
                         borderRadius: "10px",
                         border: "1.5px solid #e2e8f0",
                         borderColor: fieldErrors.nama_aplikasi
                           ? errorBorderColor
-                          : "#e2e8f0",
-                        fontSize: "13px",
+                          : "#cbd5e1",
+                        fontSize: "14px",
                         outline: "none",
-                        backgroundColor: "#fafbfc",
+                        backgroundColor: "#f8fafc",
                         boxShadow: fieldErrors.nama_aplikasi
                           ? errorBoxShadow
                           : "none",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#0ea5e9";
+                        e.currentTarget.style.borderColor = "#6366f1";
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                          "0 0 0 3px rgba(99, 102, 241, 0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           fieldErrors.nama_aplikasi
                             ? errorBorderColor
-                            : "#e2e8f0";
+                            : "#cbd5e1";
                         e.currentTarget.style.boxShadow =
                           fieldErrors.nama_aplikasi ? errorBoxShadow : "none";
                       }}
@@ -3013,12 +3017,10 @@ function OperatorUPTDataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        fontSize: "12px",
-                        color: "#475569",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Deskripsi dan Fungsi Aplikasi
@@ -3033,15 +3035,15 @@ function OperatorUPTDataAplikasi() {
                       rows={3}
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
+                        padding: "10px 12px",
                         borderRadius: "10px",
                         border: "1.5px solid #e2e8f0",
                         borderColor: fieldErrors.deskripsi_fungsi
                           ? errorBorderColor
-                          : "#e2e8f0",
-                        fontSize: "13px",
+                          : "#cbd5e1",
+                        fontSize: "14px",
                         outline: "none",
-                        backgroundColor: "#fafbfc",
+                        backgroundColor: "#f8fafc",
                         resize: "vertical",
                         boxShadow: fieldErrors.deskripsi_fungsi
                           ? errorBoxShadow
@@ -3049,15 +3051,15 @@ function OperatorUPTDataAplikasi() {
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#0ea5e9";
+                        e.currentTarget.style.borderColor = "#6366f1";
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                          "0 0 0 3px rgba(99, 102, 241, 0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           fieldErrors.deskripsi_fungsi
                             ? errorBorderColor
-                            : "#e2e8f0";
+                            : "#cbd5e1";
                         e.currentTarget.style.boxShadow =
                           fieldErrors.deskripsi_fungsi
                             ? errorBoxShadow
@@ -3070,39 +3072,36 @@ function OperatorUPTDataAplikasi() {
                 {/* SECTION: Lokasi & Penggunaan */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Lokasi & Penggunaan
                   </h3>
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gridTemplateColumns: "repeat(2, 1fr)",
                       gap: "14px",
                       marginBottom: "14px",
                     }}
@@ -3111,12 +3110,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 1
@@ -3131,34 +3128,34 @@ function OperatorUPTDataAplikasi() {
                         }}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.eselon1_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fafbfc",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.eselon1_id
                             ? errorBoxShadow
                             : "none",
                         }}
                         disabled
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
+                          e.currentTarget.style.borderColor = "#6366f1";
                           e.currentTarget.style.backgroundColor = "#fff";
                           e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor =
                             fieldErrors.eselon1_id
                               ? errorBorderColor
-                              : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
+                              : "#cbd5e1";
+                          e.currentTarget.style.backgroundColor = "#f8fafc";
                           e.currentTarget.style.boxShadow =
                             fieldErrors.eselon1_id ? errorBoxShadow : "none";
                         }}
@@ -3181,12 +3178,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         UPT
@@ -3200,32 +3195,32 @@ function OperatorUPTDataAplikasi() {
                         disabled
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.upt_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fafbfc",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.upt_id
                             ? errorBoxShadow
                             : "none",
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
+                          e.currentTarget.style.borderColor = "#6366f1";
                           e.currentTarget.style.backgroundColor = "#fff";
                           e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = fieldErrors.upt_id
                             ? errorBorderColor
-                            : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
+                            : "#cbd5e1";
+                          e.currentTarget.style.backgroundColor = "#f8fafc";
                           e.currentTarget.style.boxShadow = fieldErrors.upt_id
                             ? errorBoxShadow
                             : "none";
@@ -3253,12 +3248,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cara Akses Aplikasi
@@ -3269,122 +3262,140 @@ function OperatorUPTDataAplikasi() {
                         role="group"
                         aria-label="Cara Akses Aplikasi"
                         style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
-                          backgroundColor: "#fff",
-                          ...(fieldErrors.cara_akses_id
-                            ? {
-                                borderColor: errorBorderColor,
-                                boxShadow: errorBoxShadow,
-                              }
-                            : null),
+                          padding: "16px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          backgroundColor: "#fafbfc",
+                          borderColor: fieldErrors.cara_akses_id
+                            ? errorBorderColor
+                            : "#cbd5e1",
+                          boxShadow: fieldErrors.cara_akses_id
+                            ? errorBoxShadow
+                            : "none",
                         }}
                       >
                         <div
                           style={{
-                            fontSize: "12px",
-                            color: "#64748b",
-                            marginBottom: "8px",
+                            display: "grid",
+                            gridAutoFlow: "column",
+                            gridAutoColumns: "max-content",
+                            gridTemplateRows: "repeat(2, auto)",
+                            gap: "8px",
+                            overflowX: "auto",
                           }}
                         >
-                          {(formData.cara_akses_id || []).length > 0
-                            ? `${(formData.cara_akses_id || []).length} cara akses dipilih`
-                            : "Pilih satu atau lebih"}
-                        </div>
-
-                        <div
-                          style={{
-                            maxHeight: "220px",
-                            overflowY: "auto",
-                            paddingRight: "4px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "1fr 1fr",
-                              gap: "4px",
-                            }}
-                          >
-                            {(master.cara_akses || [])
-                              .filter(
-                                (x) =>
-                                  x.status_aktif === 1 ||
-                                  x.status_aktif === true,
-                              )
-                              .map((x) => (
-                                <label
-                                  key={x.cara_akses_id}
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "6px 8px",
-                                    cursor: "pointer",
-                                    borderRadius: "6px",
-                                    transition: "background-color 0.15s",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor =
-                                      "#f1f5f9";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor =
-                                      "transparent";
-                                  }}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={(formData.cara_akses_id || []).includes(
-                                      String(x.cara_akses_id),
-                                    )}
-                                    onChange={(e) => {
-                                      const id = String(x.cara_akses_id);
-                                      const current = formData.cara_akses_id || [];
-                                      const updated = e.target.checked
-                                        ? [...current, id]
-                                        : current.filter((item) => item !== id);
-                                      handleFormChange("cara_akses_id", updated);
-                                    }}
-                                    style={{
-                                      width: "14px",
-                                      height: "14px",
-                                      marginRight: "8px",
-                                      cursor: "pointer",
-                                      accentColor: "#0ea5e9",
-                                      flexShrink: 0,
-                                    }}
-                                  />
-                                  <span
-                                    style={{
-                                      fontSize: "12.5px",
-                                      color: "#334155",
-                                      lineHeight: "1.3",
-                                    }}
-                                  >
-                                    {x.nama_cara_akses}
-                                  </span>
-                                </label>
-                              ))}
-                          </div>
-
-                          {(!master.cara_akses ||
-                            master.cara_akses.filter(
-                              (x) => x.status_aktif === 1 || x.status_aktif === true,
-                            ).length === 0) && (
-                            <div
+                          {(() => {
+                            const options = (master.cara_akses || []).filter(
+                              (x) =>
+                                x.status_aktif === 1 || x.status_aktif === true,
+                            );
+                            const cols = Math.ceil(options.length / 2) || 1;
+                            const row1 = options.slice(0, cols);
+                            const row2 = options.slice(cols);
+                            const interleaved = [];
+                            for (let i = 0; i < cols; i += 1) {
+                              if (row1[i]) interleaved.push(row1[i]);
+                              if (row2[i]) interleaved.push(row2[i]);
+                            }
+                            return interleaved;
+                          })().map((x) => (
+                            <label
+                              key={x.cara_akses_id}
                               style={{
-                                fontSize: "12px",
-                                color: "#94a3b8",
-                                textAlign: "center",
-                                padding: "12px",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                padding: "8px 10px",
+                                cursor: "pointer",
+                                borderRadius: "6px",
+                                backgroundColor: (
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))
+                                  ? "#e0f2fe"
+                                  : "#fff",
+                                border: (formData.cara_akses_id || []).includes(
+                                  String(x.cara_akses_id),
+                                )
+                                  ? "1px solid #0ea5e9"
+                                  : "1px solid #cbd5e1",
+                                transition: "all 0.15s",
+                                minHeight: "38px",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (
+                                  !(formData.cara_akses_id || []).includes(
+                                    String(x.cara_akses_id),
+                                  )
+                                ) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#fff";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                }
                               }}
                             >
-                              Tidak ada data Cara Akses
-                            </div>
-                          )}
+                              <input
+                                type="checkbox"
+                                checked={(
+                                  formData.cara_akses_id || []
+                                ).includes(String(x.cara_akses_id))}
+                                onChange={(e) => {
+                                  const id = String(x.cara_akses_id);
+                                  const current = formData.cara_akses_id || [];
+                                  const updated = e.target.checked
+                                    ? [...current, id]
+                                    : current.filter((item) => item !== id);
+                                  handleFormChange("cara_akses_id", updated);
+                                }}
+                                style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  marginRight: "10px",
+                                  marginTop: "1px",
+                                  cursor: "pointer",
+                                  accentColor: "#0ea5e9",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "13px",
+                                  color: "#334155",
+                                  fontWeight: 500,
+                                  lineHeight: "1.4",
+                                  wordBreak: "break-word",
+                                  flex: 1,
+                                }}
+                              >
+                                {x.nama_cara_akses}
+                              </span>
+                            </label>
+                          ))}
                         </div>
+                        {(!master.cara_akses ||
+                          master.cara_akses.filter(
+                            (x) => x.status_aktif === 1 || x.status_aktif === true,
+                          ).length === 0) && (
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              color: "#94a3b8",
+                              textAlign: "center",
+                              padding: "20px",
+                            }}
+                          >
+                            Tidak ada data Cara Akses
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3393,39 +3404,36 @@ function OperatorUPTDataAplikasi() {
                 {/* Detail Teknis */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m-6 6l-4.2 4.2m16.4 0l-4.2-4.2m-6-6l-4.2-4.2" />
+                    </svg>
                     Detail Teknis
                   </h3>
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gridTemplateColumns: "repeat(2, 1fr)",
                       gap: "14px",
                       marginTop: "14px",
                     }}
@@ -3434,12 +3442,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Frekuensi Pemakaian
@@ -3455,15 +3461,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.frekuensi_pemakaian
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.frekuensi_pemakaian
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.frekuensi_pemakaian ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.frekuensi_pemakaian ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3503,7 +3522,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3517,15 +3536,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.status_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.status_aplikasi
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.status_aplikasi ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.status_aplikasi ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3549,7 +3581,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3563,15 +3595,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.environment_id
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.environment_id
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.environment_id ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.environment_id ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3604,7 +3649,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3618,15 +3663,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pdn_id
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.pdn_id
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.pdn_id ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.pdn_id ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3647,7 +3705,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3661,15 +3719,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pdn_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.pdn_backup
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.pdn_backup ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.pdn_backup ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-- Pilih PDN Backup --</option>
@@ -3699,7 +3770,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3714,19 +3785,32 @@ function OperatorUPTDataAplikasi() {
                         disabled={!formData.upt_id}
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pic_internal
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
                           boxShadow: fieldErrors.pic_internal
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: !formData.upt_id
                             ? "#f3f4f6"
-                            : "#fff",
+                            : "#f8fafc",
                           cursor: !formData.upt_id ? "not-allowed" : "pointer",
+                        }}
+                        onFocus={(e) => {
+                          if (formData.upt_id) {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.pic_internal ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.pic_internal ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">
@@ -3758,7 +3842,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3773,19 +3857,32 @@ function OperatorUPTDataAplikasi() {
                         disabled={!formData.upt_id}
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pic_eksternal
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
                           boxShadow: fieldErrors.pic_eksternal
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: !formData.upt_id
                             ? "#f3f4f6"
-                            : "#fff",
+                            : "#f8fafc",
                           cursor: !formData.upt_id ? "not-allowed" : "pointer",
+                        }}
+                        onFocus={(e) => {
+                          if (formData.upt_id) {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.pic_eksternal ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.pic_eksternal ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">
@@ -3827,7 +3924,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3842,9 +3939,11 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          fontSize: "14px",
+                          outline: "none",
                           backgroundColor: "#f3f4f6",
                           cursor: "not-allowed",
                           color: "#6b7280",
@@ -3856,7 +3955,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -3871,9 +3970,11 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          fontSize: "14px",
+                          outline: "none",
                           backgroundColor: "#f3f4f6",
                           cursor: "not-allowed",
                           color: "#6b7280",
@@ -3886,7 +3987,7 @@ function OperatorUPTDataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
                       }}
                     >
@@ -3901,14 +4002,26 @@ function OperatorUPTDataAplikasi() {
                       placeholder="https://contoh.domain"
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.domain
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
+                        fontSize: "14px",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        outline: "none",
+                        backgroundColor: "#f8fafc",
                         boxShadow: fieldErrors.domain ? errorBoxShadow : "none",
                         textTransform: "none",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "#6366f1";
+                        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = fieldErrors.domain ? errorBorderColor : "#cbd5e1";
+                        e.currentTarget.style.boxShadow = fieldErrors.domain ? errorBoxShadow : "none";
                       }}
                     />
                   </div>
@@ -3917,7 +4030,7 @@ function OperatorUPTDataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
                       }}
                     >
@@ -3926,60 +4039,61 @@ function OperatorUPTDataAplikasi() {
                     <div
                       data-field="user_pengguna"
                       style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.user_pengguna
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                         boxShadow: fieldErrors.user_pengguna
                           ? errorBoxShadow
                           : "none",
-                        backgroundColor: "#fff",
+                        backgroundColor: "#f8fafc",
                       }}
                     >
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "#64748b",
-                          marginBottom: "8px",
-                        }}
-                      >
-                        {(userPenggunaSelected || []).length > 0
-                          ? `${(userPenggunaSelected || []).length} dipilih`
-                          : "Pilih satu atau lebih"}
-                      </div>
-
-                      <div
-                        style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "6px",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "10px",
                         }}
                       >
-                        {USER_PENGGUNA_OPTIONS.map((opt) => (
+                        {USER_PENGGUNA_OPTIONS.map((opt) => {
+                          const checked = (userPenggunaSelected || []).includes(opt);
+                          return (
                           <label
                             key={opt}
                             style={{
                               display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
+                              alignItems: "flex-start",
+                              padding: "10px 12px",
                               cursor: "pointer",
-                              transition: "background-color 0.15s",
+                              borderRadius: "10px",
+                              backgroundColor: checked ? "#eff6ff" : "#fafbfc",
+                              border: checked
+                                ? "1.5px solid #6366f1"
+                                : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              minHeight: "44px",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                              if (!checked) {
+                                e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = "transparent";
+                              if (!checked) {
+                                e.currentTarget.style.backgroundColor = "#fafbfc";
+                                e.currentTarget.style.borderColor = "#cbd5e1";
+                                e.currentTarget.style.transform = "translateY(0)";
+                              }
                             }}
                           >
                             <input
                               type="checkbox"
-                              checked={(userPenggunaSelected || []).includes(opt)}
+                              checked={checked}
                               onChange={(e) => {
                                 const current = userPenggunaSelected || [];
                                 const nextSelected = e.target.checked
@@ -3994,18 +4108,28 @@ function OperatorUPTDataAplikasi() {
                                 setUserPenggunaFromUi(nextSelected, nextLainnya);
                               }}
                               style={{
-                                width: "14px",
-                                height: "14px",
+                                width: "16px",
+                                height: "16px",
+                                marginRight: "10px",
+                                marginTop: "1px",
                                 cursor: "pointer",
-                                accentColor: "#0ea5e9",
+                                accentColor: "#6366f1",
                                 flexShrink: 0,
                               }}
                             />
-                            <span style={{ fontSize: "12.5px", color: "#334155" }}>
+                            <span style={{
+                              fontSize: "13px",
+                              color: checked ? "#4338ca" : "#334155",
+                              fontWeight: checked ? 600 : 500,
+                              lineHeight: "1.5",
+                              wordBreak: "break-word",
+                              flex: 1,
+                            }}>
                               {opt}
                             </span>
                           </label>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       {(userPenggunaSelected || []).includes("Lainnya") && (
@@ -4021,9 +4145,12 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Tulis lainnya..."
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              fontSize: "14px",
+                              outline: "none",
                             }}
                           />
                         </div>
@@ -4035,7 +4162,7 @@ function OperatorUPTDataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
                       }}
                     >
@@ -4051,15 +4178,30 @@ function OperatorUPTDataAplikasi() {
                       rows={2}
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.data_digunakan
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
+                        fontSize: "14px",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        outline: "none",
+                        backgroundColor: "#f8fafc",
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                        lineHeight: "1.6",
                         boxShadow: fieldErrors.data_digunakan
                           ? errorBoxShadow
                           : "none",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "#6366f1";
+                        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = fieldErrors.data_digunakan ? errorBorderColor : "#cbd5e1";
+                        e.currentTarget.style.boxShadow = fieldErrors.data_digunakan ? errorBoxShadow : "none";
                       }}
                     />
                   </div>
@@ -4068,7 +4210,7 @@ function OperatorUPTDataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
                       }}
                     >
@@ -4084,15 +4226,30 @@ function OperatorUPTDataAplikasi() {
                       rows={2}
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.luaran_output
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
+                        fontSize: "14px",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        outline: "none",
+                        backgroundColor: "#f8fafc",
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                        lineHeight: "1.6",
                         boxShadow: fieldErrors.luaran_output
                           ? errorBoxShadow
                           : "none",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = "#6366f1";
+                        e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = fieldErrors.luaran_output ? errorBorderColor : "#cbd5e1";
+                        e.currentTarget.style.boxShadow = fieldErrors.luaran_output ? errorBoxShadow : "none";
                       }}
                     />
                   </div>
@@ -4109,7 +4266,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4124,15 +4281,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: PHP, Python, Java"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.bahasa_pemrograman
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.bahasa_pemrograman
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.bahasa_pemrograman ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.bahasa_pemrograman ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -4140,7 +4309,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4155,15 +4324,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: MySQL, PostgreSQL, Oracle"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.basis_data
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.basis_data
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.basis_data ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.basis_data ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -4181,7 +4362,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4199,15 +4380,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: Laravel, Django, Spring Boot"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.kerangka_pengembangan
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.kerangka_pengembangan
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.kerangka_pengembangan ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.kerangka_pengembangan ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -4215,7 +4408,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4223,12 +4416,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.unit_pengembang
                             ? errorBoxShadow
                             : "none",
@@ -4237,12 +4431,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_1 ? "#eff6ff" : "#fff",
+                              border: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_1 ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_INTERNAL_ESELON_1) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_INTERNAL_ESELON_1) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="unit_pengembang_type"
@@ -4256,11 +4466,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
-                            {UNIT_PENGEMBANG_INTERNAL_ESELON_1}
+                            <span style={{ fontSize: "13px", color: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_1 ? "#4338ca" : "#334155", fontWeight: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_1 ? 600 : 500 }}>
+                              {UNIT_PENGEMBANG_INTERNAL_ESELON_1}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_2 ? "#eff6ff" : "#fff",
+                              border: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_2 ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_INTERNAL_ESELON_2) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_INTERNAL_ESELON_2) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="unit_pengembang_type"
@@ -4274,11 +4504,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
-                            {UNIT_PENGEMBANG_INTERNAL_ESELON_2}
+                            <span style={{ fontSize: "13px", color: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_2 ? "#4338ca" : "#334155", fontWeight: unitPengembangType === UNIT_PENGEMBANG_INTERNAL_ESELON_2 ? 600 : 500 }}>
+                              {UNIT_PENGEMBANG_INTERNAL_ESELON_2}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: unitPengembangType === UNIT_PENGEMBANG_EXTERNAL ? "#eff6ff" : "#fff",
+                              border: unitPengembangType === UNIT_PENGEMBANG_EXTERNAL ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_EXTERNAL) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (unitPengembangType !== UNIT_PENGEMBANG_EXTERNAL) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="unit_pengembang_type"
@@ -4291,8 +4541,11 @@ function OperatorUPTDataAplikasi() {
                                   unitPengembangExternal,
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
-                            {UNIT_PENGEMBANG_EXTERNAL}
+                            <span style={{ fontSize: "13px", color: unitPengembangType === UNIT_PENGEMBANG_EXTERNAL ? "#4338ca" : "#334155", fontWeight: unitPengembangType === UNIT_PENGEMBANG_EXTERNAL ? 600 : 500 }}>
+                              {UNIT_PENGEMBANG_EXTERNAL}
+                            </span>
                           </label>
                         </div>
 
@@ -4308,10 +4561,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Contoh: Vendor/Instansi (isi nama)"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4331,7 +4596,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4339,12 +4604,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_operasional_teknologi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
@@ -4353,12 +4619,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: unitOperasionalType === UNIT_OPERASIONAL_PUSDATIN ? "#eff6ff" : "#fff",
+                              border: unitOperasionalType === UNIT_OPERASIONAL_PUSDATIN ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (unitOperasionalType !== UNIT_OPERASIONAL_PUSDATIN) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (unitOperasionalType !== UNIT_OPERASIONAL_PUSDATIN) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="unit_operasional_teknologi_type"
@@ -4369,11 +4651,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
-                            {UNIT_OPERASIONAL_PUSDATIN}
+                            <span style={{ fontSize: "13px", color: unitOperasionalType === UNIT_OPERASIONAL_PUSDATIN ? "#4338ca" : "#334155", fontWeight: unitOperasionalType === UNIT_OPERASIONAL_PUSDATIN ? 600 : 500 }}>
+                              {UNIT_OPERASIONAL_PUSDATIN}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: unitOperasionalType === UNIT_OPERASIONAL_LAINNYA ? "#eff6ff" : "#fff",
+                              border: unitOperasionalType === UNIT_OPERASIONAL_LAINNYA ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (unitOperasionalType !== UNIT_OPERASIONAL_LAINNYA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (unitOperasionalType !== UNIT_OPERASIONAL_LAINNYA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="unit_operasional_teknologi_type"
@@ -4384,8 +4686,11 @@ function OperatorUPTDataAplikasi() {
                                   unitOperasionalLainnya,
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
-                            {UNIT_OPERASIONAL_LAINNYA}
+                            <span style={{ fontSize: "13px", color: unitOperasionalType === UNIT_OPERASIONAL_LAINNYA ? "#4338ca" : "#334155", fontWeight: unitOperasionalType === UNIT_OPERASIONAL_LAINNYA ? 600 : 500 }}>
+                              {UNIT_OPERASIONAL_LAINNYA}
+                            </span>
                           </label>
                         </div>
 
@@ -4401,10 +4706,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Isi unit operasional teknologi"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4414,7 +4731,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4432,15 +4749,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: 500000000 (dalam Rupiah)"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.nilai_pengembangan_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.nilai_pengembangan_aplikasi
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.nilai_pengembangan_aplikasi ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.nilai_pengembangan_aplikasi ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -4458,7 +4787,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4466,12 +4795,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pusat_komputasi_utama
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
@@ -4480,12 +4810,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_utama_type"
@@ -4499,11 +4845,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "#0369a1" : "#334155", fontWeight: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_DC_CYBER) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_DC_CYBER) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_utama_type"
@@ -4517,11 +4883,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "#0369a1" : "#334155", fontWeight: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_LAINNYA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_LAINNYA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_utama_type"
@@ -4535,11 +4921,31 @@ function OperatorUPTDataAplikasi() {
                                   pusatKomputasiUtamaLainnya,
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "#0369a1" : "#334155", fontWeight: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiUtamaType !== PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_utama_type"
@@ -4553,8 +4959,11 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                            <span style={{ fontSize: "13px", color: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "#0369a1" : "#334155", fontWeight: pusatKomputasiUtamaType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                            </span>
                           </label>
                         </div>
 
@@ -4571,10 +4980,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Isi pusat komputasi utama"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4584,7 +5005,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4592,12 +5013,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pusat_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
@@ -4606,12 +5028,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_backup_type"
@@ -4625,11 +5063,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? "#0369a1" : "#334155", fontWeight: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_DC_CYBER) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_DC_CYBER) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_backup_type"
@@ -4643,11 +5101,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? "#0369a1" : "#334155", fontWeight: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_DC_CYBER ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_LAINNYA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_LAINNYA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_backup_type"
@@ -4661,11 +5139,31 @@ function OperatorUPTDataAplikasi() {
                                   pusatKomputasiBackupLainnya,
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                            <span style={{ fontSize: "13px", color: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? "#0369a1" : "#334155", fontWeight: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_LAINNYA ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "#e0f2fe" : "#fff",
+                              border: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (pusatKomputasiBackupType !== PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="pusat_komputasi_backup_type"
@@ -4679,8 +5177,11 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                            <span style={{ fontSize: "13px", color: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? "#0369a1" : "#334155", fontWeight: pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA ? 600 : 500 }}>
+                              {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                            </span>
                           </label>
                         </div>
 
@@ -4696,10 +5197,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Isi pusat komputasi backup"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4709,7 +5222,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4717,12 +5230,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.mandiri_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
@@ -4731,12 +5245,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_STORAGE ? "#e0f2fe" : "#fff",
+                              border: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_STORAGE ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_EX_STORAGE) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_EX_STORAGE) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="mandiri_komputasi_backup_type"
@@ -4750,11 +5280,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {MANDIRI_BACKUP_EX_STORAGE}
+                            <span style={{ fontSize: "13px", color: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_STORAGE ? "#0369a1" : "#334155", fontWeight: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_STORAGE ? 600 : 500 }}>
+                              {MANDIRI_BACKUP_EX_STORAGE}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: mandiriKomputasiBackupType === MANDIRI_BACKUP_IN_STORAGE ? "#e0f2fe" : "#fff",
+                              border: mandiriKomputasiBackupType === MANDIRI_BACKUP_IN_STORAGE ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_IN_STORAGE) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_IN_STORAGE) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="mandiri_komputasi_backup_type"
@@ -4768,11 +5318,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {MANDIRI_BACKUP_IN_STORAGE}
+                            <span style={{ fontSize: "13px", color: mandiriKomputasiBackupType === MANDIRI_BACKUP_IN_STORAGE ? "#0369a1" : "#334155", fontWeight: mandiriKomputasiBackupType === MANDIRI_BACKUP_IN_STORAGE ? 600 : 500 }}>
+                              {MANDIRI_BACKUP_IN_STORAGE}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_CLOUD ? "#e0f2fe" : "#fff",
+                              border: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_CLOUD ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_EX_CLOUD) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_EX_CLOUD) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="mandiri_komputasi_backup_type"
@@ -4786,11 +5356,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {MANDIRI_BACKUP_EX_CLOUD}
+                            <span style={{ fontSize: "13px", color: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_CLOUD ? "#0369a1" : "#334155", fontWeight: mandiriKomputasiBackupType === MANDIRI_BACKUP_EX_CLOUD ? 600 : 500 }}>
+                              {MANDIRI_BACKUP_EX_CLOUD}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: mandiriKomputasiBackupType === MANDIRI_BACKUP_TIDAK_ADA ? "#e0f2fe" : "#fff",
+                              border: mandiriKomputasiBackupType === MANDIRI_BACKUP_TIDAK_ADA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_TIDAK_ADA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="mandiri_komputasi_backup_type"
@@ -4804,11 +5394,31 @@ function OperatorUPTDataAplikasi() {
                                   "",
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {MANDIRI_BACKUP_TIDAK_ADA}
+                            <span style={{ fontSize: "13px", color: mandiriKomputasiBackupType === MANDIRI_BACKUP_TIDAK_ADA ? "#0369a1" : "#334155", fontWeight: mandiriKomputasiBackupType === MANDIRI_BACKUP_TIDAK_ADA ? 600 : 500 }}>
+                              {MANDIRI_BACKUP_TIDAK_ADA}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: mandiriKomputasiBackupType === MANDIRI_BACKUP_LAINNYA ? "#e0f2fe" : "#fff",
+                              border: mandiriKomputasiBackupType === MANDIRI_BACKUP_LAINNYA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_LAINNYA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (mandiriKomputasiBackupType !== MANDIRI_BACKUP_LAINNYA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="mandiri_komputasi_backup_type"
@@ -4822,8 +5432,11 @@ function OperatorUPTDataAplikasi() {
                                   mandiriKomputasiBackupLainnya,
                                 )
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {MANDIRI_BACKUP_LAINNYA}
+                            <span style={{ fontSize: "13px", color: mandiriKomputasiBackupType === MANDIRI_BACKUP_LAINNYA ? "#0369a1" : "#334155", fontWeight: mandiriKomputasiBackupType === MANDIRI_BACKUP_LAINNYA ? 600 : 500 }}>
+                              {MANDIRI_BACKUP_LAINNYA}
+                            </span>
                           </label>
                         </div>
 
@@ -4839,10 +5452,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Isi mandiri komputasi backup"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4862,7 +5487,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4877,15 +5502,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: Windows Server, Linux Ubuntu"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.perangkat_lunak
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.perangkat_lunak
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.perangkat_lunak ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.perangkat_lunak ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -4893,7 +5530,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4901,12 +5538,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.cloud
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
@@ -4915,12 +5553,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: cloudType === CLOUD_YA ? "#e0f2fe" : "#fff",
+                              border: cloudType === CLOUD_YA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (cloudType !== CLOUD_YA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (cloudType !== CLOUD_YA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="cloud_type"
@@ -4928,18 +5582,41 @@ function OperatorUPTDataAplikasi() {
                               onChange={() =>
                                 setCloudFromUi(CLOUD_YA, cloudText)
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {CLOUD_YA}
+                            <span style={{ fontSize: "13px", color: cloudType === CLOUD_YA ? "#0369a1" : "#334155", fontWeight: cloudType === CLOUD_YA ? 600 : 500 }}>
+                              {CLOUD_YA}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: cloudType === CLOUD_TIDAK ? "#e0f2fe" : "#fff",
+                              border: cloudType === CLOUD_TIDAK ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (cloudType !== CLOUD_TIDAK) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (cloudType !== CLOUD_TIDAK) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="cloud_type"
                               checked={cloudType === CLOUD_TIDAK}
                               onChange={() => setCloudFromUi(CLOUD_TIDAK, "")}
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {CLOUD_TIDAK}
+                            <span style={{ fontSize: "13px", color: cloudType === CLOUD_TIDAK ? "#0369a1" : "#334155", fontWeight: cloudType === CLOUD_TIDAK ? 600 : 500 }}>
+                              {CLOUD_TIDAK}
+                            </span>
                           </label>
                         </div>
 
@@ -4950,10 +5627,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Contoh: AWS, Google Cloud, Azure"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -4973,7 +5662,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -4981,34 +5670,71 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.ssl
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                         }}
                       >
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: sslType === SSL_AKTIF_PUSDATIN ? "#e0f2fe" : "#fff",
+                              border: sslType === SSL_AKTIF_PUSDATIN ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (sslType !== SSL_AKTIF_PUSDATIN) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (sslType !== SSL_AKTIF_PUSDATIN) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="ssl_type"
                               checked={sslType === SSL_AKTIF_PUSDATIN}
                               onChange={() => setSslFromUi(SSL_AKTIF_PUSDATIN, "")}
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {SSL_AKTIF_PUSDATIN}
+                            <span style={{ fontSize: "13px", color: sslType === SSL_AKTIF_PUSDATIN ? "#0369a1" : "#334155", fontWeight: sslType === SSL_AKTIF_PUSDATIN ? 600 : 500 }}>
+                              {SSL_AKTIF_PUSDATIN}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: sslType === SSL_AKTIF_UNIT_KERJA ? "#e0f2fe" : "#fff",
+                              border: sslType === SSL_AKTIF_UNIT_KERJA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (sslType !== SSL_AKTIF_UNIT_KERJA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (sslType !== SSL_AKTIF_UNIT_KERJA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="ssl_type"
@@ -5016,8 +5742,11 @@ function OperatorUPTDataAplikasi() {
                               onChange={() =>
                                 setSslFromUi(SSL_AKTIF_UNIT_KERJA, sslUnitKerja)
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {SSL_AKTIF_UNIT_KERJA}
+                            <span style={{ fontSize: "13px", color: sslType === SSL_AKTIF_UNIT_KERJA ? "#0369a1" : "#334155", fontWeight: sslType === SSL_AKTIF_UNIT_KERJA ? 600 : 500 }}>
+                              {SSL_AKTIF_UNIT_KERJA}
+                            </span>
                           </label>
                         </div>
 
@@ -5030,10 +5759,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Isi unit kerja (contoh: Dit. X, UPT Y)"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -5043,7 +5784,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5058,15 +5799,27 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.ssl_expired
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.ssl_expired
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.ssl_expired ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.ssl_expired ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -5084,7 +5837,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5092,12 +5845,13 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         style={{
-                          border: "1px solid #e6eef6",
-                          borderRadius: "8px",
-                          padding: "10px",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.antivirus
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
@@ -5106,12 +5860,28 @@ function OperatorUPTDataAplikasi() {
                         <div
                           style={{
                             display: "flex",
-                            gap: "14px",
+                            gap: "8px",
                             flexWrap: "wrap",
-                            alignItems: "center",
                           }}
                         >
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: antivirusType === ANTIVIRUS_YA ? "#e0f2fe" : "#fff",
+                              border: antivirusType === ANTIVIRUS_YA ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (antivirusType !== ANTIVIRUS_YA) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (antivirusType !== ANTIVIRUS_YA) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="antivirus_type"
@@ -5119,11 +5889,31 @@ function OperatorUPTDataAplikasi() {
                               onChange={() =>
                                 setAntivirusFromUi(ANTIVIRUS_YA, antivirusText)
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {ANTIVIRUS_YA}
+                            <span style={{ fontSize: "13px", color: antivirusType === ANTIVIRUS_YA ? "#0369a1" : "#334155", fontWeight: antivirusType === ANTIVIRUS_YA ? 600 : 500 }}>
+                              {ANTIVIRUS_YA}
+                            </span>
                           </label>
 
-                          <label style={{ display: "flex", gap: "8px" }}>
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              padding: "8px 14px",
+                              cursor: "pointer",
+                              borderRadius: "8px",
+                              backgroundColor: antivirusType === ANTIVIRUS_TIDAK ? "#e0f2fe" : "#fff",
+                              border: antivirusType === ANTIVIRUS_TIDAK ? "1.5px solid #0ea5e9" : "1.5px solid #cbd5e1",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (antivirusType !== ANTIVIRUS_TIDAK) e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              if (antivirusType !== ANTIVIRUS_TIDAK) e.currentTarget.style.backgroundColor = "#fff";
+                            }}
+                          >
                             <input
                               type="radio"
                               name="antivirus_type"
@@ -5131,8 +5921,11 @@ function OperatorUPTDataAplikasi() {
                               onChange={() =>
                                 setAntivirusFromUi(ANTIVIRUS_TIDAK, "")
                               }
+                              style={{ width: "15px", height: "15px", marginRight: "8px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
                             />
-                            {ANTIVIRUS_TIDAK}
+                            <span style={{ fontSize: "13px", color: antivirusType === ANTIVIRUS_TIDAK ? "#0369a1" : "#334155", fontWeight: antivirusType === ANTIVIRUS_TIDAK ? 600 : 500 }}>
+                              {ANTIVIRUS_TIDAK}
+                            </span>
                           </label>
                         </div>
 
@@ -5145,10 +5938,22 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Contoh: Kaspersky, Norton, Avast"
                             style={{
                               width: "100%",
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               marginTop: "10px",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = "#cbd5e1";
+                              e.currentTarget.style.boxShadow = "none";
                             }}
                           />
                         )}
@@ -5168,7 +5973,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5181,16 +5986,28 @@ function OperatorUPTDataAplikasi() {
                         placeholder="IPv4: 192.168.1.1 atau IPv6: 2001:0db8:85a3::8a2e:0370:7334"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.alamat_ip_publik
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.alamat_ip_publik
                             ? errorBoxShadow
                             : "none",
                           fontFamily: "monospace",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.alamat_ip_publik ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.alamat_ip_publik ? errorBoxShadow : "none";
                         }}
                       />
                       <small
@@ -5208,7 +6025,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5223,15 +6040,27 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Contoh: Aplikasi masih dalam tahap pengembangan"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.keterangan
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.keterangan
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.keterangan ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.keterangan ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -5249,7 +6078,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5263,15 +6092,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.status_bmn
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.status_bmn
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.status_bmn ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.status_bmn ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -5283,7 +6125,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5297,15 +6139,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.server_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.server_aplikasi
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.server_aplikasi ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.server_aplikasi ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -5329,7 +6184,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5346,15 +6201,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.tipe_lisensi_bahasa
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.tipe_lisensi_bahasa
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.tipe_lisensi_bahasa ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.tipe_lisensi_bahasa ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -5366,7 +6234,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5383,15 +6251,28 @@ function OperatorUPTDataAplikasi() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.api_internal_status
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.api_internal_status
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.api_internal_status ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.api_internal_status ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -5413,7 +6294,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5428,15 +6309,28 @@ function OperatorUPTDataAplikasi() {
                           }
                           style={{
                             flex: 1,
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            padding: "10px 12px",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor: fieldErrors.waf
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            cursor: "pointer",
+                            backgroundColor: "#f8fafc",
                             boxShadow: fieldErrors.waf
                               ? errorBoxShadow
                               : "none",
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = fieldErrors.waf ? errorBorderColor : "#cbd5e1";
+                            e.currentTarget.style.boxShadow = fieldErrors.waf ? errorBoxShadow : "none";
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -5454,15 +6348,27 @@ function OperatorUPTDataAplikasi() {
                             placeholder="Sebutkan"
                             style={{
                               flex: 1,
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid",
                               borderColor: fieldErrors.waf_lainnya
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               boxShadow: fieldErrors.waf_lainnya
                                 ? errorBoxShadow
                                 : "none",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = fieldErrors.waf_lainnya ? errorBorderColor : "#cbd5e1";
+                              e.currentTarget.style.boxShadow = fieldErrors.waf_lainnya ? errorBoxShadow : "none";
                             }}
                           />
                         )}
@@ -5472,7 +6378,7 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
                         }}
                       >
@@ -5487,15 +6393,28 @@ function OperatorUPTDataAplikasi() {
                           }
                           style={{
                             flex: 1,
-                            padding: "10px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            padding: "10px 12px",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor: fieldErrors.va_pt_status
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            cursor: "pointer",
+                            backgroundColor: "#f8fafc",
                             boxShadow: fieldErrors.va_pt_status
                               ? errorBoxShadow
                               : "none",
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = fieldErrors.va_pt_status ? errorBorderColor : "#cbd5e1";
+                            e.currentTarget.style.boxShadow = fieldErrors.va_pt_status ? errorBoxShadow : "none";
                           }}
                         >
                           <option value="">-Pilih-</option>
@@ -5512,15 +6431,27 @@ function OperatorUPTDataAplikasi() {
                             }
                             style={{
                               flex: 1,
-                              padding: "10px",
-                              borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid",
                               borderColor: fieldErrors.va_pt_waktu
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
+                              fontSize: "14px",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                              outline: "none",
+                              backgroundColor: "#f8fafc",
                               boxShadow: fieldErrors.va_pt_waktu
                                 ? errorBoxShadow
                                 : "none",
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = "#6366f1";
+                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = fieldErrors.va_pt_waktu ? errorBorderColor : "#cbd5e1";
+                              e.currentTarget.style.boxShadow = fieldErrors.va_pt_waktu ? errorBoxShadow : "none";
                             }}
                           />
                         )}
@@ -5535,14 +6466,14 @@ function OperatorUPTDataAplikasi() {
                     style={{
                       marginTop: "20px",
                       paddingTop: "20px",
-                      borderTop: "2px solid #e2e8f0",
+                      borderTop: "2px solid #cbd5e1",
                     }}
                   >
                     <h3
                       style={{
                         fontSize: "14px",
                         fontWeight: 700,
-                        color: "#1e293b",
+                        color: "#4f46e5",
                         marginBottom: "16px",
                         display: "flex",
                         alignItems: "center",
@@ -5599,7 +6530,7 @@ function OperatorUPTDataAplikasi() {
                             <label
                               style={{
                                 display: "block",
-                                marginBottom: "6px",
+                                marginBottom: "8px",
                                 fontWeight: 600,
                                 fontSize: "13px",
                               }}
@@ -5614,15 +6545,28 @@ function OperatorUPTDataAplikasi() {
                               }
                               style={{
                                 width: "100%",
-                                padding: "10px",
-                                borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                padding: "10px 12px",
+                                borderRadius: "10px",
+                                border: "1.5px solid",
                                 borderColor: fieldErrors[fieldName]
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
+                                fontSize: "14px",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                outline: "none",
+                                cursor: "pointer",
+                                backgroundColor: "#f8fafc",
                                 boxShadow: fieldErrors[fieldName]
                                   ? errorBoxShadow
                                   : "none",
+                              }}
+                              onFocus={(e) => {
+                                e.currentTarget.style.borderColor = "#6366f1";
+                                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                              }}
+                              onBlur={(e) => {
+                                e.currentTarget.style.borderColor = fieldErrors[fieldName] ? errorBorderColor : "#cbd5e1";
+                                e.currentTarget.style.boxShadow = fieldErrors[fieldName] ? errorBoxShadow : "none";
                               }}
                             >
                               <option value="">
@@ -5655,65 +6599,58 @@ function OperatorUPTDataAplikasi() {
                 {/* Section Akses Aplikasi (Akun) */}
                 <div
                   style={{
-                    marginTop: "20px",
-                    paddingTop: "20px",
-                    borderTop: "2px solid #e2e8f0",
+                    marginTop: "32px",
+                    paddingTop: "28px",
+                    borderTop: "1px solid #cbd5e1",
                   }}
                 >
-                  <div
+                  <h3
                     style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#4f46e5",
+                      marginBottom: "20px",
+                      marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
-                      marginBottom: "14px",
+                      gap: "8px",
                     }}
                   >
-                    <div
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Akses Aplikasi (Akun){" "}
+                    <span
                       style={{
-                        width: "4px",
-                        height: "18px",
-                        background: "#4f46e5",
-                        borderRadius: "999px",
+                        fontSize: "11px",
+                        color: "#94a3b8",
+                        fontWeight: 500,
+                        textTransform: "none",
+                        letterSpacing: "normal",
                       }}
-                    />
-                    <div>
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 800,
-                          color: "#0f172a",
-                          letterSpacing: "0.2px",
-                        }}
-                      >
-                        AKSES APLIKASI (AKUN)
-                        <span
-                          style={{
-                            marginLeft: "8px",
-                            fontWeight: 600,
-                            color: "#64748b",
-                            fontSize: "12px",
-                          }}
-                        >
-                          (UNTUK KEBUTUHAN BPK)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    >
+                      (untuk kebutuhan BPK)
+                    </span>
+                  </h3>
 
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
+                      gap: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Username
@@ -5730,16 +6667,28 @@ function OperatorUPTDataAplikasi() {
                         placeholder="Username"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           textTransform: "none",
                           borderColor: fieldErrors.akses_aplikasi_username
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#f8fafc",
                           boxShadow: fieldErrors.akses_aplikasi_username
                             ? errorBoxShadow
                             : "none",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = fieldErrors.akses_aplikasi_username ? errorBorderColor : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = fieldErrors.akses_aplikasi_username ? errorBoxShadow : "none";
                         }}
                       />
                     </div>
@@ -5748,9 +6697,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Password
@@ -5769,16 +6719,28 @@ function OperatorUPTDataAplikasi() {
                           placeholder="Password"
                           style={{
                             width: "100%",
-                            padding: "10px",
+                            padding: "10px 12px",
                             paddingRight: "40px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor: fieldErrors.akses_aplikasi_password
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            backgroundColor: "#f8fafc",
                             boxShadow: fieldErrors.akses_aplikasi_password
                               ? errorBoxShadow
                               : "none",
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = fieldErrors.akses_aplikasi_password ? errorBorderColor : "#cbd5e1";
+                            e.currentTarget.style.boxShadow = fieldErrors.akses_aplikasi_password ? errorBoxShadow : "none";
                           }}
                         />
                         <button
@@ -5845,9 +6807,10 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Konfirmasi Password
@@ -5868,18 +6831,30 @@ function OperatorUPTDataAplikasi() {
                           placeholder="Konfirmasi Password"
                           style={{
                             width: "100%",
-                            padding: "10px",
+                            padding: "10px 12px",
                             paddingRight: "40px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor:
                               fieldErrors.akses_aplikasi_konfirmasi_password
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            backgroundColor: "#f8fafc",
                             boxShadow:
                               fieldErrors.akses_aplikasi_konfirmasi_password
                                 ? errorBoxShadow
                                 : "none",
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = fieldErrors.akses_aplikasi_konfirmasi_password ? errorBorderColor : "#cbd5e1";
+                            e.currentTarget.style.boxShadow = fieldErrors.akses_aplikasi_konfirmasi_password ? errorBoxShadow : "none";
                           }}
                         />
                         <button
@@ -5960,11 +6935,11 @@ function OperatorUPTDataAplikasi() {
                 <div
                   style={{
                     display: "flex",
-                    gap: "10px",
+                    gap: "12px",
                     justifyContent: "flex-end",
-                    marginTop: "20px",
-                    paddingTop: "20px",
-                    borderTop: "1.5px solid #e2e8f0",
+                    marginTop: "28px",
+                    paddingTop: "24px",
+                    borderTop: "1.5px solid #cbd5e1",
                   }}
                 >
                   <button
@@ -5974,11 +6949,11 @@ function OperatorUPTDataAplikasi() {
                       setFieldErrors({});
                     }}
                     style={{
-                      padding: "8px 18px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #e2e8f0",
+                      padding: "11px 24px",
+                      borderRadius: "10px",
+                      border: "1.5px solid #cbd5e1",
                       background: "#fff",
-                      fontSize: "12.5px",
+                      fontSize: "13px",
                       fontWeight: 600,
                       color: "#64748b",
                       cursor: "pointer",
@@ -5986,87 +6961,97 @@ function OperatorUPTDataAplikasi() {
                     }}
                     onMouseOver={(e) => {
                       e.currentTarget.style.borderColor = "#cbd5e1";
-                      e.currentTarget.style.color = "#475569";
+                      e.currentTarget.style.color = "#334155";
+                      e.currentTarget.style.background = "#f8fafc";
                     }}
                     onMouseOut={(e) => {
-                      e.currentTarget.style.borderColor = "#e2e8f0";
+                      e.currentTarget.style.borderColor = "#cbd5e1";
                       e.currentTarget.style.color = "#64748b";
+                      e.currentTarget.style.background = "#fff";
                     }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      style={{ marginRight: "6px", verticalAlign: "middle" }}
-                    >
-                      <path
-                        d="M18 6L6 18M6 6L18 18"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
                     Batal
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
                     style={{
-                      padding: "8px 22px",
-                      borderRadius: "8px",
+                      padding: "11px 28px",
+                      borderRadius: "10px",
                       border: "none",
                       background: submitting
-                        ? "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)"
-                        : "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                        ? "#94a3b8"
+                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                       color: "#fff",
-                      fontSize: "12.5px",
+                      fontSize: "13px",
                       fontWeight: 600,
                       cursor: submitting ? "not-allowed" : "pointer",
-                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                       boxShadow: submitting
                         ? "none"
-                        : "0 2px 8px rgba(79, 70, 229, 0.3)",
+                        : "0 4px 14px rgba(99, 102, 241, 0.25)",
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "8px",
                     }}
                     onMouseOver={(e) => {
                       if (!submitting) {
-                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                         e.currentTarget.style.boxShadow =
-                          "0 4px 14px rgba(79, 70, 229, 0.4)";
+                          "0 6px 20px rgba(99, 102, 241, 0.3)";
                       }
                     }}
                     onMouseOut={(e) => {
                       if (!submitting) {
                         e.currentTarget.style.transform = "translateY(0)";
                         e.currentTarget.style.boxShadow =
-                          "0 2px 8px rgba(79, 70, 229, 0.3)";
+                          "0 4px 14px rgba(99, 102, 241, 0.25)";
                       }
                     }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M5 13L9 17L19 7"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    {submitting
-                      ? "Menyimpan..."
-                      : editMode
-                        ? "Simpan Perubahan"
-                        : "Tambah Aplikasi"}
+                    {submitting ? (
+                      <>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{
+                            animation: "spin 1s linear infinite",
+                          }}
+                        >
+                          <path
+                            d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 19.07L16.24 16.24M19.07 4.93L16.24 7.76M4.93 19.07L7.76 16.24M4.93 4.93L7.76 7.76"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        <span>Menyimpan...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M5 13L9 17L19 7"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <span>
+                          {editMode ? "Simpan Perubahan" : "Tambah Aplikasi"}
+                        </span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
