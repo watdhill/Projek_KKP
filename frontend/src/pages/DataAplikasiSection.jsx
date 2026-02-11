@@ -433,7 +433,10 @@ function DataAplikasiSection() {
   ];
 
   const buildUnitPengembangString = (type, eksternalText) => {
-    if (type === "eksternal") return (eksternalText || "").trim();
+    if (type === "eksternal") {
+      const text = (eksternalText || "").trim();
+      return text ? `Eksternal - ${text}` : "Eksternal";
+    }
     const opt = UNIT_PENGEMBANG_OPTIONS.find((o) => o.value === type);
     return opt ? opt.label : "";
   };
@@ -458,6 +461,18 @@ function DataAplikasiSection() {
     );
 
     if (mapped) return { type: mapped.value, eksternalText: "" };
+
+    // Handle "Eksternal - <text>"
+    if (norm(raw).startsWith("eksternal -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "eksternal",
+          eksternalText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
     return { type: "eksternal", eksternalText: raw };
   };
 
@@ -484,6 +499,17 @@ function DataAplikasiSection() {
 
     if (norm(raw) === norm("Pusdatin")) {
       return { type: "pusdatin", lainnyaText: "" };
+    }
+
+    // Handle "Lainnya - <text>" (strip prefix)
+    if (norm(raw).startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
     }
 
     return { type: "lainnya", lainnyaText: raw };
@@ -527,6 +553,17 @@ function DataAplikasiSection() {
       return { type: "tidak_ada", lainnyaText: "" };
     }
 
+    // Handle "Lainnya - <text>" (strip prefix)
+    if (rawNorm.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
     return { type: "lainnya", lainnyaText: raw };
   };
 
@@ -568,6 +605,17 @@ function DataAplikasiSection() {
       return { type: "tidak_ada", lainnyaText: "" };
     }
 
+    // Handle "Lainnya - <text>" (strip prefix)
+    if (rawNorm.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
     return { type: "lainnya", lainnyaText: raw };
   };
 
@@ -580,7 +628,9 @@ function DataAplikasiSection() {
   ];
 
   const buildMandiriKomputasiBackupString = (type, lainnyaText) => {
-    if (type === "lainnya") return (lainnyaText || "").trim();
+    if (type === "lainnya") {
+      return (lainnyaText || "").trim();
+    }
     const opt = MANDIRI_KOMPUTASI_BACKUP_OPTIONS.find((o) => o.value === type);
     return opt ? opt.label : "";
   };
@@ -613,6 +663,17 @@ function DataAplikasiSection() {
       return { type: "tidak_ada", lainnyaText: "" };
     }
 
+    // Handle "Lainnya - <text>" (strip prefix)
+    if (rawNorm.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim()
+        };
+      }
+    }
+
     return { type: "lainnya", lainnyaText: raw };
   };
 
@@ -623,7 +684,10 @@ function DataAplikasiSection() {
 
   const buildCloudString = (type, text) => {
     if (type === "tidak") return "Tidak";
-    if (type === "ya") return (text || "").trim();
+    if (type === "ya") {
+      const t = (text || "").trim();
+      return t ? `Ya - ${t}` : "Ya";
+    }
     return "";
   };
 
@@ -638,6 +702,18 @@ function DataAplikasiSection() {
         .trim();
 
     if (norm(raw) === norm("Tidak")) return { type: "tidak", text: "" };
+
+    // Handle "Ya - <text>"
+    if (norm(raw).startsWith("ya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "ya",
+          text: parts.slice(1).join("-").trim()
+        };
+      }
+    }
+
     return { type: "ya", text: raw };
   };
 
@@ -647,11 +723,10 @@ function DataAplikasiSection() {
   ];
 
   const buildSslString = (type, unitKerjaText) => {
-    if (type === "aktif_pusdatin") return "SSL Aktif/Pusdatin";
+    if (type === "aktif_pusdatin") return "Aktif/Pusdatin";
     if (type === "aktif_unit_kerja") {
       const text = (unitKerjaText || "").trim();
-      if (!text) return "SSL Aktif/Unit Kerja";
-      return `SSL Aktif/Unit Kerja - ${text}`;
+      return text ? `Aktif/Unit Kerja - ${text}` : "Aktif/Unit Kerja";
     }
     return "";
   };
@@ -668,30 +743,47 @@ function DataAplikasiSection() {
 
     const rawNorm = norm(raw);
 
+    // Handle "SSL Aktif/Pusdatin" (legacy) or "Aktif/Pusdatin"
     if (
       rawNorm === norm("SSL Aktif/Pusdatin") ||
+      rawNorm === norm("Aktif/Pusdatin") ||
       rawNorm === norm("pusdatin")
     ) {
       return { type: "aktif_pusdatin", unitKerjaText: "" };
     }
 
-    const unitKerjaPrefixNorm = norm("SSL Aktif/Unit Kerja");
+    // Handle "SSL Aktif/Unit Kerja" (legacy) or "Aktif/Unit Kerja"
+    const legacyPrefix = norm("SSL Aktif/Unit Kerja");
+    const newPrefix = norm("Aktif/Unit Kerja");
 
-    if (
-      rawNorm === norm("Aktif/Unit Kerja") ||
-      rawNorm === unitKerjaPrefixNorm
-    ) {
+    if (rawNorm === legacyPrefix || rawNorm === newPrefix) {
       return { type: "aktif_unit_kerja", unitKerjaText: "" };
     }
 
-    if (rawNorm.startsWith(unitKerjaPrefixNorm)) {
-      // Accept formats:
-      // - "SSL Aktif/Unit Kerja - <unit>"
-      // - "SSL Aktif/Unit Kerja: <unit>"
-      // - "SSL Aktif/Unit Kerja <unit>" (fallback)
-      const withoutPrefix = raw.slice("SSL Aktif/Unit Kerja".length).trim();
-      const cleaned = withoutPrefix.replace(/^[-:]+\s*/, "").trim();
-      return { type: "aktif_unit_kerja", unitKerjaText: cleaned };
+    // Check for "Aktif/Unit Kerja - <text>" (new standard)
+    if (rawNorm.startsWith(newPrefix)) {
+      // Check for hyphen separator
+      const after = raw.slice("Aktif/Unit Kerja".length).trim();
+      if (after.startsWith("-")) {
+        return {
+          type: "aktif_unit_kerja",
+          unitKerjaText: after.slice(1).trim()
+        };
+      }
+      // Fallback if no hyphen (or colon)
+      return { type: "aktif_unit_kerja", unitKerjaText: after };
+    }
+
+    // Check for "SSL Aktif/Unit Kerja - <text>" (legacy)
+    if (rawNorm.startsWith(legacyPrefix)) {
+      const after = raw.slice("SSL Aktif/Unit Kerja".length).trim();
+      if (after.startsWith("-")) {
+        return {
+          type: "aktif_unit_kerja",
+          unitKerjaText: after.slice(1).trim()
+        };
+      }
+      return { type: "aktif_unit_kerja", unitKerjaText: after };
     }
 
     return { type: "aktif_unit_kerja", unitKerjaText: raw };
@@ -807,12 +899,12 @@ function DataAplikasiSection() {
         ssl: app.ssl || "",
         ssl_expired: app.ssl_expired
           ? (() => {
-              const date = new Date(app.ssl_expired);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              return `${year}-${month}-${day}`;
-            })()
+            const date = new Date(app.ssl_expired);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          })()
           : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
@@ -1597,7 +1689,7 @@ function DataAplikasiSection() {
           formData.va_pt_status === "ya" ? formData.va_pt_waktu : null,
         akses_aplikasi_username:
           formData.akses_aplikasi_username &&
-          formData.akses_aplikasi_username.trim() !== ""
+            formData.akses_aplikasi_username.trim() !== ""
             ? formData.akses_aplikasi_username.trim()
             : null,
       };
@@ -1618,8 +1710,8 @@ function DataAplikasiSection() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName,
-          )}`
+          originalAppName,
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -1667,7 +1759,7 @@ function DataAplikasiSection() {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
           7000,
         );
       } else {
@@ -2652,8 +2744,8 @@ function DataAplikasiSection() {
                                 lineHeight: "1.3",
                               }}
                               onMouseOver={(e) =>
-                                (e.currentTarget.style.textDecoration =
-                                  "underline")
+                              (e.currentTarget.style.textDecoration =
+                                "underline")
                               }
                               onMouseOut={(e) =>
                                 (e.currentTarget.style.textDecoration = "none")
@@ -2762,13 +2854,13 @@ function DataAplikasiSection() {
                       >
                         {app.ssl_expired
                           ? new Date(app.ssl_expired).toLocaleDateString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
                           : "-"}
                       </td>
                       <td
@@ -3516,7 +3608,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -3593,7 +3685,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.upt_id} value={x.upt_id}>
@@ -3746,17 +3838,17 @@ function DataAplikasiSection() {
                             (x) =>
                               x.status_aktif === 1 || x.status_aktif === true,
                           ).length === 0) && (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#94a3b8",
-                              textAlign: "center",
-                              padding: "20px",
-                            }}
-                          >
-                            Tidak ada data Cara Akses
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                padding: "20px",
+                              }}
+                            >
+                              Tidak ada data Cara Akses
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -4168,12 +4260,12 @@ function DataAplikasiSection() {
                             : "none",
                           backgroundColor:
                             !formData.eselon1_id ||
-                            (!formData.eselon2_id && !formData.upt_id)
+                              (!formData.eselon2_id && !formData.upt_id)
                               ? "#f3f4f6"
                               : "#fff",
                           cursor:
                             !formData.eselon1_id ||
-                            (!formData.eselon2_id && !formData.upt_id)
+                              (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
                         }}
@@ -4195,7 +4287,7 @@ function DataAplikasiSection() {
                       >
                         <option value="">
                           {!formData.eselon1_id ||
-                          (!formData.eselon2_id && !formData.upt_id)
+                            (!formData.eselon2_id && !formData.upt_id)
                             ? "Pilih Eselon 1 & (Eselon 2 atau UPT) terlebih dahulu"
                             : "-Pilih-"}
                         </option>
@@ -4207,7 +4299,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (formData.eselon2_id
                                 ? String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)
+                                String(formData.eselon2_id)
                                 : formData.upt_id
                                   ? String(x.upt_id) === String(formData.upt_id)
                                   : true),
@@ -4261,12 +4353,12 @@ function DataAplikasiSection() {
                             : "none",
                           backgroundColor:
                             !formData.eselon1_id ||
-                            (!formData.eselon2_id && !formData.upt_id)
+                              (!formData.eselon2_id && !formData.upt_id)
                               ? "#f3f4f6"
                               : "#fff",
                           cursor:
                             !formData.eselon1_id ||
-                            (!formData.eselon2_id && !formData.upt_id)
+                              (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
                         }}
@@ -4288,7 +4380,7 @@ function DataAplikasiSection() {
                       >
                         <option value="">
                           {!formData.eselon1_id ||
-                          (!formData.eselon2_id && !formData.upt_id)
+                            (!formData.eselon2_id && !formData.upt_id)
                             ? "Pilih Eselon 1 & (Eselon 2 atau UPT) terlebih dahulu"
                             : "-Pilih-"}
                         </option>
@@ -4300,7 +4392,7 @@ function DataAplikasiSection() {
                                 x.status_aktif === true) &&
                               (formData.eselon2_id
                                 ? String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)
+                                String(formData.eselon2_id)
                                 : formData.upt_id
                                   ? String(x.upt_id) === String(formData.upt_id)
                                   : true),
@@ -4500,14 +4592,14 @@ function DataAplikasiSection() {
                                 onChange={(e) => {
                                   const nextSelected = e.target.checked
                                     ? Array.from(
-                                        new Set([
-                                          ...(userPenggunaSelected || []),
-                                          opt.value,
-                                        ]),
-                                      )
+                                      new Set([
+                                        ...(userPenggunaSelected || []),
+                                        opt.value,
+                                      ]),
+                                    )
                                     : (userPenggunaSelected || []).filter(
-                                        (v) => v !== opt.value,
-                                      );
+                                      (v) => v !== opt.value,
+                                    );
 
                                   let nextLainnya = userPenggunaLainnya;
                                   if (!nextSelected.includes("lainnya")) {
@@ -7650,9 +7742,9 @@ function DataAplikasiSection() {
                   value={
                     selectedApp.ssl_expired
                       ? new Date(selectedApp.ssl_expired).toLocaleDateString(
-                          "id-ID",
-                          { year: "numeric", month: "long", day: "numeric" },
-                        )
+                        "id-ID",
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )
                       : null
                   }
                 />
