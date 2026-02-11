@@ -427,7 +427,7 @@ function DataAplikasiSection() {
   };
 
   const UNIT_PENGEMBANG_OPTIONS = [
-    { value: "set_sekretariat_eselon_1", label: "Set Sekretariat Eselon 1" },
+    { value: "set_sekretariat_eselon_1", label: "Sekretariat Eselon 1" },
     { value: "internal_eselon_2", label: "Internal Eselon 2" },
     { value: "eksternal", label: "Eksternal" },
   ];
@@ -447,6 +447,11 @@ function DataAplikasiSection() {
         .toLowerCase()
         .replace(/\s+/g, " ")
         .trim();
+
+    // Backward compatibility: tolerate legacy label "Set Sekretariat Eselon 1"
+    if (norm(raw) === norm("Set Sekretariat Eselon 1")) {
+      return { type: "set_sekretariat_eselon_1", eksternalText: "" };
+    }
 
     const mapped = UNIT_PENGEMBANG_OPTIONS.find(
       (o) => o.value !== "eksternal" && norm(o.label) === norm(raw),
@@ -1694,9 +1699,9 @@ function DataAplikasiSection() {
             zIndex: 10000,
             minWidth: 280,
             maxWidth: 520,
-            padding: "12px 14px",
+            padding: "10px 12px",
             borderRadius: 12,
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
             boxShadow:
               "0 10px 25px rgba(0,0,0,0.10), 0 4px 10px rgba(0,0,0,0.06)",
             background:
@@ -1772,7 +1777,7 @@ function DataAplikasiSection() {
           borderRadius: "12px",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
-          border: "1px solid #e2e8f0",
+          border: "1px solid #cbd5e1",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -1920,7 +1925,7 @@ function DataAplikasiSection() {
           marginBottom: "20px",
           boxShadow:
             "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
-          border: "1px solid #e2e8f0",
+          border: "1px solid #cbd5e1",
           display: "flex",
           flexDirection: "column",
           gap: "12px",
@@ -1969,7 +1974,7 @@ function DataAplikasiSection() {
                 width: "100%",
                 padding: "9px 14px 9px 38px",
                 borderRadius: "10px",
-                border: "1.5px solid #e2e8f0",
+                border: "1.5px solid #cbd5e1",
                 fontSize: "12.5px",
                 fontWeight: 500,
                 color: "#1e293b",
@@ -1984,7 +1989,7 @@ function DataAplikasiSection() {
                   "0 0 0 3px rgba(79, 70, 229, 0.1)";
               }}
               onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.borderColor = "#cbd5e1";
                 e.currentTarget.style.backgroundColor = "#fafbfc";
                 e.currentTarget.style.boxShadow = "none";
               }}
@@ -2003,7 +2008,7 @@ function DataAplikasiSection() {
               minWidth: "200px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
+              border: "1.5px solid #cbd5e1",
               fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
@@ -2023,7 +2028,7 @@ function DataAplikasiSection() {
               e.currentTarget.style.backgroundColor = "#fff";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.borderColor = "#cbd5e1";
               e.currentTarget.style.backgroundColor = "#fafbfc";
             }}
           >
@@ -2045,7 +2050,7 @@ function DataAplikasiSection() {
               minWidth: "220px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
+              border: "1.5px solid #cbd5e1",
               fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
@@ -2065,7 +2070,7 @@ function DataAplikasiSection() {
               e.currentTarget.style.backgroundColor = "#fff";
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
+              e.currentTarget.style.borderColor = "#cbd5e1";
               e.currentTarget.style.backgroundColor = "#fafbfc";
             }}
           >
@@ -2091,19 +2096,19 @@ function DataAplikasiSection() {
                 setFilterUpt(""); // Reset UPT when Eselon 2 is selected
               }
             }}
-            disabled={!!filterUpt}
+            disabled={filterUpt !== ""}
             style={{
               flex: 1,
               minWidth: "200px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
+              border: "1.5px solid #cbd5e1",
               fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
-              backgroundColor: !!filterUpt ? "#f1f5f9" : "#fafbfc",
-              cursor: !!filterUpt ? "not-allowed" : "pointer",
-              opacity: !!filterUpt ? 0.6 : 1,
+              backgroundColor: filterUpt ? "#f1f5f9" : "#fafbfc",
+              cursor: filterUpt ? "not-allowed" : "pointer",
+              opacity: filterUpt ? 0.6 : 1,
               outline: "none",
               appearance: "none",
               backgroundImage:
@@ -2120,14 +2125,14 @@ function DataAplikasiSection() {
               }
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
-              e.currentTarget.style.backgroundColor = !!filterUpt
+              e.currentTarget.style.borderColor = "#cbd5e1";
+              e.currentTarget.style.backgroundColor = filterUpt
                 ? "#f1f5f9"
                 : "#fafbfc";
             }}
           >
             <option value="">
-              {!!filterUpt ? "Eselon 2 (UPT dipilih)" : "Semua Eselon 2"}
+              {filterUpt ? "Eselon 2 (UPT dipilih)" : "Semua Eselon 2"}
             </option>
             {(master.eselon2 || [])
               .filter(
@@ -2150,19 +2155,19 @@ function DataAplikasiSection() {
                 setFilterEselon2(""); // Reset Eselon 2 when UPT is selected
               }
             }}
-            disabled={!!filterEselon2}
+            disabled={filterEselon2 !== ""}
             style={{
               flex: 1,
               minWidth: "200px",
               padding: "9px 34px 9px 12px",
               borderRadius: "10px",
-              border: "1.5px solid #e2e8f0",
+              border: "1.5px solid #cbd5e1",
               fontSize: "12.5px",
               fontWeight: 600,
               color: "#475569",
-              backgroundColor: !!filterEselon2 ? "#f1f5f9" : "#fafbfc",
-              cursor: !!filterEselon2 ? "not-allowed" : "pointer",
-              opacity: !!filterEselon2 ? 0.6 : 1,
+              backgroundColor: filterEselon2 ? "#f1f5f9" : "#fafbfc",
+              cursor: filterEselon2 ? "not-allowed" : "pointer",
+              opacity: filterEselon2 ? 0.6 : 1,
               outline: "none",
               appearance: "none",
               backgroundImage:
@@ -2179,14 +2184,14 @@ function DataAplikasiSection() {
               }
             }}
             onBlur={(e) => {
-              e.currentTarget.style.borderColor = "#e2e8f0";
-              e.currentTarget.style.backgroundColor = !!filterEselon2
+              e.currentTarget.style.borderColor = "#cbd5e1";
+              e.currentTarget.style.backgroundColor = filterEselon2
                 ? "#f1f5f9"
                 : "#fafbfc";
             }}
           >
             <option value="">
-              {!!filterEselon2 ? "UPT (Eselon 2 dipilih)" : "Semua UPT"}
+              {filterEselon2 ? "UPT (Eselon 2 dipilih)" : "Semua UPT"}
             </option>
             {(master.upt || [])
               .filter(
@@ -2279,7 +2284,7 @@ function DataAplikasiSection() {
             textAlign: "center",
             boxShadow:
               "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
           }}
         >
           <div
@@ -2316,7 +2321,7 @@ function DataAplikasiSection() {
             textAlign: "center",
             boxShadow:
               "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
           }}
         >
           <div style={{ marginBottom: "16px" }}>
@@ -2372,7 +2377,7 @@ function DataAplikasiSection() {
             <button
               onClick={openModal}
               style={{
-                marginTop: "18px",
+                marginTop: "16px",
                 background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
                 color: "#fff",
                 padding: "8px 16px",
@@ -2407,7 +2412,7 @@ function DataAplikasiSection() {
             overflow: "hidden",
             boxShadow:
               "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
           }}
         >
           <div style={{ overflowX: "auto", overflowY: "visible" }}>
@@ -2581,7 +2586,7 @@ function DataAplikasiSection() {
                         setShowDetailModal(true);
                       }}
                       style={{
-                        borderBottom: "1px solid #e2e8f0",
+                        borderBottom: "1px solid #cbd5e1",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         height: "70px",
                         cursor: "pointer",
@@ -2927,7 +2932,7 @@ function DataAplikasiSection() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #cbd5e1",
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
           }}
         >
@@ -2971,7 +2976,7 @@ function DataAplikasiSection() {
               style={{
                 padding: "8px 16px",
                 background: "#fff",
-                border: "2px solid #e2e8f0",
+                border: "2px solid #cbd5e1",
                 borderRadius: "10px",
                 fontSize: "13px",
                 color: "#64748b",
@@ -2988,7 +2993,7 @@ function DataAplikasiSection() {
                 e.currentTarget.style.transform = "translateY(-1px)";
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.borderColor = "#e2e8f0";
+                e.currentTarget.style.borderColor = "#cbd5e1";
                 e.currentTarget.style.color = "#64748b";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
@@ -3020,8 +3025,8 @@ function DataAplikasiSection() {
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.6)",
-            backdropFilter: "blur(4px)",
+            backgroundColor: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -3035,11 +3040,11 @@ function DataAplikasiSection() {
           <div
             style={{
               width: "100%",
-              maxWidth: "850px",
-              background: "#fff",
-              borderRadius: "14px",
+              maxWidth: "900px",
+              background: "#ffffff",
+              borderRadius: "16px",
               boxShadow:
-                "0 12px 40px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.1)",
+                "0 20px 60px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.05)",
               maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
@@ -3048,29 +3053,30 @@ function DataAplikasiSection() {
           >
             <div
               style={{
-                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                padding: "16px 20px",
-                borderTopLeftRadius: "14px",
-                borderTopRightRadius: "14px",
+                background: "#ffffff",
+                borderBottom: "1px solid #f1f5f9",
+                padding: "20px 28px",
+                borderTopLeftRadius: "16px",
+                borderTopRightRadius: "16px",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
               }}
             >
               <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
+                style={{ display: "flex", alignItems: "center", gap: "14px" }}
               >
                 <div
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "rgba(255, 255, 255, 0.2)",
-                    borderRadius: "9px",
+                    width: "40px",
+                    height: "40px",
+                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    borderRadius: "10px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
                   }}
                 >
                   {editMode ? (
@@ -3148,10 +3154,10 @@ function DataAplikasiSection() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#fff",
-                    fontSize: "16px",
+                    color: "#0f172a",
+                    fontSize: "18px",
                     fontWeight: 700,
-                    letterSpacing: "-0.01em",
+                    letterSpacing: "-0.02em",
                   }}
                 >
                   {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
@@ -3160,28 +3166,30 @@ function DataAplikasiSection() {
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
+                  background: "#f8fafc",
                   border: "none",
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "7px",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
                   cursor: "pointer",
                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#fff",
+                  color: "#64748b",
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.color = "#64748b";
                 }}
               >
                 <svg
-                  width="14"
-                  height="14"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -3189,7 +3197,7 @@ function DataAplikasiSection() {
                   <path
                     d="M18 6L6 18M6 6L18 18"
                     stroke="currentColor"
-                    strokeWidth="2.5"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                 </svg>
@@ -3201,49 +3209,46 @@ function DataAplikasiSection() {
                 flex: 1,
               }}
             >
-              <form onSubmit={handleSubmitForm} style={{ padding: "24px" }}>
+              <form onSubmit={handleSubmitForm} style={{ padding: "32px" }}>
                 {/* Informasi Dasar */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
                     Informasi Dasar
                   </h3>
 
-                  <div style={{ marginBottom: "14px" }}>
+                  <div style={{ marginBottom: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "7px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        color: "#475569",
-                        fontSize: "12px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Nama Aplikasi
@@ -3257,46 +3262,44 @@ function DataAplikasiSection() {
                       placeholder="Contoh: Sistem Informasi Kepegawaian"
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.nama_aplikasi
                           ? errorBorderColor
-                          : "#e2e8f0",
-                        fontSize: "13px",
+                          : "#cbd5e1",
+                        fontSize: "14px",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         outline: "none",
-                        backgroundColor: "#fafbfc",
+                        backgroundColor: "#fff",
                         boxShadow: fieldErrors.nama_aplikasi
                           ? errorRing
                           : "none",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#0ea5e9";
+                        e.currentTarget.style.borderColor = "#6366f1";
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                          "0 0 0 3px rgba(99, 102, 241, 0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           fieldErrors.nama_aplikasi
                             ? errorBorderColor
-                            : "#e2e8f0";
+                            : "#cbd5e1";
                         e.currentTarget.style.boxShadow =
                           fieldErrors.nama_aplikasi ? errorRing : "none";
                       }}
                     />
                   </div>
 
-                  <div style={{ marginBottom: "14px" }}>
+                  <div style={{ marginBottom: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "7px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        color: "#475569",
-                        fontSize: "12px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Deskripsi dan Fungsi
@@ -3311,33 +3314,33 @@ function DataAplikasiSection() {
                       rows={3}
                       style={{
                         width: "100%",
-                        padding: "10px 14px",
-                        borderRadius: "8px",
-                        border: "1px solid #e2e8f0",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.deskripsi_fungsi
                           ? errorBorderColor
-                          : "#e2e8f0",
-                        fontSize: "13px",
+                          : "#cbd5e1",
+                        fontSize: "14px",
                         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                         outline: "none",
                         fontFamily: "inherit",
                         resize: "vertical",
-                        backgroundColor: "#fafbfc",
+                        backgroundColor: "#fff",
                         lineHeight: "1.6",
                         boxShadow: fieldErrors.deskripsi_fungsi
                           ? errorRing
                           : "none",
                       }}
                       onFocus={(e) => {
-                        e.currentTarget.style.borderColor = "#0ea5e9";
+                        e.currentTarget.style.borderColor = "#6366f1";
                         e.currentTarget.style.boxShadow =
-                          "0 0 0 3px rgba(14, 165, 233, 0.1)";
+                          "0 0 0 3px rgba(99, 102, 241, 0.08)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor =
                           fieldErrors.deskripsi_fungsi
                             ? errorBorderColor
-                            : "#e2e8f0";
+                            : "#cbd5e1";
                         e.currentTarget.style.backgroundColor = "#fafbfc";
                         e.currentTarget.style.boxShadow =
                           fieldErrors.deskripsi_fungsi ? errorRing : "none";
@@ -3349,57 +3352,49 @@ function DataAplikasiSection() {
                 {/* Lokasi & Penggunaan */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Lokasi & Penggunaan
                   </h3>
 
+                  {/* Eselon 1 dan Eselon 2 - 2 kolom untuk lebih rapi */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, minmax(0, 280px))",
-                      justifyContent: "space-between",
-                      alignItems: "start",
-                      gap: "14px",
-                      marginBottom: "14px",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "16px",
+                      marginBottom: "18px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          minHeight: "32px",
-                          lineHeight: "1.25",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 1
@@ -3414,33 +3409,31 @@ function DataAplikasiSection() {
                         }}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.eselon1_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: "pointer",
-                          backgroundColor: "#fafbfc",
+                          backgroundColor: "#fff",
                           boxShadow: fieldErrors.eselon1_id
                             ? errorRing
                             : "none",
                         }}
                         onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#0ea5e9";
-                          e.currentTarget.style.backgroundColor = "#fff";
+                          e.currentTarget.style.borderColor = "#6366f1";
                           e.currentTarget.style.boxShadow =
-                            "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor =
                             fieldErrors.eselon1_id
                               ? errorBorderColor
-                              : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor = "#fafbfc";
+                              : "#cbd5e1";
                           e.currentTarget.style.boxShadow =
                             fieldErrors.eselon1_id ? errorRing : "none";
                         }}
@@ -3463,18 +3456,14 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          minHeight: "32px",
-                          lineHeight: "1.25",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 2{" "}
-                        <span style={{ color: "#94a3b8", fontWeight: 400 }}>
+                        <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "12px" }}>
                           (opsional jika UPT diisi)
                         </span>
                       </label>
@@ -3487,19 +3476,19 @@ function DataAplikasiSection() {
                         disabled={!!formData.upt_id}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.eselon2_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: formData.upt_id ? "not-allowed" : "pointer",
                           backgroundColor: formData.upt_id
                             ? "#f8fafc"
-                            : "#fafbfc",
+                            : "#fff",
                           opacity: formData.upt_id ? 0.6 : 1,
                           boxShadow: fieldErrors.eselon2_id
                             ? errorRing
@@ -3507,19 +3496,16 @@ function DataAplikasiSection() {
                         }}
                         onFocus={(e) => {
                           if (!formData.upt_id) {
-                            e.currentTarget.style.borderColor = "#0ea5e9";
-                            e.currentTarget.style.backgroundColor = "#fff";
+                            e.currentTarget.style.borderColor = "#6366f1";
                             e.currentTarget.style.boxShadow =
-                              "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
                           }
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor =
                             fieldErrors.eselon2_id
                               ? errorBorderColor
-                              : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor =
-                            formData.upt_id ? "#f8fafc" : "#fafbfc";
+                              : "#cbd5e1";
                           e.currentTarget.style.boxShadow =
                             fieldErrors.eselon2_id ? errorRing : "none";
                         }}
@@ -3541,23 +3527,22 @@ function DataAplikasiSection() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* UPT - Full width untuk lebih jelas */}
+                  <div style={{ marginBottom: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          minHeight: "32px",
-                          lineHeight: "1.25",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         UPT{" "}
-                        <span style={{ color: "#94a3b8", fontWeight: 400 }}>
+                        <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "12px" }}>
                           (opsional jika Eselon 2 diisi)
                         </span>
                       </label>
@@ -3570,13 +3555,13 @@ function DataAplikasiSection() {
                         disabled={!!formData.eselon2_id}
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.upt_id
                             ? errorBorderColor
-                            : "#e2e8f0",
-                          fontSize: "13px",
+                            : "#cbd5e1",
+                          fontSize: "14px",
                           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                           outline: "none",
                           cursor: formData.eselon2_id
@@ -3584,24 +3569,21 @@ function DataAplikasiSection() {
                             : "pointer",
                           backgroundColor: formData.eselon2_id
                             ? "#f8fafc"
-                            : "#fafbfc",
+                            : "#fff",
                           opacity: formData.eselon2_id ? 0.6 : 1,
                           boxShadow: fieldErrors.upt_id ? errorRing : "none",
                         }}
                         onFocus={(e) => {
                           if (!formData.eselon2_id) {
-                            e.currentTarget.style.borderColor = "#0ea5e9";
-                            e.currentTarget.style.backgroundColor = "#fff";
+                            e.currentTarget.style.borderColor = "#6366f1";
                             e.currentTarget.style.boxShadow =
-                              "0 0 0 3px rgba(14, 165, 233, 0.08)";
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
                           }
                         }}
                         onBlur={(e) => {
                           e.currentTarget.style.borderColor = fieldErrors.upt_id
                             ? errorBorderColor
-                            : "#e2e8f0";
-                          e.currentTarget.style.backgroundColor =
-                            formData.eselon2_id ? "#f8fafc" : "#fafbfc";
+                            : "#cbd5e1";
                           e.currentTarget.style.boxShadow = fieldErrors.upt_id
                             ? errorRing
                             : "none";
@@ -3631,10 +3613,8 @@ function DataAplikasiSection() {
                           display: "block",
                           marginBottom: "10px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cara Akses Aplikasi
@@ -3642,13 +3622,13 @@ function DataAplikasiSection() {
                       <div
                         data-field="cara_akses_id"
                         style={{
-                          padding: "14px",
-                          borderRadius: "8px",
-                          border: "1px solid #e2e8f0",
+                          padding: "16px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           backgroundColor: "#fafbfc",
                           borderColor: fieldErrors.cara_akses_id
                             ? errorBorderColor
-                            : "#e2e8f0",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.cara_akses_id
                             ? errorRing
                             : "none",
@@ -3687,7 +3667,7 @@ function DataAplikasiSection() {
                               key={x.cara_akses_id}
                               style={{
                                 display: "flex",
-                                alignItems: "center",
+                                alignItems: "flex-start",
                                 padding: "8px 10px",
                                 cursor: "pointer",
                                 borderRadius: "6px",
@@ -3700,8 +3680,9 @@ function DataAplikasiSection() {
                                   String(x.cara_akses_id),
                                 )
                                   ? "1px solid #0ea5e9"
-                                  : "1px solid #e2e8f0",
+                                  : "1px solid #cbd5e1",
                                 transition: "all 0.15s",
+                                minHeight: "38px",
                               }}
                               onMouseEnter={(e) => {
                                 if (
@@ -3722,7 +3703,7 @@ function DataAplikasiSection() {
                                 ) {
                                   e.currentTarget.style.backgroundColor =
                                     "#fff";
-                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
                                 }
                               }}
                             >
@@ -3743,6 +3724,7 @@ function DataAplikasiSection() {
                                   width: "16px",
                                   height: "16px",
                                   marginRight: "10px",
+                                  marginTop: "1px",
                                   cursor: "pointer",
                                   accentColor: "#0ea5e9",
                                   flexShrink: 0,
@@ -3753,8 +3735,9 @@ function DataAplikasiSection() {
                                   fontSize: "13px",
                                   color: "#334155",
                                   fontWeight: 500,
-                                  lineHeight: "1.3",
-                                  whiteSpace: "nowrap",
+                                  lineHeight: "1.4",
+                                  wordBreak: "break-word",
+                                  flex: 1,
                                 }}
                               >
                                 {x.nama_cara_akses}
@@ -3786,53 +3769,49 @@ function DataAplikasiSection() {
                 {/* Detail Teknis */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M12 1v6m0 6v6m5.2-13.8l-4.2 4.2m-6 6l-4.2 4.2m16.4 0l-4.2-4.2m-6-6l-4.2-4.2" />
+                    </svg>
                     Detail Teknis
                   </h3>
 
+                  {/* Frekuensi dan Status - 2 kolom */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
-                      marginTop: "14px",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: "16px",
+                      marginBottom: "18px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Frekuensi Pemakaian
@@ -3848,12 +3827,29 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.frekuensi_pemakaian
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.frekuensi_pemakaian
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3877,8 +3873,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status Aplikasi
@@ -3891,12 +3889,29 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.status_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.status_aplikasi
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3915,13 +3930,18 @@ function DataAplikasiSection() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* Ekosistem - Full width untuk lebih prominent */}
+                  <div style={{ marginBottom: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Ekosistem
@@ -3934,12 +3954,29 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.environment_id
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.environment_id
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -3964,16 +4001,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "16px",
+                      marginTop: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Utama
@@ -3988,12 +4027,29 @@ function DataAplikasiSection() {
                         }}
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pdn_id
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.pdn_id
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-Pilih-</option>
@@ -4014,8 +4070,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Backup
@@ -4028,12 +4086,29 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: fieldErrors.pdn_backup
-                            ? `1px solid ${errorBorderColor}`
-                            : "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
+                          borderColor: fieldErrors.pdn_backup
+                            ? errorBorderColor
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          cursor: "pointer",
                           backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.pdn_backup
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       >
                         <option value="">-- Pilih PDN Backup --</option>
@@ -4055,16 +4130,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "16px",
+                      marginTop: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Internal
@@ -4081,12 +4158,15 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pic_internal
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
                           boxShadow: fieldErrors.pic_internal
                             ? errorBoxShadow
                             : "none",
@@ -4100,6 +4180,21 @@ function DataAplikasiSection() {
                             (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
+                        }}
+                        onFocus={(e) => {
+                          if (!e.currentTarget.disabled) {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.pic_internal
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow =
+                            fieldErrors.pic_internal ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">
@@ -4136,8 +4231,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Eksternal
@@ -4154,12 +4251,15 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pic_eksternal
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
                           boxShadow: fieldErrors.pic_eksternal
                             ? errorBoxShadow
                             : "none",
@@ -4173,6 +4273,21 @@ function DataAplikasiSection() {
                             (!formData.eselon2_id && !formData.upt_id)
                               ? "not-allowed"
                               : "pointer",
+                        }}
+                        onFocus={(e) => {
+                          if (!e.currentTarget.disabled) {
+                            e.currentTarget.style.borderColor = "#6366f1";
+                            e.currentTarget.style.boxShadow =
+                              "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                          }
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.pic_eksternal
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow =
+                            fieldErrors.pic_eksternal ? errorBoxShadow : "none";
                         }}
                       >
                         <option value="">
@@ -4211,16 +4326,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "16px",
+                      marginTop: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Internal
@@ -4234,9 +4351,9 @@ function DataAplikasiSection() {
                         placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           backgroundColor: "#f3f4f6",
                           cursor: "not-allowed",
                           color: "#6b7280",
@@ -4248,8 +4365,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Eksternal
@@ -4263,9 +4382,9 @@ function DataAplikasiSection() {
                         placeholder="Otomatis terisi dari master PIC"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           backgroundColor: "#f3f4f6",
                           cursor: "not-allowed",
                           color: "#6b7280",
@@ -4274,12 +4393,14 @@ function DataAplikasiSection() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Domain
@@ -4294,23 +4415,25 @@ function DataAplikasiSection() {
                       placeholder="https://contoh.domain"
                       style={{
                         width: "100%",
-                        padding: "10px",
+                        padding: "9px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        border: "1px solid #cbd5e1",
                         borderColor: fieldErrors.domain
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                         textTransform: "none",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       User / Pengguna
@@ -4319,19 +4442,19 @@ function DataAplikasiSection() {
                       data-field="user_pengguna"
                       style={{
                         padding: "12px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.user_pengguna
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                         backgroundColor: "#fff",
                       }}
                     >
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                          gap: "8px",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "10px",
                         }}
                       >
                         {USER_PENGGUNA_OPTIONS.map((opt) => {
@@ -4344,28 +4467,33 @@ function DataAplikasiSection() {
                               key={opt.value}
                               style={{
                                 display: "flex",
-                                alignItems: "center",
+                                alignItems: "flex-start",
                                 padding: "10px 12px",
                                 cursor: "pointer",
-                                borderRadius: "8px",
-                                backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                borderRadius: "10px",
+                                backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                 border: checked
-                                  ? "1px solid #0ea5e9"
-                                  : "1px solid #e2e8f0",
-                                transition: "all 0.15s",
+                                  ? "1.5px solid #6366f1"
+                                  : "1.5px solid #cbd5e1",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                minHeight: "48px",
                               }}
                               onMouseEnter={(e) => {
                                 if (!checked) {
                                   e.currentTarget.style.backgroundColor =
                                     "#f1f5f9";
-                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                  e.currentTarget.style.borderColor = "#8b5cf6";
+                                  e.currentTarget.style.transform =
+                                    "translateY(-1px)";
                                 }
                               }}
                               onMouseLeave={(e) => {
                                 if (!checked) {
                                   e.currentTarget.style.backgroundColor =
-                                    "#fff";
-                                  e.currentTarget.style.borderColor = "#e2e8f0";
+                                    "#fafbfc";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                  e.currentTarget.style.transform =
+                                    "translateY(0)";
                                 }
                               }}
                             >
@@ -4403,17 +4531,25 @@ function DataAplikasiSection() {
                                   width: "16px",
                                   height: "16px",
                                   marginRight: "10px",
+                                  marginTop: "1px",
                                   cursor: "pointer",
-                                  accentColor: "#0ea5e9",
+                                  accentColor: "#6366f1",
                                   flexShrink: 0,
                                 }}
                               />
                               <span
                                 style={{
                                   fontSize: "13px",
-                                  color: "#334155",
-                                  fontWeight: 500,
-                                  lineHeight: "1.3",
+                                  color: checked ? "#4338ca" : "#334155",
+                                  fontWeight: checked ? 600 : 500,
+                                  lineHeight: "1.5",
+                                  wordBreak: "break-word",
+                                  flex: 1,
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
                                 }}
                               >
                                 {opt.label}
@@ -4442,12 +4578,12 @@ function DataAplikasiSection() {
                             placeholder="Isi lainnya..."
                             style={{
                               width: "100%",
-                              padding: "10px",
+                              padding: "9px 12px",
                               borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              border: "1px solid #cbd5e1",
                               borderColor: fieldErrors.user_pengguna
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
                               textTransform: "none",
                             }}
                           />
@@ -4456,12 +4592,14 @@ function DataAplikasiSection() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Data Yang Digunakan
@@ -4476,22 +4614,24 @@ function DataAplikasiSection() {
                       rows={2}
                       style={{
                         width: "100%",
-                        padding: "10px",
+                        padding: "9px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        border: "1px solid #cbd5e1",
                         borderColor: fieldErrors.data_digunakan
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                       }}
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "16px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Luaran/Output
@@ -4506,12 +4646,12 @@ function DataAplikasiSection() {
                       rows={2}
                       style={{
                         width: "100%",
-                        padding: "10px",
+                        padding: "9px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        border: "1px solid #cbd5e1",
                         borderColor: fieldErrors.luaran_output
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                       }}
                     />
                   </div>
@@ -4520,16 +4660,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "16px",
+                      marginTop: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Bahasa Pemrograman
@@ -4543,12 +4685,28 @@ function DataAplikasiSection() {
                         placeholder="Contoh: PHP, Python, Java"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.bahasa_pemrograman
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.bahasa_pemrograman
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       />
                     </div>
@@ -4556,8 +4714,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Basis Data
@@ -4571,31 +4731,42 @@ function DataAplikasiSection() {
                         placeholder="Contoh: MySQL, PostgreSQL, Oracle"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.basis_data
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.basis_data
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       />
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kerangka Pengembangan / Framework
@@ -4612,21 +4783,43 @@ function DataAplikasiSection() {
                         placeholder="Contoh: Laravel, Django, Spring Boot"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.kerangka_pengembangan
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#fff",
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = "#6366f1";
+                          e.currentTarget.style.boxShadow =
+                            "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor =
+                            fieldErrors.kerangka_pengembangan
+                              ? errorBorderColor
+                              : "#cbd5e1";
+                          e.currentTarget.style.boxShadow = "none";
                         }}
                       />
                     </div>
+                  </div>
+
+                  {/* Unit Pengembang - Full width dengan 2 kolom untuk lebih rapi */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Pengembang
@@ -4634,20 +4827,20 @@ function DataAplikasiSection() {
                       <div
                         data-field="unit_pengembang"
                         style={{
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           backgroundColor: "#fff",
                         }}
                       >
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                            gap: "8px",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gap: "10px",
                           }}
                         >
                           {UNIT_PENGEMBANG_OPTIONS.map((opt) => {
@@ -4657,30 +4850,35 @@ function DataAplikasiSection() {
                                 key={opt.value}
                                 style={{
                                   display: "flex",
-                                  alignItems: "center",
+                                  alignItems: "flex-start",
                                   padding: "10px 12px",
                                   cursor: "pointer",
-                                  borderRadius: "8px",
-                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  borderRadius: "10px",
+                                  backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                   border: checked
-                                    ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
-                                  transition: "all 0.15s",
+                                    ? "1.5px solid #6366f1"
+                                    : "1.5px solid #cbd5e1",
+                                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  minHeight: "48px",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!checked) {
                                     e.currentTarget.style.backgroundColor =
                                       "#f1f5f9";
                                     e.currentTarget.style.borderColor =
-                                      "#cbd5e1";
+                                      "#8b5cf6";
+                                    e.currentTarget.style.transform =
+                                      "translateY(-1px)";
                                   }
                                 }}
                                 onMouseLeave={(e) => {
                                   if (!checked) {
                                     e.currentTarget.style.backgroundColor =
-                                      "#fff";
+                                      "#fafbfc";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
+                                    e.currentTarget.style.transform =
+                                      "translateY(0)";
                                   }
                                 }}
                               >
@@ -4714,17 +4912,25 @@ function DataAplikasiSection() {
                                     width: "16px",
                                     height: "16px",
                                     marginRight: "10px",
+                                    marginTop: "1px",
                                     cursor: "pointer",
-                                    accentColor: "#0ea5e9",
+                                    accentColor: "#6366f1",
                                     flexShrink: 0,
                                   }}
                                 />
                                 <span
                                   style={{
                                     fontSize: "13px",
-                                    color: "#334155",
-                                    fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    color: checked ? "#4338ca" : "#334155",
+                                    fontWeight: checked ? 600 : 500,
+                                    lineHeight: "1.5",
+                                    wordBreak: "break-word",
+                                    flex: 1,
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
                                   }}
                                 >
                                   {opt.label}
@@ -4750,12 +4956,12 @@ function DataAplikasiSection() {
                               placeholder="Isi unit pengembang eksternal..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.unit_pengembang
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 textTransform: "none",
                               }}
                             />
@@ -4765,20 +4971,16 @@ function DataAplikasiSection() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  {/* Unit Operasional Teknologi - Full width dengan 2 kolom */}
+                  <div style={{ marginTop: "16px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Operasional Teknologi
@@ -4786,12 +4988,12 @@ function DataAplikasiSection() {
                       <div
                         data-field="unit_operasional_teknologi"
                         style={{
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_operasional_teknologi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
@@ -4802,7 +5004,7 @@ function DataAplikasiSection() {
                           style={{
                             display: "grid",
                             gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                            gap: "8px",
+                            gap: "10px",
                           }}
                         >
                           {UNIT_OPERASIONAL_TEKNOLOGI_OPTIONS.map((opt) => {
@@ -4813,30 +5015,35 @@ function DataAplikasiSection() {
                                 key={opt.value}
                                 style={{
                                   display: "flex",
-                                  alignItems: "center",
+                                  alignItems: "flex-start",
                                   padding: "10px 12px",
                                   cursor: "pointer",
-                                  borderRadius: "8px",
-                                  backgroundColor: checked ? "#e0f2fe" : "#fff",
+                                  borderRadius: "10px",
+                                  backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                   border: checked
-                                    ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
-                                  transition: "all 0.15s",
+                                    ? "1.5px solid #6366f1"
+                                    : "1.5px solid #cbd5e1",
+                                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  minHeight: "48px",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!checked) {
                                     e.currentTarget.style.backgroundColor =
                                       "#f1f5f9";
                                     e.currentTarget.style.borderColor =
-                                      "#cbd5e1";
+                                      "#8b5cf6";
+                                    e.currentTarget.style.transform =
+                                      "translateY(-1px)";
                                   }
                                 }}
                                 onMouseLeave={(e) => {
                                   if (!checked) {
                                     e.currentTarget.style.backgroundColor =
-                                      "#fff";
+                                      "#fafbfc";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
+                                    e.currentTarget.style.transform =
+                                      "translateY(0)";
                                   }
                                 }}
                               >
@@ -4871,17 +5078,25 @@ function DataAplikasiSection() {
                                     width: "16px",
                                     height: "16px",
                                     marginRight: "10px",
+                                    marginTop: "1px",
                                     cursor: "pointer",
-                                    accentColor: "#0ea5e9",
+                                    accentColor: "#6366f1",
                                     flexShrink: 0,
                                   }}
                                 />
                                 <span
                                   style={{
                                     fontSize: "13px",
-                                    color: "#334155",
-                                    fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    color: checked ? "#4338ca" : "#334155",
+                                    fontWeight: checked ? 600 : 500,
+                                    lineHeight: "1.5",
+                                    wordBreak: "break-word",
+                                    flex: 1,
+                                    display: "-webkit-box",
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: "vertical",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
                                   }}
                                 >
                                   {opt.label}
@@ -4910,13 +5125,13 @@ function DataAplikasiSection() {
                               placeholder="Isi unit operasional teknologi lainnya..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor:
                                   fieldErrors.unit_operasional_teknologi
                                     ? errorBorderColor
-                                    : "#e6eef6",
+                                    : "#cbd5e1",
                                 boxShadow:
                                   fieldErrors.unit_operasional_teknologi
                                     ? errorBoxShadow
@@ -4932,8 +5147,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         <div>Nilai Pengembangan Aplikasi</div>
@@ -4960,12 +5177,12 @@ function DataAplikasiSection() {
                         placeholder="Contoh: 500000000 (dalam Rupiah)"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.nilai_pengembangan_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.nilai_pengembangan_aplikasi
                             ? errorBoxShadow
                             : "none",
@@ -4978,16 +5195,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Utama
@@ -4997,10 +5216,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.pusat_komputasi_utama
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
@@ -5029,7 +5248,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5045,7 +5264,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5119,12 +5338,12 @@ function DataAplikasiSection() {
                               placeholder="Isi pusat komputasi utama lainnya..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.pusat_komputasi_utama
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors.pusat_komputasi_utama
                                   ? errorBoxShadow
                                   : "none",
@@ -5139,8 +5358,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Backup
@@ -5150,10 +5371,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.pusat_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
@@ -5182,7 +5403,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5198,7 +5419,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5272,12 +5493,12 @@ function DataAplikasiSection() {
                               placeholder="Isi pusat komputasi backup lainnya..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.pusat_komputasi_backup
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors.pusat_komputasi_backup
                                   ? errorBoxShadow
                                   : "none",
@@ -5292,8 +5513,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Mandiri Komputasi Backup
@@ -5303,10 +5526,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.mandiri_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
@@ -5335,7 +5558,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5351,7 +5574,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5425,13 +5648,13 @@ function DataAplikasiSection() {
                               placeholder="Isi mandiri komputasi backup lainnya..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor:
                                   fieldErrors.mandiri_komputasi_backup
                                     ? errorBorderColor
-                                    : "#e6eef6",
+                                    : "#cbd5e1",
                                 boxShadow: fieldErrors.mandiri_komputasi_backup
                                   ? errorBoxShadow
                                   : "none",
@@ -5448,16 +5671,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Perangkat Lunak
@@ -5471,12 +5696,12 @@ function DataAplikasiSection() {
                         placeholder="Contoh: Windows Server, Linux Ubuntu"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.perangkat_lunak
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.perangkat_lunak
                             ? errorBoxShadow
                             : "none",
@@ -5487,8 +5712,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cloud
@@ -5498,10 +5725,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.cloud
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
@@ -5529,7 +5756,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5545,7 +5772,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5610,12 +5837,12 @@ function DataAplikasiSection() {
                               placeholder="Contoh: AWS, Google Cloud, Azure"
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.cloud
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors.cloud
                                   ? errorBoxShadow
                                   : "none",
@@ -5632,16 +5859,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         SSL
@@ -5651,10 +5880,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.ssl
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                           backgroundColor: "#fff",
                         }}
@@ -5680,7 +5909,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5696,7 +5925,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5764,12 +5993,12 @@ function DataAplikasiSection() {
                               placeholder="Isi unit kerja..."
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.ssl
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors.ssl
                                   ? errorBoxShadow
                                   : "none",
@@ -5784,8 +6013,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tanggal Expired SSL
@@ -5799,12 +6030,12 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.ssl_expired
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.ssl_expired
                             ? errorBoxShadow
                             : "none",
@@ -5817,16 +6048,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Antivirus
@@ -5836,10 +6069,10 @@ function DataAplikasiSection() {
                         style={{
                           padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.antivirus
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
@@ -5867,7 +6100,7 @@ function DataAplikasiSection() {
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
                                   border: checked
                                     ? "1px solid #0ea5e9"
-                                    : "1px solid #e2e8f0",
+                                    : "1px solid #cbd5e1",
                                   transition: "all 0.15s",
                                 }}
                                 onMouseEnter={(e) => {
@@ -5883,7 +6116,7 @@ function DataAplikasiSection() {
                                     e.currentTarget.style.backgroundColor =
                                       "#fff";
                                     e.currentTarget.style.borderColor =
-                                      "#e2e8f0";
+                                      "#cbd5e1";
                                   }
                                 }}
                               >
@@ -5948,12 +6181,12 @@ function DataAplikasiSection() {
                               placeholder="Contoh: Kaspersky, Norton, Avast"
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors.antivirus
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors.antivirus
                                   ? errorBoxShadow
                                   : "none",
@@ -5970,16 +6203,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Alamat IP Publik
@@ -5991,12 +6226,12 @@ function DataAplikasiSection() {
                         placeholder="IPv4: 192.168.1.1 atau IPv6: 2001:0db8:85a3::8a2e:0370:7334"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.alamat_ip_publik
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.alamat_ip_publik
                             ? errorBoxShadow
                             : "none",
@@ -6018,8 +6253,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Keterangan
@@ -6033,12 +6270,12 @@ function DataAplikasiSection() {
                         placeholder="Contoh: Aplikasi masih dalam tahap pengembangan"
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.keterangan
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.keterangan
                             ? errorBoxShadow
                             : "none",
@@ -6051,16 +6288,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status BMN
@@ -6073,12 +6312,12 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.status_bmn
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.status_bmn
                             ? errorBoxShadow
                             : "none",
@@ -6093,8 +6332,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Server Aplikasi
@@ -6107,12 +6348,12 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.server_aplikasi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.server_aplikasi
                             ? errorBoxShadow
                             : "none",
@@ -6131,16 +6372,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tipe Lisensi Bahasa Pemrograman
@@ -6156,12 +6399,12 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.tipe_lisensi_bahasa
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.tipe_lisensi_bahasa
                             ? errorBoxShadow
                             : "none",
@@ -6176,8 +6419,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         API Internal Sistem Integrasi
@@ -6193,12 +6438,12 @@ function DataAplikasiSection() {
                         }
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "9px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid #cbd5e1",
                           borderColor: fieldErrors.api_internal_status
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.api_internal_status
                             ? errorBoxShadow
                             : "none",
@@ -6215,16 +6460,18 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         WAF
@@ -6238,12 +6485,12 @@ function DataAplikasiSection() {
                           }
                           style={{
                             flex: 1,
-                            padding: "10px",
+                            padding: "9px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            border: "1px solid #cbd5e1",
                             borderColor: fieldErrors.waf
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
                             boxShadow: fieldErrors.waf
                               ? errorBoxShadow
                               : "none",
@@ -6264,12 +6511,12 @@ function DataAplikasiSection() {
                             placeholder="Sebutkan"
                             style={{
                               flex: 1,
-                              padding: "10px",
+                              padding: "9px 12px",
                               borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              border: "1px solid #cbd5e1",
                               borderColor: fieldErrors.waf_lainnya
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
                               boxShadow: fieldErrors.waf_lainnya
                                 ? errorBoxShadow
                                 : "none",
@@ -6282,8 +6529,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         VA/PT
@@ -6297,12 +6546,12 @@ function DataAplikasiSection() {
                           }
                           style={{
                             flex: 1,
-                            padding: "10px",
+                            padding: "9px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            border: "1px solid #cbd5e1",
                             borderColor: fieldErrors.va_pt_status
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
                             boxShadow: fieldErrors.va_pt_status
                               ? errorBoxShadow
                               : "none",
@@ -6322,12 +6571,12 @@ function DataAplikasiSection() {
                             }
                             style={{
                               flex: 1,
-                              padding: "10px",
+                              padding: "9px 12px",
                               borderRadius: "8px",
-                              border: "1px solid #e6eef6",
+                              border: "1px solid #cbd5e1",
                               borderColor: fieldErrors.va_pt_waktu
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
                               boxShadow: fieldErrors.va_pt_waktu
                                 ? errorBoxShadow
                                 : "none",
@@ -6345,14 +6594,14 @@ function DataAplikasiSection() {
                     style={{
                       marginTop: "20px",
                       paddingTop: "20px",
-                      borderTop: "2px solid #e2e8f0",
+                      borderTop: "2px solid #cbd5e1",
                     }}
                   >
                     <h3
                       style={{
                         fontSize: "14px",
                         fontWeight: 700,
-                        color: "#1e293b",
+                        color: "#4f46e5",
                         marginBottom: "16px",
                         display: "flex",
                         alignItems: "center",
@@ -6375,7 +6624,7 @@ function DataAplikasiSection() {
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
-                        gap: "12px",
+                        gap: "14px",
                       }}
                     >
                       {dynamicTables.map((table) => {
@@ -6390,7 +6639,7 @@ function DataAplikasiSection() {
                           if (schema.length > 0) {
                             displayField = schema[0].column_name;
                           }
-                        } catch (e) {
+                        } catch {
                           // Fallback: ambil key pertama dari data (selain id)
                           if (data.length > 0) {
                             const keys = Object.keys(data[0]).filter(
@@ -6409,8 +6658,9 @@ function DataAplikasiSection() {
                             <label
                               style={{
                                 display: "block",
-                                marginBottom: "6px",
+                                marginBottom: "8px",
                                 fontWeight: 600,
+                                color: "#334155",
                                 fontSize: "13px",
                               }}
                             >
@@ -6424,12 +6674,12 @@ function DataAplikasiSection() {
                               }
                               style={{
                                 width: "100%",
-                                padding: "10px",
+                                padding: "9px 12px",
                                 borderRadius: "8px",
-                                border: "1px solid #e6eef6",
+                                border: "1px solid #cbd5e1",
                                 borderColor: fieldErrors[fieldName]
                                   ? errorBorderColor
-                                  : "#e6eef6",
+                                  : "#cbd5e1",
                                 boxShadow: fieldErrors[fieldName]
                                   ? errorBoxShadow
                                   : "none",
@@ -6464,38 +6714,37 @@ function DataAplikasiSection() {
 
                 <div
                   style={{
-                    marginTop: "20px",
-                    paddingTop: "20px",
-                    borderTop: "1px solid #f1f5f9",
+                    marginTop: "32px",
+                    paddingTop: "28px",
+                    borderTop: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
-                    <span>Akses Aplikasi (Akun)</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    Akses Aplikasi (Akun){" "}
                     <span
                       style={{
-                        fontSize: "12px",
-                        color: "#64748b",
+                        fontSize: "11px",
+                        color: "#94a3b8",
                         fontWeight: 500,
+                        textTransform: "none",
+                        letterSpacing: "normal",
                       }}
                     >
                       (untuk kebutuhan BPK)
@@ -6506,19 +6755,17 @@ function DataAplikasiSection() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
+                      gap: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Username
@@ -6536,12 +6783,16 @@ function DataAplikasiSection() {
                         placeholder="Username"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "10px 12px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.akses_aplikasi_username
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
+                          fontSize: "14px",
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          outline: "none",
+                          backgroundColor: "#fff",
                           boxShadow: fieldErrors.akses_aplikasi_username
                             ? errorBoxShadow
                             : "none",
@@ -6553,12 +6804,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Password
@@ -6577,12 +6826,16 @@ function DataAplikasiSection() {
                           placeholder="Password"
                           style={{
                             width: "100%",
-                            padding: "10px 40px 10px 10px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            padding: "11px 42px 11px 14px",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor: fieldErrors.akses_aplikasi_password
                               ? errorBorderColor
-                              : "#e6eef6",
+                              : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            backgroundColor: "#fff",
                             boxShadow: fieldErrors.akses_aplikasi_password
                               ? errorBoxShadow
                               : "none",
@@ -6685,12 +6938,10 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Konfirmasi Password
@@ -6709,13 +6960,17 @@ function DataAplikasiSection() {
                           placeholder="Konfirmasi Password"
                           style={{
                             width: "100%",
-                            padding: "10px 40px 10px 10px",
-                            borderRadius: "8px",
-                            border: "1px solid #e6eef6",
+                            padding: "11px 42px 11px 14px",
+                            borderRadius: "10px",
+                            border: "1.5px solid",
                             borderColor:
                               fieldErrors.akses_aplikasi_konfirmasi_password
                                 ? errorBorderColor
-                                : "#e6eef6",
+                                : "#cbd5e1",
+                            fontSize: "14px",
+                            transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                            outline: "none",
+                            backgroundColor: "#fff",
                             boxShadow:
                               fieldErrors.akses_aplikasi_konfirmasi_password
                                 ? errorBoxShadow
@@ -6831,22 +7086,22 @@ function DataAplikasiSection() {
                 <div
                   style={{
                     display: "flex",
-                    gap: "10px",
+                    gap: "12px",
                     justifyContent: "flex-end",
-                    marginTop: "20px",
-                    paddingTop: "20px",
-                    borderTop: "1.5px solid #e2e8f0",
+                    marginTop: "28px",
+                    paddingTop: "24px",
+                    borderTop: "1.5px solid #cbd5e1",
                   }}
                 >
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
                     style={{
-                      padding: "8px 18px",
-                      borderRadius: "8px",
-                      border: "1.5px solid #e2e8f0",
+                      padding: "11px 24px",
+                      borderRadius: "10px",
+                      border: "1.5px solid #cbd5e1",
                       background: "#fff",
-                      fontSize: "12.5px",
+                      fontSize: "13px",
                       fontWeight: 600,
                       color: "#64748b",
                       cursor: "pointer",
@@ -6854,11 +7109,13 @@ function DataAplikasiSection() {
                     }}
                     onMouseOver={(e) => {
                       e.currentTarget.style.borderColor = "#cbd5e1";
-                      e.currentTarget.style.color = "#475569";
+                      e.currentTarget.style.color = "#334155";
+                      e.currentTarget.style.background = "#f8fafc";
                     }}
                     onMouseOut={(e) => {
-                      e.currentTarget.style.borderColor = "#e2e8f0";
+                      e.currentTarget.style.borderColor = "#cbd5e1";
                       e.currentTarget.style.color = "#64748b";
+                      e.currentTarget.style.background = "#fff";
                     }}
                   >
                     Batal
@@ -6867,36 +7124,36 @@ function DataAplikasiSection() {
                     type="submit"
                     disabled={submitting}
                     style={{
-                      padding: "8px 22px",
-                      borderRadius: "8px",
+                      padding: "11px 28px",
+                      borderRadius: "10px",
                       border: "none",
                       background: submitting
-                        ? "linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%)"
-                        : "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
+                        ? "#94a3b8"
+                        : "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                       color: "#fff",
-                      fontSize: "12.5px",
+                      fontSize: "13px",
                       fontWeight: 600,
                       cursor: submitting ? "not-allowed" : "pointer",
-                      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                      transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                       boxShadow: submitting
                         ? "none"
-                        : "0 2px 8px rgba(79, 70, 229, 0.3)",
+                        : "0 4px 14px rgba(99, 102, 241, 0.25)",
                       display: "flex",
                       alignItems: "center",
-                      gap: "7px",
+                      gap: "8px",
                     }}
                     onMouseOver={(e) => {
                       if (!submitting) {
-                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.transform = "translateY(-1px)";
                         e.currentTarget.style.boxShadow =
-                          "0 4px 14px rgba(79, 70, 229, 0.4)";
+                          "0 6px 20px rgba(99, 102, 241, 0.3)";
                       }
                     }}
                     onMouseOut={(e) => {
                       if (!submitting) {
                         e.currentTarget.style.transform = "translateY(0)";
                         e.currentTarget.style.boxShadow =
-                          "0 2px 8px rgba(79, 70, 229, 0.3)";
+                          "0 4px 14px rgba(99, 102, 241, 0.25)";
                       }
                     }}
                   >
@@ -7065,7 +7322,7 @@ function DataAplikasiSection() {
                   padding: "12px",
                   backgroundColor: "#f1f5f9",
                   color: "#64748b",
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid #cbd5e1",
                   borderRadius: "8px",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -7483,7 +7740,7 @@ function DataAplikasiSection() {
                                 const displayField = schema[0].column_name;
                                 displayValue = item[displayField] || fieldValue;
                               }
-                            } catch (e) {
+                            } catch {
                               // Fallback: ambil key pertama selain id
                               const keys = Object.keys(item).filter(
                                 (k) =>
@@ -7516,7 +7773,7 @@ function DataAplikasiSection() {
             <div
               style={{
                 padding: "16px 24px",
-                borderTop: "1px solid #e5e7eb",
+                borderTop: "1px solid #cbd5e1",
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: "10px",
@@ -7576,7 +7833,7 @@ function DataAplikasiSection() {
                   padding: "12px 24px",
                   backgroundColor: "#ffffff",
                   color: "#6b7280",
-                  border: "2px solid #e5e7eb",
+                  border: "2px solid #cbd5e1",
                   borderRadius: "12px",
                   fontWeight: 600,
                   fontSize: "14px",
@@ -7590,7 +7847,7 @@ function DataAplikasiSection() {
                 }}
                 onMouseOut={(e) => {
                   e.currentTarget.style.backgroundColor = "#ffffff";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.borderColor = "#cbd5e1";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
@@ -7718,7 +7975,7 @@ function DetailSection({ title, children }) {
           padding: "16px",
           backgroundColor: "#ffffff",
           borderRadius: "0 0 12px 12px",
-          border: "1px solid #e5e7eb",
+          border: "1px solid #cbd5e1",
           borderTop: "none",
         }}
       >
@@ -7879,7 +8136,7 @@ function DetailField({ label, value, isLink, isBadge, isTextarea }) {
           padding: isTextarea ? "12px" : "0",
           backgroundColor: isTextarea ? "#f9fafb" : "transparent",
           borderRadius: isTextarea ? "8px" : "0",
-          border: isTextarea ? "1px solid #e5e7eb" : "none",
+          border: isTextarea ? "1px solid #cbd5e1" : "none",
         }}
       >
         {displayValue}
