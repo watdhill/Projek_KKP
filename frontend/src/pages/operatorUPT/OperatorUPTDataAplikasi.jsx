@@ -1,5 +1,42 @@
 ﻿import { useState, useEffect, useRef } from "react";
 
+const USER_PENGGUNA_OPTIONS = [
+  "Internal KKP",
+  "Internal Eselon 1",
+  "Internal Eselon 2",
+  "Internal Unit Kerja",
+  "Stakeholder",
+  "Publik",
+  "Lainnya",
+];
+
+const UNIT_PENGEMBANG_INTERNAL_ESELON_1 = "Sekretariat Eselon 1";
+const UNIT_PENGEMBANG_INTERNAL_ESELON_2 = "Internal Eselon 2";
+const UNIT_PENGEMBANG_EXTERNAL = "Eksternal";
+
+const UNIT_OPERASIONAL_PUSDATIN = "Pusdatin";
+const UNIT_OPERASIONAL_LAINNYA = "Lainnya";
+
+const PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR = "DC Gambir";
+const PUSAT_KOMPUTASI_UTAMA_DC_CYBER = "DC Cyber";
+const PUSAT_KOMPUTASI_UTAMA_LAINNYA = "Lainnya";
+const PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA = "Tidak Ada";
+
+const MANDIRI_BACKUP_EX_STORAGE = "Ex STORAGE";
+const MANDIRI_BACKUP_IN_STORAGE = "In STORAGE";
+const MANDIRI_BACKUP_EX_CLOUD = "Ex CLOUD";
+const MANDIRI_BACKUP_TIDAK_ADA = "TIDAK ADA";
+const MANDIRI_BACKUP_LAINNYA = "LAINNYA";
+
+const CLOUD_YA = "Ya";
+const CLOUD_TIDAK = "Tidak";
+
+const SSL_AKTIF_PUSDATIN = "Aktif/Pusdatin";
+const SSL_AKTIF_UNIT_KERJA = "Aktif/Unit Kerja";
+
+const ANTIVIRUS_YA = "Ya";
+const ANTIVIRUS_TIDAK = "Tidak";
+
 function OperatorUPTDataAplikasi() {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,10 +53,35 @@ function OperatorUPTDataAplikasi() {
   const [master, setMaster] = useState({});
   const [dynamicTables, setDynamicTables] = useState([]);
   const [dynamicMasterData, setDynamicMasterData] = useState({});
-  const [showCaraAksesDropdown, setShowCaraAksesDropdown] = useState(false);
+  // Cara akses aplikasi ditampilkan sebagai list (bukan dropdown)
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [userPenggunaSelected, setUserPenggunaSelected] = useState([]);
+  const [userPenggunaLainnya, setUserPenggunaLainnya] = useState("");
+  const [unitPengembangType, setUnitPengembangType] = useState("");
+  const [unitPengembangExternal, setUnitPengembangExternal] = useState("");
+  const [unitOperasionalType, setUnitOperasionalType] = useState("");
+  const [unitOperasionalLainnya, setUnitOperasionalLainnya] = useState("");
+  const [pusatKomputasiUtamaType, setPusatKomputasiUtamaType] = useState("");
+  const [pusatKomputasiUtamaLainnya, setPusatKomputasiUtamaLainnya] =
+    useState("");
+  const [pusatKomputasiBackupType, setPusatKomputasiBackupType] = useState("");
+  const [pusatKomputasiBackupLainnya, setPusatKomputasiBackupLainnya] =
+    useState("");
+  const [mandiriKomputasiBackupType, setMandiriKomputasiBackupType] =
+    useState("");
+  const [mandiriKomputasiBackupLainnya, setMandiriKomputasiBackupLainnya] =
+    useState("");
+  const [cloudType, setCloudType] = useState("");
+  const [cloudText, setCloudText] = useState("");
+  const [sslType, setSslType] = useState("");
+  const [sslUnitKerja, setSslUnitKerja] = useState("");
+  const [antivirusType, setAntivirusType] = useState("");
+  const [antivirusText, setAntivirusText] = useState("");
+  const [aksesPasswordVisible, setAksesPasswordVisible] = useState(false);
+  const [aksesKonfirmasiPasswordVisible, setAksesKonfirmasiPasswordVisible] =
+    useState(false);
   // Get operator's eselon1_id and upt_id from localStorage
   const userEselon1Id = localStorage.getItem("eselon1_id");
   const userUptId = localStorage.getItem("upt_id");
@@ -68,6 +130,9 @@ function OperatorUPTDataAplikasi() {
     va_pt_status: "",
     va_pt_waktu: "",
     antivirus: "",
+    akses_aplikasi_username: "",
+    akses_aplikasi_password: "",
+    akses_aplikasi_konfirmasi_password: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -76,6 +141,414 @@ function OperatorUPTDataAplikasi() {
   const errorBorderColor = "#ef4444";
   const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
   const errorBoxShadow = errorRing;
+
+  const buildUserPenggunaValue = (selected, lainnyaText) => {
+    const selectedSet = new Set((selected || []).map(String));
+    const values = [];
+
+    USER_PENGGUNA_OPTIONS.forEach((opt) => {
+      if (opt === "Lainnya") return;
+      if (selectedSet.has(opt)) values.push(opt);
+    });
+
+    if (selectedSet.has("Lainnya")) {
+      const extra = String(lainnyaText || "").trim();
+      if (extra) values.push(`Lainnya: ${extra}`);
+    }
+
+    return values.join(", ");
+  };
+
+  const parseUserPenggunaValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { selected: [], lainnyaText: "" };
+
+    const normalizedOptions = new Map(
+      USER_PENGGUNA_OPTIONS.map((opt) => [
+        opt.toLowerCase().replace(/\s+/g, " "),
+        opt,
+      ]),
+    );
+
+    const parts = raw
+      .split(/\r?\n|;|,/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const selected = [];
+    const unknown = [];
+    let lainnyaText = "";
+
+    for (const part of parts) {
+      const m = part.match(/^lainnya\s*:\s*(.+)$/i);
+      if (m && m[1]) {
+        if (!selected.includes("Lainnya")) selected.push("Lainnya");
+        const extra = String(m[1]).trim();
+        if (extra) lainnyaText = extra;
+        continue;
+      }
+
+      const key = part.toLowerCase().replace(/\s+/g, " ");
+      const matched = normalizedOptions.get(key);
+      if (matched && matched !== "Lainnya") {
+        if (!selected.includes(matched)) selected.push(matched);
+      } else if (matched === "Lainnya") {
+        if (!selected.includes("Lainnya")) selected.push("Lainnya");
+      } else {
+        unknown.push(part);
+      }
+    }
+
+    if (unknown.length > 0) {
+      if (!selected.includes("Lainnya")) selected.push("Lainnya");
+      if (!lainnyaText) lainnyaText = unknown.join(", ");
+    }
+
+    return { selected, lainnyaText };
+  };
+
+  const setUserPenggunaFromUi = (nextSelected, nextLainnya) => {
+    setUserPenggunaSelected(nextSelected);
+    setUserPenggunaLainnya(nextLainnya);
+    const nextValue = buildUserPenggunaValue(nextSelected, nextLainnya);
+    setFormData((prev) => ({ ...prev, user_pengguna: nextValue }));
+  };
+
+  const buildUnitPengembangValue = (type, externalText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === UNIT_PENGEMBANG_EXTERNAL) {
+      const extra = String(externalText || "").trim();
+      return extra;
+    }
+    return t;
+  };
+
+  const parseUnitPengembangValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", externalText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (
+      normalized === UNIT_PENGEMBANG_INTERNAL_ESELON_1.toLowerCase() ||
+      normalized === "sekretariat eselon i"
+    ) {
+      return { type: UNIT_PENGEMBANG_INTERNAL_ESELON_1, externalText: "" };
+    }
+    if (normalized === UNIT_PENGEMBANG_INTERNAL_ESELON_2.toLowerCase()) {
+      return { type: UNIT_PENGEMBANG_INTERNAL_ESELON_2, externalText: "" };
+    }
+
+    const m = raw.match(/^eksternal\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return {
+        type: UNIT_PENGEMBANG_EXTERNAL,
+        externalText: String(m[1]).trim(),
+      };
+    }
+
+    // Fallback: value lama yang tidak cocok dianggap eksternal
+    return { type: UNIT_PENGEMBANG_EXTERNAL, externalText: raw };
+  };
+
+  const setUnitPengembangFromUi = (nextType, nextExternal) => {
+    setUnitPengembangType(nextType);
+    setUnitPengembangExternal(nextExternal);
+    const nextValue = buildUnitPengembangValue(nextType, nextExternal);
+    setFormData((prev) => ({ ...prev, unit_pengembang: nextValue }));
+  };
+
+  const buildUnitOperasionalTeknologiValue = (type, lainnyaText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === UNIT_OPERASIONAL_PUSDATIN) return UNIT_OPERASIONAL_PUSDATIN;
+    if (t === UNIT_OPERASIONAL_LAINNYA) return String(lainnyaText || "").trim();
+    return "";
+  };
+
+  const parseUnitOperasionalTeknologiValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === UNIT_OPERASIONAL_PUSDATIN.toLowerCase()) {
+      return { type: UNIT_OPERASIONAL_PUSDATIN, lainnyaText: "" };
+    }
+
+    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return { type: UNIT_OPERASIONAL_LAINNYA, lainnyaText: String(m[1]).trim() };
+    }
+
+    return { type: UNIT_OPERASIONAL_LAINNYA, lainnyaText: raw };
+  };
+
+  const setUnitOperasionalTeknologiFromUi = (nextType, nextLainnyaText) => {
+    setUnitOperasionalType(nextType);
+    setUnitOperasionalLainnya(nextLainnyaText);
+    const nextValue = buildUnitOperasionalTeknologiValue(
+      nextType,
+      nextLainnyaText,
+    );
+    setFormData((prev) => ({ ...prev, unit_operasional_teknologi: nextValue }));
+  };
+
+  const buildPusatKomputasiUtamaValue = (type, lainnyaText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) return PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR;
+    if (t === PUSAT_KOMPUTASI_UTAMA_DC_CYBER) return PUSAT_KOMPUTASI_UTAMA_DC_CYBER;
+    if (t === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) return PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA;
+    if (t === PUSAT_KOMPUTASI_UTAMA_LAINNYA) return String(lainnyaText || "").trim();
+    return "";
+  };
+
+  const parsePusatKomputasiUtamaValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR, lainnyaText: "" };
+    }
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_DC_CYBER.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_DC_CYBER, lainnyaText: "" };
+    }
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA, lainnyaText: "" };
+    }
+
+    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return {
+        type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+        lainnyaText: String(m[1]).trim(),
+      };
+    }
+
+    return { type: PUSAT_KOMPUTASI_UTAMA_LAINNYA, lainnyaText: raw };
+  };
+
+  const setPusatKomputasiUtamaFromUi = (nextType, nextLainnyaText) => {
+    setPusatKomputasiUtamaType(nextType);
+    setPusatKomputasiUtamaLainnya(nextLainnyaText);
+    const nextValue = buildPusatKomputasiUtamaValue(nextType, nextLainnyaText);
+    setFormData((prev) => ({ ...prev, pusat_komputasi_utama: nextValue }));
+  };
+
+  const buildPusatKomputasiBackupValue = (type, lainnyaText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR) return PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR;
+    if (t === PUSAT_KOMPUTASI_UTAMA_DC_CYBER) return PUSAT_KOMPUTASI_UTAMA_DC_CYBER;
+    if (t === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA) return PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA;
+    if (t === PUSAT_KOMPUTASI_UTAMA_LAINNYA) return String(lainnyaText || "").trim();
+    return "";
+  };
+
+  const parsePusatKomputasiBackupValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR, lainnyaText: "" };
+    }
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_DC_CYBER.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_DC_CYBER, lainnyaText: "" };
+    }
+    if (normalized === PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA.toLowerCase()) {
+      return { type: PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA, lainnyaText: "" };
+    }
+
+    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return {
+        type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+        lainnyaText: String(m[1]).trim(),
+      };
+    }
+
+    return { type: PUSAT_KOMPUTASI_UTAMA_LAINNYA, lainnyaText: raw };
+  };
+
+  const setPusatKomputasiBackupFromUi = (nextType, nextLainnyaText) => {
+    setPusatKomputasiBackupType(nextType);
+    setPusatKomputasiBackupLainnya(nextLainnyaText);
+    const nextValue = buildPusatKomputasiBackupValue(nextType, nextLainnyaText);
+    setFormData((prev) => ({ ...prev, pusat_komputasi_backup: nextValue }));
+  };
+
+  const buildMandiriKomputasiBackupValue = (type, lainnyaText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === MANDIRI_BACKUP_EX_STORAGE) return MANDIRI_BACKUP_EX_STORAGE;
+    if (t === MANDIRI_BACKUP_IN_STORAGE) return MANDIRI_BACKUP_IN_STORAGE;
+    if (t === MANDIRI_BACKUP_EX_CLOUD) return MANDIRI_BACKUP_EX_CLOUD;
+    if (t === MANDIRI_BACKUP_TIDAK_ADA) return MANDIRI_BACKUP_TIDAK_ADA;
+    if (t === MANDIRI_BACKUP_LAINNYA) return String(lainnyaText || "").trim();
+    return "";
+  };
+
+  const parseMandiriKomputasiBackupValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", lainnyaText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === MANDIRI_BACKUP_EX_STORAGE.toLowerCase()) {
+      return { type: MANDIRI_BACKUP_EX_STORAGE, lainnyaText: "" };
+    }
+    if (normalized === MANDIRI_BACKUP_IN_STORAGE.toLowerCase()) {
+      return { type: MANDIRI_BACKUP_IN_STORAGE, lainnyaText: "" };
+    }
+    if (normalized === MANDIRI_BACKUP_EX_CLOUD.toLowerCase()) {
+      return { type: MANDIRI_BACKUP_EX_CLOUD, lainnyaText: "" };
+    }
+    if (
+      normalized === MANDIRI_BACKUP_TIDAK_ADA.toLowerCase() ||
+      normalized === "tidak ada"
+    ) {
+      return { type: MANDIRI_BACKUP_TIDAK_ADA, lainnyaText: "" };
+    }
+
+    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return { type: MANDIRI_BACKUP_LAINNYA, lainnyaText: String(m[1]).trim() };
+    }
+
+    return { type: MANDIRI_BACKUP_LAINNYA, lainnyaText: raw };
+  };
+
+  const setMandiriKomputasiBackupFromUi = (nextType, nextLainnyaText) => {
+    setMandiriKomputasiBackupType(nextType);
+    setMandiriKomputasiBackupLainnya(nextLainnyaText);
+    const nextValue = buildMandiriKomputasiBackupValue(nextType, nextLainnyaText);
+    setFormData((prev) => ({ ...prev, mandiri_komputasi_backup: nextValue }));
+  };
+
+  const buildCloudValue = (type, freeText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === CLOUD_TIDAK) return CLOUD_TIDAK;
+    if (t === CLOUD_YA) return String(freeText || "").trim();
+    return "";
+  };
+
+  const parseCloudValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", freeText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === CLOUD_TIDAK.toLowerCase()) {
+      return { type: CLOUD_TIDAK, freeText: "" };
+    }
+
+    // Support legacy formats like "Ya: AWS" or plain provider text
+    const m = raw.match(/^ya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return { type: CLOUD_YA, freeText: String(m[1]).trim() };
+    }
+
+    if (normalized === CLOUD_YA.toLowerCase()) {
+      return { type: CLOUD_YA, freeText: "" };
+    }
+
+    return { type: CLOUD_YA, freeText: raw };
+  };
+
+  const setCloudFromUi = (nextType, nextText) => {
+    setCloudType(nextType);
+    setCloudText(nextText);
+    const nextValue = buildCloudValue(nextType, nextText);
+    setFormData((prev) => ({ ...prev, cloud: nextValue }));
+  };
+
+  const buildSslValue = (type, unitKerjaText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === SSL_AKTIF_PUSDATIN) return SSL_AKTIF_PUSDATIN;
+    if (t === SSL_AKTIF_UNIT_KERJA) {
+      const extra = String(unitKerjaText || "").trim();
+      return extra ? `Aktif/${extra}` : "";
+    }
+    return "";
+  };
+
+  const parseSslValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", unitKerjaText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === SSL_AKTIF_PUSDATIN.toLowerCase()) {
+      return { type: SSL_AKTIF_PUSDATIN, unitKerjaText: "" };
+    }
+
+    // New format: "Aktif/<unit>" or "Aktif/Pusdatin"
+    const aktifSlash = raw.match(/^aktif\s*\/\s*(.+)$/i);
+    if (aktifSlash && aktifSlash[1]) {
+      const afterSlash = String(aktifSlash[1]).trim();
+      const afterNorm = afterSlash.toLowerCase().replace(/\s+/g, " ");
+      if (afterNorm === "pusdatin") {
+        return { type: SSL_AKTIF_PUSDATIN, unitKerjaText: "" };
+      }
+      return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: afterSlash };
+    }
+
+    // Legacy format: "Aktif/Unit Kerja: <unit>" (atau tanpa ':')
+    const legacy = raw.match(/^aktif\s*\/\s*unit\s*kerja\s*:?\s*(.*)$/i);
+    if (legacy) {
+      return {
+        type: SSL_AKTIF_UNIT_KERJA,
+        unitKerjaText: String(legacy[1] || "").trim(),
+      };
+    }
+
+    // Fallback: data lama dianggap "Aktif/Unit Kerja" agar tidak hilang
+    return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: raw };
+  };
+
+  const setSslFromUi = (nextType, nextUnitKerjaText) => {
+    setSslType(nextType);
+    setSslUnitKerja(nextUnitKerjaText);
+    const nextValue = buildSslValue(nextType, nextUnitKerjaText);
+    setFormData((prev) => ({ ...prev, ssl: nextValue }));
+  };
+
+  const buildAntivirusValue = (type, freeText) => {
+    const t = String(type || "").trim();
+    if (!t) return "";
+    if (t === ANTIVIRUS_TIDAK) return ANTIVIRUS_TIDAK;
+    if (t === ANTIVIRUS_YA) return String(freeText || "").trim();
+    return "";
+  };
+
+  const parseAntivirusValue = (rawValue) => {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { type: "", freeText: "" };
+
+    const normalized = raw.toLowerCase().replace(/\s+/g, " ");
+    if (normalized === ANTIVIRUS_TIDAK.toLowerCase()) {
+      return { type: ANTIVIRUS_TIDAK, freeText: "" };
+    }
+
+    const m = raw.match(/^ya\s*:\s*(.+)$/i);
+    if (m && m[1]) {
+      return { type: ANTIVIRUS_YA, freeText: String(m[1]).trim() };
+    }
+
+    if (normalized === ANTIVIRUS_YA.toLowerCase()) {
+      return { type: ANTIVIRUS_YA, freeText: "" };
+    }
+
+    return { type: ANTIVIRUS_YA, freeText: raw };
+  };
+
+  const setAntivirusFromUi = (nextType, nextText) => {
+    setAntivirusType(nextType);
+    setAntivirusText(nextText);
+    const nextValue = buildAntivirusValue(nextType, nextText);
+    setFormData((prev) => ({ ...prev, antivirus: nextValue }));
+  };
 
   const showMessage = (type, text, timeoutMs = 3500) => {
     if (messageTimerRef.current) {
@@ -340,6 +813,9 @@ function OperatorUPTDataAplikasi() {
       va_pt_status: "",
       va_pt_waktu: "",
       antivirus: "",
+      akses_aplikasi_username: "",
+      akses_aplikasi_password: "",
+      akses_aplikasi_konfirmasi_password: "",
     };
 
     // Add dynamic fields
@@ -349,6 +825,17 @@ function OperatorUPTDataAplikasi() {
     });
 
     setFormData(baseFormData);
+    setUserPenggunaFromUi([], "");
+    setUnitPengembangFromUi("", "");
+    setUnitOperasionalTeknologiFromUi("", "");
+    setPusatKomputasiUtamaFromUi("", "");
+    setPusatKomputasiBackupFromUi("", "");
+    setMandiriKomputasiBackupFromUi("", "");
+    setCloudFromUi("", "");
+    setSslFromUi("", "");
+    setAntivirusFromUi("", "");
+    setAksesPasswordVisible(false);
+    setAksesKonfirmasiPasswordVisible(false);
 
     // Fetch PIC berdasarkan upt_id operator
     if (userUptId) {
@@ -370,12 +857,33 @@ function OperatorUPTDataAplikasi() {
       const result = await res.json();
       const app = result.data;
 
+      const parsedUserPengguna = parseUserPenggunaValue(app.user_pengguna);
+      const parsedUnitPengembang = parseUnitPengembangValue(app.unit_pengembang);
+      const parsedUnitOperasionalTeknologi = parseUnitOperasionalTeknologiValue(
+        app.unit_operasional_teknologi,
+      );
+      const parsedPusatKomputasiUtama = parsePusatKomputasiUtamaValue(
+        app.pusat_komputasi_utama,
+      );
+      const parsedPusatKomputasiBackup = parsePusatKomputasiBackupValue(
+        app.pusat_komputasi_backup,
+      );
+      const parsedMandiriKomputasiBackup = parseMandiriKomputasiBackupValue(
+        app.mandiri_komputasi_backup,
+      );
+      const parsedCloud = parseCloudValue(app.cloud);
+      const parsedSsl = parseSslValue(app.ssl);
+      const parsedAntivirus = parseAntivirusValue(app.antivirus);
+
       // Pre-fill form with existing data
       const baseFormData = {
         nama_aplikasi: app.nama_aplikasi || "",
         domain: app.domain || "",
         deskripsi_fungsi: app.deskripsi_fungsi || "",
-        user_pengguna: app.user_pengguna || "",
+        user_pengguna: buildUserPenggunaValue(
+          parsedUserPengguna.selected,
+          parsedUserPengguna.lainnyaText,
+        ),
         data_digunakan: app.data_digunakan || "",
         luaran_output: app.luaran_output || "",
         eselon1_id: app.eselon1_id ? String(app.eselon1_id) : "",
@@ -436,6 +944,10 @@ function OperatorUPTDataAplikasi() {
         va_pt_status: app.va_pt_status || "",
         va_pt_waktu: app.va_pt_waktu || "",
         antivirus: app.antivirus || "",
+        akses_aplikasi_username: app.akses_aplikasi_username || "",
+        // Jangan prefill password untuk edit; hanya isi jika user ingin mengganti
+        akses_aplikasi_password: "",
+        akses_aplikasi_konfirmasi_password: "",
       };
 
       // Add dynamic fields with prefill from database
@@ -445,6 +957,53 @@ function OperatorUPTDataAplikasi() {
       });
 
       setFormData(baseFormData);
+      setUserPenggunaSelected(parsedUserPengguna.selected);
+      setUserPenggunaLainnya(parsedUserPengguna.lainnyaText);
+      setUnitPengembangType(parsedUnitPengembang.type);
+      setUnitPengembangExternal(parsedUnitPengembang.externalText);
+      setUnitOperasionalType(parsedUnitOperasionalTeknologi.type);
+      setUnitOperasionalLainnya(parsedUnitOperasionalTeknologi.lainnyaText);
+      setPusatKomputasiUtamaType(parsedPusatKomputasiUtama.type);
+      setPusatKomputasiUtamaLainnya(parsedPusatKomputasiUtama.lainnyaText);
+      setPusatKomputasiBackupType(parsedPusatKomputasiBackup.type);
+      setPusatKomputasiBackupLainnya(parsedPusatKomputasiBackup.lainnyaText);
+      setMandiriKomputasiBackupType(parsedMandiriKomputasiBackup.type);
+      setMandiriKomputasiBackupLainnya(parsedMandiriKomputasiBackup.lainnyaText);
+      setCloudType(parsedCloud.type);
+      setCloudText(parsedCloud.freeText);
+      setSslType(parsedSsl.type);
+      setSslUnitKerja(parsedSsl.unitKerjaText);
+      setAntivirusType(parsedAntivirus.type);
+      setAntivirusText(parsedAntivirus.freeText);
+      setFormData((prev) => ({
+        ...prev,
+        unit_pengembang: buildUnitPengembangValue(
+          parsedUnitPengembang.type,
+          parsedUnitPengembang.externalText,
+        ),
+        unit_operasional_teknologi: buildUnitOperasionalTeknologiValue(
+          parsedUnitOperasionalTeknologi.type,
+          parsedUnitOperasionalTeknologi.lainnyaText,
+        ),
+        pusat_komputasi_utama: buildPusatKomputasiUtamaValue(
+          parsedPusatKomputasiUtama.type,
+          parsedPusatKomputasiUtama.lainnyaText,
+        ),
+        pusat_komputasi_backup: buildPusatKomputasiBackupValue(
+          parsedPusatKomputasiBackup.type,
+          parsedPusatKomputasiBackup.lainnyaText,
+        ),
+        mandiri_komputasi_backup: buildMandiriKomputasiBackupValue(
+          parsedMandiriKomputasiBackup.type,
+          parsedMandiriKomputasiBackup.lainnyaText,
+        ),
+        cloud: buildCloudValue(parsedCloud.type, parsedCloud.freeText),
+        ssl: buildSslValue(parsedSsl.type, parsedSsl.unitKerjaText),
+        antivirus: buildAntivirusValue(
+          parsedAntivirus.type,
+          parsedAntivirus.freeText,
+        ),
+      }));
 
       // Fetch PIC berdasarkan upt_id jika ada
       if (app.upt_id) {
@@ -453,6 +1012,8 @@ function OperatorUPTDataAplikasi() {
 
       setEditMode(true);
       setOriginalAppName(appName);
+      setAksesPasswordVisible(false);
+      setAksesKonfirmasiPasswordVisible(false);
       setShowModal(true);
     } catch (err) {
       showMessage("error", "Error: " + (err.message || err), 6000);
@@ -668,7 +1229,6 @@ function OperatorUPTDataAplikasi() {
         kerangka_pengembangan: "Kerangka Pengembangan",
         unit_pengembang: "Unit Pengembang",
         unit_operasional_teknologi: "Unit Operasional Teknologi",
-        nilai_pengembangan_aplikasi: "Nilai Pengembangan Aplikasi",
         pusat_komputasi_utama: "Pusat Komputasi Utama",
         pusat_komputasi_backup: "Pusat Komputasi Backup",
         mandiri_komputasi_backup: "Mandiri Komputasi Backup",
@@ -773,7 +1333,6 @@ function OperatorUPTDataAplikasi() {
           "kerangka_pengembangan",
           "unit_pengembang",
           "unit_operasional_teknologi",
-          "nilai_pengembangan_aplikasi",
           "pusat_komputasi_utama",
           "pusat_komputasi_backup",
           "mandiri_komputasi_backup",
@@ -824,7 +1383,6 @@ function OperatorUPTDataAplikasi() {
           "kerangka_pengembangan",
           "unit_pengembang",
           "unit_operasional_teknologi",
-          "nilai_pengembangan_aplikasi",
           "pusat_komputasi_utama",
           "pusat_komputasi_backup",
           "mandiri_komputasi_backup",
@@ -852,6 +1410,60 @@ function OperatorUPTDataAplikasi() {
       }
 
       setFieldErrors({});
+
+      // Optional: Akses Aplikasi (Akun)
+      const aksesPassword = String(formData.akses_aplikasi_password || "").trim();
+      const aksesKonfirmasi = String(
+        formData.akses_aplikasi_konfirmasi_password || "",
+      ).trim();
+
+      if (aksesPassword || aksesKonfirmasi) {
+        const nextErrors = {};
+
+        if (!aksesPassword) {
+          nextErrors.akses_aplikasi_password = true;
+          nextErrors.akses_aplikasi_konfirmasi_password = true;
+          setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
+          focusFirstInvalidField(nextErrors, [
+            "akses_aplikasi_password",
+            "akses_aplikasi_konfirmasi_password",
+          ]);
+          showMessage(
+            "error",
+            "Jika mengisi Konfirmasi Password, Password juga harus diisi.",
+            6500,
+          );
+          return false;
+        }
+
+        if (!aksesKonfirmasi) {
+          nextErrors.akses_aplikasi_konfirmasi_password = true;
+          setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
+          focusFirstInvalidField(nextErrors, ["akses_aplikasi_konfirmasi_password"]);
+          showMessage(
+            "error",
+            "Konfirmasi Password wajib diisi jika Password diisi.",
+            6500,
+          );
+          return false;
+        }
+
+        if (aksesPassword !== aksesKonfirmasi) {
+          nextErrors.akses_aplikasi_password = true;
+          nextErrors.akses_aplikasi_konfirmasi_password = true;
+          setFieldErrors((prev) => ({ ...prev, ...nextErrors }));
+          focusFirstInvalidField(nextErrors, [
+            "akses_aplikasi_password",
+            "akses_aplikasi_konfirmasi_password",
+          ]);
+          showMessage(
+            "error",
+            "Konfirmasi Password harus sama dengan Password.",
+            6500,
+          );
+          return false;
+        }
+      }
 
       // Additional client-side validation
       if (
@@ -914,6 +1526,10 @@ function OperatorUPTDataAplikasi() {
         user_pengguna: formData.user_pengguna || null,
         data_digunakan: formData.data_digunakan || null,
         luaran_output: formData.luaran_output || null,
+        akses_aplikasi_username: formData.akses_aplikasi_username || null,
+        akses_aplikasi_password: formData.akses_aplikasi_password || null,
+        akses_aplikasi_konfirmasi_password:
+          formData.akses_aplikasi_konfirmasi_password || null,
         eselon1_id: formData.eselon1_id || null,
         upt_id: formData.upt_id || null,
         cara_akses_id:
@@ -2633,7 +3249,7 @@ function OperatorUPTDataAplikasi() {
                       </select>
                     </div>
 
-                    <div style={{ position: "relative" }}>
+                    <div>
                       <label
                         style={{
                           display: "block",
@@ -2649,212 +3265,127 @@ function OperatorUPTDataAplikasi() {
                       </label>
                       <div
                         data-field="cara_akses_id"
-                        onClick={() =>
-                          setShowCaraAksesDropdown(!showCaraAksesDropdown)
-                        }
                         tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setShowCaraAksesDropdown((s) => !s);
-                          }
-                        }}
+                        role="group"
+                        aria-label="Cara Akses Aplikasi"
                         style={{
                           width: "100%",
-                          padding: "10px 14px",
+                          padding: "10px 12px",
                           borderRadius: "8px",
                           border: "1px solid #e2e8f0",
-                          fontSize: "13px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          color: "#0f172a",
-                          backgroundColor: showCaraAksesDropdown
-                            ? "#fff"
-                            : "#fafbfc",
-                          borderColor: showCaraAksesDropdown
-                            ? "#0ea5e9"
-                            : "#e2e8f0",
-                          boxShadow: showCaraAksesDropdown
-                            ? "0 0 0 3px rgba(14, 165, 233, 0.08)"
-                            : "none",
+                          backgroundColor: "#fff",
                           ...(fieldErrors.cara_akses_id
                             ? {
                                 borderColor: errorBorderColor,
                                 boxShadow: errorBoxShadow,
                               }
                             : null),
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          minHeight: "41px",
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            color:
-                              (formData.cara_akses_id || []).length > 0
-                                ? "#0f172a"
-                                : "#0f172a",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            flex: 1,
+                            fontSize: "12px",
+                            color: "#64748b",
+                            marginBottom: "8px",
                           }}
                         >
                           {(formData.cara_akses_id || []).length > 0
-                            ? `${
-                                (formData.cara_akses_id || []).length
-                              } cara akses dipilih`
-                            : "-Pilih-"}
-                        </span>
-                        <svg
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            transform: showCaraAksesDropdown
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                            transition: "transform 0.2s",
-                            flexShrink: 0,
-                          }}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </div>
+                            ? `${(formData.cara_akses_id || []).length} cara akses dipilih`
+                            : "Pilih satu atau lebih"}
+                        </div>
 
-                      {showCaraAksesDropdown && (
-                        <>
-                          <div
-                            onClick={() => setShowCaraAksesDropdown(false)}
-                            style={{
-                              position: "fixed",
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              zIndex: 998,
-                            }}
-                          />
+                        <div
+                          style={{
+                            maxHeight: "220px",
+                            overflowY: "auto",
+                            paddingRight: "4px",
+                          }}
+                        >
                           <div
                             style={{
-                              position: "absolute",
-                              top: "100%",
-                              left: 0,
-                              right: 0,
-                              marginTop: "4px",
-                              border: "1px solid #e2e8f0",
-                              borderRadius: "8px",
-                              backgroundColor: "#fff",
-                              boxShadow:
-                                "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                              maxHeight: "240px",
-                              overflowY: "auto",
-                              zIndex: 999,
-                              padding: "8px",
+                              display: "grid",
+                              gridTemplateColumns: "1fr 1fr",
+                              gap: "4px",
                             }}
                           >
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "1fr 1fr",
-                                gap: "4px",
-                              }}
-                            >
-                              {(master.cara_akses || [])
-                                .filter(
-                                  (x) =>
-                                    x.status_aktif === 1 ||
-                                    x.status_aktif === true,
-                                )
-                                .map((x) => (
-                                  <label
-                                    key={x.cara_akses_id}
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      padding: "6px 8px",
-                                      cursor: "pointer",
-                                      borderRadius: "6px",
-                                      transition: "background-color 0.15s",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "#f1f5f9";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor =
-                                        "transparent";
-                                    }}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={(
-                                        formData.cara_akses_id || []
-                                      ).includes(String(x.cara_akses_id))}
-                                      onChange={(e) => {
-                                        const id = String(x.cara_akses_id);
-                                        const current =
-                                          formData.cara_akses_id || [];
-                                        const updated = e.target.checked
-                                          ? [...current, id]
-                                          : current.filter(
-                                              (item) => item !== id,
-                                            );
-                                        handleFormChange(
-                                          "cara_akses_id",
-                                          updated,
-                                        );
-                                      }}
-                                      style={{
-                                        width: "14px",
-                                        height: "14px",
-                                        marginRight: "8px",
-                                        cursor: "pointer",
-                                        accentColor: "#0ea5e9",
-                                        flexShrink: 0,
-                                      }}
-                                    />
-                                    <span
-                                      style={{
-                                        fontSize: "12.5px",
-                                        color: "#334155",
-                                        lineHeight: "1.3",
-                                      }}
-                                    >
-                                      {x.nama_cara_akses}
-                                    </span>
-                                  </label>
-                                ))}
-                            </div>
-                            {(!master.cara_akses ||
-                              master.cara_akses.filter(
+                            {(master.cara_akses || [])
+                              .filter(
                                 (x) =>
                                   x.status_aktif === 1 ||
                                   x.status_aktif === true,
-                              ).length === 0) && (
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "#94a3b8",
-                                  textAlign: "center",
-                                  padding: "12px",
-                                }}
-                              >
-                                Tidak ada data Cara Akses
-                              </div>
-                            )}
+                              )
+                              .map((x) => (
+                                <label
+                                  key={x.cara_akses_id}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    padding: "6px 8px",
+                                    cursor: "pointer",
+                                    borderRadius: "6px",
+                                    transition: "background-color 0.15s",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                      "#f1f5f9";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor =
+                                      "transparent";
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={(formData.cara_akses_id || []).includes(
+                                      String(x.cara_akses_id),
+                                    )}
+                                    onChange={(e) => {
+                                      const id = String(x.cara_akses_id);
+                                      const current = formData.cara_akses_id || [];
+                                      const updated = e.target.checked
+                                        ? [...current, id]
+                                        : current.filter((item) => item !== id);
+                                      handleFormChange("cara_akses_id", updated);
+                                    }}
+                                    style={{
+                                      width: "14px",
+                                      height: "14px",
+                                      marginRight: "8px",
+                                      cursor: "pointer",
+                                      accentColor: "#0ea5e9",
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <span
+                                    style={{
+                                      fontSize: "12.5px",
+                                      color: "#334155",
+                                      lineHeight: "1.3",
+                                    }}
+                                  >
+                                    {x.nama_cara_akses}
+                                  </span>
+                                </label>
+                              ))}
                           </div>
-                        </>
-                      )}
+
+                          {(!master.cara_akses ||
+                            master.cara_akses.filter(
+                              (x) => x.status_aktif === 1 || x.status_aktif === true,
+                            ).length === 0) && (
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                padding: "12px",
+                              }}
+                            >
+                              Tidak ada data Cara Akses
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -2941,6 +3472,22 @@ function OperatorUPTDataAplikasi() {
                             (x) =>
                               x.status_aktif === 1 || x.status_aktif === true,
                           )
+                          // Samakan urutan dropdown dengan urutan master
+                          // (ID kecil tampil lebih atas)
+                          .sort((a, b) => {
+                            const aId = Number.parseInt(
+                              String(a.frekuensi_pemakaian ?? ""),
+                              10,
+                            );
+                            const bId = Number.parseInt(
+                              String(b.frekuensi_pemakaian ?? ""),
+                              10,
+                            );
+
+                            const aNum = Number.isNaN(aId) ? 0 : aId;
+                            const bNum = Number.isNaN(bId) ? 0 : bId;
+                            return aNum - bNum;
+                          })
                           .map((x) => (
                             <option
                               key={x.frekuensi_pemakaian}
@@ -3006,7 +3553,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Environment
+                        Ekosistem
                       </label>
                       <select
                         data-field="environment_id"
@@ -3361,6 +3908,7 @@ function OperatorUPTDataAplikasi() {
                           ? errorBorderColor
                           : "#e6eef6",
                         boxShadow: fieldErrors.domain ? errorBoxShadow : "none",
+                        textTransform: "none",
                       }}
                     />
                   </div>
@@ -3375,14 +3923,8 @@ function OperatorUPTDataAplikasi() {
                     >
                       User / Pengguna
                     </label>
-                    <textarea
+                    <div
                       data-field="user_pengguna"
-                      value={formData.user_pengguna}
-                      onChange={(e) =>
-                        handleFormChange("user_pengguna", e.target.value)
-                      }
-                      placeholder="Contoh: Pegawai internal, masyarakat umum"
-                      rows={2}
                       style={{
                         width: "100%",
                         padding: "10px",
@@ -3394,8 +3936,99 @@ function OperatorUPTDataAplikasi() {
                         boxShadow: fieldErrors.user_pengguna
                           ? errorBoxShadow
                           : "none",
+                        backgroundColor: "#fff",
                       }}
-                    />
+                    >
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "#64748b",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        {(userPenggunaSelected || []).length > 0
+                          ? `${(userPenggunaSelected || []).length} dipilih`
+                          : "Pilih satu atau lebih"}
+                      </div>
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr 1fr",
+                          gap: "6px",
+                        }}
+                      >
+                        {USER_PENGGUNA_OPTIONS.map((opt) => (
+                          <label
+                            key={opt}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "6px 8px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              transition: "background-color 0.15s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = "#f1f5f9";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={(userPenggunaSelected || []).includes(opt)}
+                              onChange={(e) => {
+                                const current = userPenggunaSelected || [];
+                                const nextSelected = e.target.checked
+                                  ? [...current, opt]
+                                  : current.filter((x) => x !== opt);
+
+                                const nextLainnya =
+                                  opt === "Lainnya" && !e.target.checked
+                                    ? ""
+                                    : userPenggunaLainnya;
+
+                                setUserPenggunaFromUi(nextSelected, nextLainnya);
+                              }}
+                              style={{
+                                width: "14px",
+                                height: "14px",
+                                cursor: "pointer",
+                                accentColor: "#0ea5e9",
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span style={{ fontSize: "12.5px", color: "#334155" }}>
+                              {opt}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+
+                      {(userPenggunaSelected || []).includes("Lainnya") && (
+                        <div style={{ marginTop: "10px" }}>
+                          <input
+                            value={userPenggunaLainnya}
+                            onChange={(e) =>
+                              setUserPenggunaFromUi(
+                                userPenggunaSelected || [],
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Tulis lainnya..."
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div style={{ marginTop: "12px" }}>
@@ -3588,18 +4221,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Unit Pengembang
                       </label>
-                      <input
-                        data-field="unit_pengembang"
-                        value={formData.unit_pengembang}
-                        onChange={(e) =>
-                          handleFormChange("unit_pengembang", e.target.value)
-                        }
-                        placeholder="Contoh: Pusdatin, Tim IT Internal"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3607,7 +4233,89 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="unit_pengembang_type"
+                              checked={
+                                unitPengembangType ===
+                                UNIT_PENGEMBANG_INTERNAL_ESELON_1
+                              }
+                              onChange={() =>
+                                setUnitPengembangFromUi(
+                                  UNIT_PENGEMBANG_INTERNAL_ESELON_1,
+                                  "",
+                                )
+                              }
+                            />
+                            {UNIT_PENGEMBANG_INTERNAL_ESELON_1}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="unit_pengembang_type"
+                              checked={
+                                unitPengembangType ===
+                                UNIT_PENGEMBANG_INTERNAL_ESELON_2
+                              }
+                              onChange={() =>
+                                setUnitPengembangFromUi(
+                                  UNIT_PENGEMBANG_INTERNAL_ESELON_2,
+                                  "",
+                                )
+                              }
+                            />
+                            {UNIT_PENGEMBANG_INTERNAL_ESELON_2}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="unit_pengembang_type"
+                              checked={
+                                unitPengembangType === UNIT_PENGEMBANG_EXTERNAL
+                              }
+                              onChange={() =>
+                                setUnitPengembangFromUi(
+                                  UNIT_PENGEMBANG_EXTERNAL,
+                                  unitPengembangExternal,
+                                )
+                              }
+                            />
+                            {UNIT_PENGEMBANG_EXTERNAL}
+                          </label>
+                        </div>
+
+                        {unitPengembangType === UNIT_PENGEMBANG_EXTERNAL && (
+                          <input
+                            value={unitPengembangExternal}
+                            onChange={(e) =>
+                              setUnitPengembangFromUi(
+                                UNIT_PENGEMBANG_EXTERNAL,
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Contoh: Vendor/Instansi (isi nama)"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -3629,21 +4337,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Unit Operasional Teknologi
                       </label>
-                      <input
-                        data-field="unit_operasional_teknologi"
-                        value={formData.unit_operasional_teknologi}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "unit_operasional_teknologi",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Subbag TI, Divisi Infrastruktur"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.unit_operasional_teknologi
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3651,7 +4349,66 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="unit_operasional_teknologi_type"
+                              checked={unitOperasionalType === UNIT_OPERASIONAL_PUSDATIN}
+                              onChange={() =>
+                                setUnitOperasionalTeknologiFromUi(
+                                  UNIT_OPERASIONAL_PUSDATIN,
+                                  "",
+                                )
+                              }
+                            />
+                            {UNIT_OPERASIONAL_PUSDATIN}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="unit_operasional_teknologi_type"
+                              checked={unitOperasionalType === UNIT_OPERASIONAL_LAINNYA}
+                              onChange={() =>
+                                setUnitOperasionalTeknologiFromUi(
+                                  UNIT_OPERASIONAL_LAINNYA,
+                                  unitOperasionalLainnya,
+                                )
+                              }
+                            />
+                            {UNIT_OPERASIONAL_LAINNYA}
+                          </label>
+                        </div>
+
+                        {unitOperasionalType === UNIT_OPERASIONAL_LAINNYA && (
+                          <input
+                            value={unitOperasionalLainnya}
+                            onChange={(e) =>
+                              setUnitOperasionalTeknologiFromUi(
+                                UNIT_OPERASIONAL_LAINNYA,
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Isi unit operasional teknologi"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3707,21 +4464,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Pusat Komputasi Utama
                       </label>
-                      <input
-                        data-field="pusat_komputasi_utama"
-                        value={formData.pusat_komputasi_utama}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_utama",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Jakarta"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.pusat_komputasi_utama
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3729,7 +4476,109 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama_type"
+                              checked={
+                                pusatKomputasiUtamaType ===
+                                PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR
+                              }
+                              onChange={() =>
+                                setPusatKomputasiUtamaFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama_type"
+                              checked={
+                                pusatKomputasiUtamaType ===
+                                PUSAT_KOMPUTASI_UTAMA_DC_CYBER
+                              }
+                              onChange={() =>
+                                setPusatKomputasiUtamaFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_DC_CYBER,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama_type"
+                              checked={
+                                pusatKomputasiUtamaType ===
+                                PUSAT_KOMPUTASI_UTAMA_LAINNYA
+                              }
+                              onChange={() =>
+                                setPusatKomputasiUtamaFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+                                  pusatKomputasiUtamaLainnya,
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_utama_type"
+                              checked={
+                                pusatKomputasiUtamaType ===
+                                PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA
+                              }
+                              onChange={() =>
+                                setPusatKomputasiUtamaFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                          </label>
+                        </div>
+
+                        {pusatKomputasiUtamaType ===
+                          PUSAT_KOMPUTASI_UTAMA_LAINNYA && (
+                          <input
+                            value={pusatKomputasiUtamaLainnya}
+                            onChange={(e) =>
+                              setPusatKomputasiUtamaFromUi(
+                                PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Isi pusat komputasi utama"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3741,21 +4590,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Pusat Komputasi Backup
                       </label>
-                      <input
-                        data-field="pusat_komputasi_backup"
-                        value={formData.pusat_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "pusat_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Data Center Surabaya"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.pusat_komputasi_backup
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3763,7 +4602,108 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup_type"
+                              checked={
+                                pusatKomputasiBackupType ===
+                                PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR
+                              }
+                              onChange={() =>
+                                setPusatKomputasiBackupFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_DC_GAMBIR}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup_type"
+                              checked={
+                                pusatKomputasiBackupType ===
+                                PUSAT_KOMPUTASI_UTAMA_DC_CYBER
+                              }
+                              onChange={() =>
+                                setPusatKomputasiBackupFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_DC_CYBER,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_DC_CYBER}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup_type"
+                              checked={
+                                pusatKomputasiBackupType ===
+                                PUSAT_KOMPUTASI_UTAMA_LAINNYA
+                              }
+                              onChange={() =>
+                                setPusatKomputasiBackupFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+                                  pusatKomputasiBackupLainnya,
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_LAINNYA}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="pusat_komputasi_backup_type"
+                              checked={
+                                pusatKomputasiBackupType ===
+                                PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA
+                              }
+                              onChange={() =>
+                                setPusatKomputasiBackupFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA,
+                                  "",
+                                )
+                              }
+                            />
+                            {PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA} (Android/Desktop)
+                          </label>
+                        </div>
+
+                        {pusatKomputasiBackupType === PUSAT_KOMPUTASI_UTAMA_LAINNYA && (
+                          <input
+                            value={pusatKomputasiBackupLainnya}
+                            onChange={(e) =>
+                              setPusatKomputasiBackupFromUi(
+                                PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Isi pusat komputasi backup"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3775,21 +4715,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Mandiri Komputasi Backup
                       </label>
-                      <input
-                        data-field="mandiri_komputasi_backup"
-                        value={formData.mandiri_komputasi_backup}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "mandiri_komputasi_backup",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="Contoh: Server Lokal Kantor"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.mandiri_komputasi_backup
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3797,7 +4727,126 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup_type"
+                              checked={
+                                mandiriKomputasiBackupType ===
+                                MANDIRI_BACKUP_EX_STORAGE
+                              }
+                              onChange={() =>
+                                setMandiriKomputasiBackupFromUi(
+                                  MANDIRI_BACKUP_EX_STORAGE,
+                                  "",
+                                )
+                              }
+                            />
+                            {MANDIRI_BACKUP_EX_STORAGE}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup_type"
+                              checked={
+                                mandiriKomputasiBackupType ===
+                                MANDIRI_BACKUP_IN_STORAGE
+                              }
+                              onChange={() =>
+                                setMandiriKomputasiBackupFromUi(
+                                  MANDIRI_BACKUP_IN_STORAGE,
+                                  "",
+                                )
+                              }
+                            />
+                            {MANDIRI_BACKUP_IN_STORAGE}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup_type"
+                              checked={
+                                mandiriKomputasiBackupType ===
+                                MANDIRI_BACKUP_EX_CLOUD
+                              }
+                              onChange={() =>
+                                setMandiriKomputasiBackupFromUi(
+                                  MANDIRI_BACKUP_EX_CLOUD,
+                                  "",
+                                )
+                              }
+                            />
+                            {MANDIRI_BACKUP_EX_CLOUD}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup_type"
+                              checked={
+                                mandiriKomputasiBackupType ===
+                                MANDIRI_BACKUP_TIDAK_ADA
+                              }
+                              onChange={() =>
+                                setMandiriKomputasiBackupFromUi(
+                                  MANDIRI_BACKUP_TIDAK_ADA,
+                                  "",
+                                )
+                              }
+                            />
+                            {MANDIRI_BACKUP_TIDAK_ADA}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="mandiri_komputasi_backup_type"
+                              checked={
+                                mandiriKomputasiBackupType ===
+                                MANDIRI_BACKUP_LAINNYA
+                              }
+                              onChange={() =>
+                                setMandiriKomputasiBackupFromUi(
+                                  MANDIRI_BACKUP_LAINNYA,
+                                  mandiriKomputasiBackupLainnya,
+                                )
+                              }
+                            />
+                            {MANDIRI_BACKUP_LAINNYA}
+                          </label>
+                        </div>
+
+                        {mandiriKomputasiBackupType === MANDIRI_BACKUP_LAINNYA && (
+                          <input
+                            value={mandiriKomputasiBackupLainnya}
+                            onChange={(e) =>
+                              setMandiriKomputasiBackupFromUi(
+                                MANDIRI_BACKUP_LAINNYA,
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Isi mandiri komputasi backup"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -3850,18 +4899,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Cloud
                       </label>
-                      <input
-                        data-field="cloud"
-                        value={formData.cloud}
-                        onChange={(e) =>
-                          handleFormChange("cloud", e.target.value)
-                        }
-                        placeholder="Contoh: AWS, Google Cloud, Azure"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.cloud
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3869,7 +4911,53 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="cloud_type"
+                              checked={cloudType === CLOUD_YA}
+                              onChange={() =>
+                                setCloudFromUi(CLOUD_YA, cloudText)
+                              }
+                            />
+                            {CLOUD_YA}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="cloud_type"
+                              checked={cloudType === CLOUD_TIDAK}
+                              onChange={() => setCloudFromUi(CLOUD_TIDAK, "")}
+                            />
+                            {CLOUD_TIDAK}
+                          </label>
+                        </div>
+
+                        {cloudType === CLOUD_YA && (
+                          <input
+                            value={cloudText}
+                            onChange={(e) => setCloudFromUi(CLOUD_YA, e.target.value)}
+                            placeholder="Contoh: AWS, Google Cloud, Azure"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -3891,24 +4979,65 @@ function OperatorUPTDataAplikasi() {
                       >
                         SSL
                       </label>
-                      <input
-                        data-field="ssl"
-                        value={formData.ssl}
-                        onChange={(e) =>
-                          handleFormChange("ssl", e.target.value)
-                        }
-                        placeholder="Contoh: Let's Encrypt, Comodo SSL"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.ssl
                             ? errorBorderColor
                             : "#e6eef6",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="ssl_type"
+                              checked={sslType === SSL_AKTIF_PUSDATIN}
+                              onChange={() => setSslFromUi(SSL_AKTIF_PUSDATIN, "")}
+                            />
+                            {SSL_AKTIF_PUSDATIN}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="ssl_type"
+                              checked={sslType === SSL_AKTIF_UNIT_KERJA}
+                              onChange={() =>
+                                setSslFromUi(SSL_AKTIF_UNIT_KERJA, sslUnitKerja)
+                              }
+                            />
+                            {SSL_AKTIF_UNIT_KERJA}
+                          </label>
+                        </div>
+
+                        {sslType === SSL_AKTIF_UNIT_KERJA && (
+                          <input
+                            value={sslUnitKerja}
+                            onChange={(e) =>
+                              setSslFromUi(SSL_AKTIF_UNIT_KERJA, e.target.value)
+                            }
+                            placeholder="Isi unit kerja (contoh: Dit. X, UPT Y)"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -3961,18 +5090,11 @@ function OperatorUPTDataAplikasi() {
                       >
                         Antivirus
                       </label>
-                      <input
-                        data-field="antivirus"
-                        value={formData.antivirus}
-                        onChange={(e) =>
-                          handleFormChange("antivirus", e.target.value)
-                        }
-                        placeholder="Contoh: Kaspersky, Norton, Avast"
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
                           border: "1px solid #e6eef6",
+                          borderRadius: "8px",
+                          padding: "10px",
                           borderColor: fieldErrors.antivirus
                             ? errorBorderColor
                             : "#e6eef6",
@@ -3980,7 +5102,57 @@ function OperatorUPTDataAplikasi() {
                             ? errorBoxShadow
                             : "none",
                         }}
-                      />
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "14px",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="antivirus_type"
+                              checked={antivirusType === ANTIVIRUS_YA}
+                              onChange={() =>
+                                setAntivirusFromUi(ANTIVIRUS_YA, antivirusText)
+                              }
+                            />
+                            {ANTIVIRUS_YA}
+                          </label>
+
+                          <label style={{ display: "flex", gap: "8px" }}>
+                            <input
+                              type="radio"
+                              name="antivirus_type"
+                              checked={antivirusType === ANTIVIRUS_TIDAK}
+                              onChange={() =>
+                                setAntivirusFromUi(ANTIVIRUS_TIDAK, "")
+                              }
+                            />
+                            {ANTIVIRUS_TIDAK}
+                          </label>
+                        </div>
+
+                        {antivirusType === ANTIVIRUS_YA && (
+                          <input
+                            value={antivirusText}
+                            onChange={(e) =>
+                              setAntivirusFromUi(ANTIVIRUS_YA, e.target.value)
+                            }
+                            placeholder="Contoh: Kaspersky, Norton, Avast"
+                            style={{
+                              width: "100%",
+                              padding: "10px",
+                              borderRadius: "8px",
+                              border: "1px solid #e6eef6",
+                              marginTop: "10px",
+                            }}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -4408,7 +5580,7 @@ function OperatorUPTDataAplikasi() {
                           if (schema.length > 0) {
                             displayField = schema[0].column_name;
                           }
-                        } catch (e) {
+                        } catch {
                           // Fallback: ambil key pertama dari data (selain id)
                           if (data.length > 0) {
                             const keys = Object.keys(data[0]).filter(
@@ -4480,6 +5652,311 @@ function OperatorUPTDataAplikasi() {
                   </div>
                 )}
 
+                {/* Section Akses Aplikasi (Akun) */}
+                <div
+                  style={{
+                    marginTop: "20px",
+                    paddingTop: "20px",
+                    borderTop: "2px solid #e2e8f0",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "4px",
+                        height: "18px",
+                        background: "#4f46e5",
+                        borderRadius: "999px",
+                      }}
+                    />
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 800,
+                          color: "#0f172a",
+                          letterSpacing: "0.2px",
+                        }}
+                      >
+                        AKSES APLIKASI (AKUN)
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            fontWeight: 600,
+                            color: "#64748b",
+                            fontSize: "12px",
+                          }}
+                        >
+                          (UNTUK KEBUTUHAN BPK)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      gap: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                          color: "#0f172a",
+                        }}
+                      >
+                        Username
+                      </label>
+                      <input
+                        data-field="akses_aplikasi_username"
+                        value={formData.akses_aplikasi_username}
+                        onChange={(e) =>
+                          handleFormChange(
+                            "akses_aplikasi_username",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="Username"
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          border: "1px solid #e6eef6",
+                          textTransform: "none",
+                          borderColor: fieldErrors.akses_aplikasi_username
+                            ? errorBorderColor
+                            : "#e6eef6",
+                          boxShadow: fieldErrors.akses_aplikasi_username
+                            ? errorBoxShadow
+                            : "none",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                          color: "#0f172a",
+                        }}
+                      >
+                        Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={aksesPasswordVisible ? "text" : "password"}
+                          data-field="akses_aplikasi_password"
+                          value={formData.akses_aplikasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Password"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            paddingRight: "40px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor: fieldErrors.akses_aplikasi_password
+                              ? errorBorderColor
+                              : "#e6eef6",
+                            boxShadow: fieldErrors.akses_aplikasi_password
+                              ? errorBoxShadow
+                              : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            aksesPasswordVisible
+                              ? "Sembunyikan password"
+                              : "Tampilkan password"
+                          }
+                          onClick={() =>
+                            setAksesPasswordVisible((prev) => !prev)
+                          }
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            border: "none",
+                            background: "transparent",
+                            padding: 0,
+                            cursor: "pointer",
+                            color: "#64748b",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            {!aksesPasswordVisible && (
+                              <path
+                                d="M4 4l16 16"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            )}
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "6px",
+                          fontWeight: 600,
+                          color: "#0f172a",
+                        }}
+                      >
+                        Konfirmasi Password
+                      </label>
+                      <div style={{ position: "relative" }}>
+                        <input
+                          type={
+                            aksesKonfirmasiPasswordVisible ? "text" : "password"
+                          }
+                          data-field="akses_aplikasi_konfirmasi_password"
+                          value={formData.akses_aplikasi_konfirmasi_password}
+                          onChange={(e) =>
+                            handleFormChange(
+                              "akses_aplikasi_konfirmasi_password",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Konfirmasi Password"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            paddingRight: "40px",
+                            borderRadius: "8px",
+                            border: "1px solid #e6eef6",
+                            borderColor:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBorderColor
+                                : "#e6eef6",
+                            boxShadow:
+                              fieldErrors.akses_aplikasi_konfirmasi_password
+                                ? errorBoxShadow
+                                : "none",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          aria-label={
+                            aksesKonfirmasiPasswordVisible
+                              ? "Sembunyikan konfirmasi password"
+                              : "Tampilkan konfirmasi password"
+                          }
+                          onClick={() =>
+                            setAksesKonfirmasiPasswordVisible((prev) => !prev)
+                          }
+                          style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                            border: "none",
+                            background: "transparent",
+                            padding: 0,
+                            cursor: "pointer",
+                            color: "#64748b",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            {!aksesKonfirmasiPasswordVisible && (
+                              <path
+                                d="M4 4l16 16"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            )}
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <small
+                    style={{
+                      display: "block",
+                      marginTop: "8px",
+                      fontSize: "12px",
+                      color: "#64748b",
+                      fontWeight: 600,
+                      letterSpacing: "0.1px",
+                    }}
+                  >
+                    OPSIONAL. JIKA MENGISI PASSWORD, KONFIRMASI HARUS SAMA.
+                  </small>
+                </div>
+
                 <div
                   style={{
                     display: "flex",
@@ -4495,7 +5972,6 @@ function OperatorUPTDataAplikasi() {
                     onClick={() => {
                       setShowModal(false);
                       setFieldErrors({});
-                      setShowCaraAksesDropdown(false);
                     }}
                     style={{
                       padding: "8px 18px",
@@ -5127,7 +6603,7 @@ function OperatorUPTDataAplikasi() {
                                 const displayField = schema[0].column_name;
                                 displayValue = item[displayField] || fieldValue;
                               }
-                            } catch (e) {
+                            } catch {
                               const keys = Object.keys(item).filter(
                                 (k) =>
                                   k !== idField &&
