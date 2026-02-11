@@ -30,15 +30,27 @@ function PenggunaSection() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [lastSubmitAction, setLastSubmitAction] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
     fetchMasterData();
   }, []);
+
+  // Auto-hide success popup after shown
+  useEffect(() => {
+    let t;
+    if (submitSuccess) {
+      // shorter auto-hide so notification doesn't linger too long
+      t = setTimeout(() => setSubmitSuccess(false), 1200);
+    }
+    return () => clearTimeout(t);
+  }, [submitSuccess]);
 
   // Filter users based on search and criteria
   useEffect(() => {
@@ -262,6 +274,7 @@ function PenggunaSection() {
     setSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
+    setLastSubmitAction(isEditMode ? "edit" : "add");
 
     try {
       const url = isEditMode
@@ -324,12 +337,11 @@ function PenggunaSection() {
       });
       setOperatorType("eselon1");
 
-      setTimeout(() => {
-        setShowModal(false);
-        setIsEditMode(false);
-        setSelectedUser(null);
-        fetchUsers();
-      }, 1500);
+      // Close modal immediately after success
+      setShowModal(false);
+      setIsEditMode(false);
+      setSelectedUser(null);
+      fetchUsers();
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -769,7 +781,7 @@ function PenggunaSection() {
                           width: "14%",
                         }}
                       >
-                        Email
+                        Nama
                       </th>
                       <th
                         style={{
@@ -781,10 +793,10 @@ function PenggunaSection() {
                           fontSize: "11.5px",
                           textTransform: "uppercase",
                           letterSpacing: "0.05em",
-                          width: "11%",
+                          width: "14%",
                         }}
                       >
-                        Nama
+                        Email
                       </th>
                       <th
                         style={{
@@ -931,6 +943,10 @@ function PenggunaSection() {
                           borderBottom: "1px solid #e2e8f0",
                           minHeight: "48px",
                         }}
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowDetailModal(true);
+                        }}
                         onMouseEnter={(e) =>
                           (e.currentTarget.style.backgroundColor = "#f8fafc")
                         }
@@ -953,6 +969,18 @@ function PenggunaSection() {
                           style={{
                             padding: "10px 12px",
                             color: "#1e293b",
+                            width: "12%",
+                            verticalAlign: "middle",
+                          }}
+                        >
+                          <div style={clampStyle}>
+                            {(user.nama || "-").toUpperCase()}
+                          </div>
+                        </td>
+                        <td
+                          style={{
+                            padding: "10px 12px",
+                            color: "#1e293b",
                             fontWeight: 500,
                             width: "15%",
                             verticalAlign: "middle",
@@ -960,18 +988,6 @@ function PenggunaSection() {
                         >
                           <div style={{ ...clampStyle, textTransform: "none" }}>
                             {user.email || "-"}
-                          </div>
-                        </td>
-                        <td
-                          style={{
-                            padding: "10px 12px",
-                            color: "#1e293b",
-                            width: "12%",
-                            verticalAlign: "middle",
-                          }}
-                        >
-                          <div style={clampStyle}>
-                            {(user.nama || "-").toUpperCase()}
                           </div>
                         </td>
                         <td
@@ -1130,7 +1146,10 @@ function PenggunaSection() {
                           }}
                         >
                           <button
-                            onClick={() => handleEdit(user)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(user);
+                            }}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -1962,6 +1981,208 @@ function PenggunaSection() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Detail Modal (readonly) */}
+      {showDetailModal && selectedUser && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(2,6,23,0.45)",
+            backdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1002,
+            padding: 20,
+          }}
+          onClick={() => {
+            setShowDetailModal(false);
+            setSelectedUser(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            style={{
+              backgroundColor: "transparent",
+              borderRadius: 12,
+              maxWidth: "980px",
+              width: "100%",
+              overflow: "hidden",
+              boxShadow: "none",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with gradient */}
+            <div style={{ background: "linear-gradient(90deg,#6d28d9,#8b5cf6)", padding: 20, borderRadius: 12, display: "flex", gap: 16, alignItems: "center" }}>
+              <div style={{ width: 56, height: 56, borderRadius: 10, background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 18 }}>
+                {((selectedUser?.nama || "").split(" ").map(s=>s?.[0]).filter(Boolean).slice(0,2).join("")||"?").toUpperCase()}
+              </div>
+              <div style={{ color: "#fff", flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, opacity: 0.95 }}>ESELON PENGGUNA</div>
+                <div style={{ fontSize: 20, fontWeight: 800, marginTop: 6 }}>{selectedUser?.nama || "-"}</div>
+                <div style={{ fontSize: 12, opacity: 0.9, marginTop: 4 }}>{selectedUser?.email || "-"}</div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedUser(null);
+                  }}
+                  style={{ width: 44, height: 44, borderRadius: 10, border: "none", background: "rgba(255,255,255,0.18)", color: "#fff", cursor: "pointer", fontSize: 16 }}
+                  aria-label="Tutup"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Body (white cards) */}
+            <div style={{ background: "#ffffff", borderRadius: "0 0 12px 12px", padding: 20 }}>
+              <div style={{ display: "grid", gap: 16 }}>
+                <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #eef2ff" }}>
+                  <div style={{ background: "linear-gradient(90deg,#eef2ff,#ede9fe)", padding: 12, fontWeight: 800, color: "#3b3663" }}>Informasi Umum</div>
+                  <div style={{ padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, alignItems: "center" }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Nama</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.nama || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Email</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.email || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Status</div>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ padding: "6px 10px", borderRadius: 9999, background: (selectedUser?.status_aktif===1?"#dcfce7":"#fee2e2"), color: (selectedUser?.status_aktif===1?"#166534":"#b91c1c"), fontWeight: 700, fontSize: 12 }}>{selectedUser?.status_aktif===1?"AKTIF":"NONAKTIF"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid #eef2ff" }}>
+                  <div style={{ background: "linear-gradient(90deg,#eef2ff,#ede9fe)", padding: 12, fontWeight: 800, color: "#3b3663" }}>Deskripsi & Organisasi</div>
+                  <div style={{ padding: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Jabatan</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.jabatan || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>NIP</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.nip || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Kontak</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.kontak || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Role</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.nama_role === "Admin" ? "Administrator" : selectedUser?.nama_role || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Eselon 1</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.nama_eselon1 || "-"}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 6 }}>Eselon 2 / UPT</div>
+                      <div style={{ fontWeight: 700, color: "#111827" }}>{selectedUser?.nama_eselon2 || selectedUser?.nama_upt || "-"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 14 }}>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedUser(null);
+                  }}
+                  style={{
+                    padding: "10px 16px",
+                    backgroundColor: "#fff",
+                    color: "#0f172a",
+                    border: "1px solid #e6eef8",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  TUTUP
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDetailModal(false);
+                    handleEdit(selectedUser);
+                  }}
+                  style={{
+                    padding: "10px 18px",
+                    background: "linear-gradient(90deg,#6d28d9,#8b5cf6)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    fontWeight: 800,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  EDIT
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success popup */}
+      {submitSuccess && (
+        <div
+          style={{
+            position: "fixed",
+            right: 24,
+            bottom: 24,
+            zIndex: 2000,
+            minWidth: 280,
+            background: "linear-gradient(90deg,#ecfdf5,#dcfce7)",
+            border: "1px solid #bbf7d0",
+            color: "#064e3b",
+            padding: "12px 16px",
+            borderRadius: 12,
+            boxShadow: "0 8px 24px rgba(2,6,23,0.12)",
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+          }}
+        >
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", color: "#065f46", fontWeight: 800 }}>
+            ✓
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800 }}>Berhasil</div>
+            <div style={{ fontSize: 13 }}>{lastSubmitAction === "edit" ? "Akun pengguna berhasil diupdate." : "Akun pengguna berhasil ditambahkan."}</div>
+          </div>
+          <button
+            onClick={() => setSubmitSuccess(false)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#065f46",
+              cursor: "pointer",
+              fontWeight: 700,
+            }}
+            aria-label="Tutup notifikasi"
+          >
+            ✕
+          </button>
         </div>
       )}
     </section>
