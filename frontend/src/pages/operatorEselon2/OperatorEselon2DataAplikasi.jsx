@@ -2909,39 +2909,70 @@ function OperatorEselon2DataAplikasi() {
       {/* Modal for input/edit */}
       {showModal && (
         <div
+          className="oe2-aplikasi-modal"
           style={{
             position: "fixed",
             inset: 0,
-            backgroundColor: "rgba(2, 6, 23, 0.7)",
-            backdropFilter: "blur(4px)",
+            backgroundColor: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 60,
-            padding: "20px",
+            animation: "fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
-          onClick={() => setShowModal(false)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowModal(false);
+          }}
         >
+          <style>{`
+            .oe2-aplikasi-modal input:not([type="checkbox"]):not([type="radio"]),
+            .oe2-aplikasi-modal select,
+            .oe2-aplikasi-modal textarea {
+              background-color: #f8fafc !important;
+              border-radius: 10px !important;
+              border-width: 1.5px !important;
+              border-style: solid !important;
+              padding: 10px 12px !important;
+              font-size: 14px !important;
+            }
+
+            .oe2-aplikasi-modal input:not([type="checkbox"]):not([type="radio"]):focus,
+            .oe2-aplikasi-modal select:focus,
+            .oe2-aplikasi-modal textarea:focus {
+              border-color: #6366f1 !important;
+              box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08) !important;
+            }
+
+            .oe2-aplikasi-modal input:disabled:not([type="checkbox"]):not([type="radio"]),
+            .oe2-aplikasi-modal select:disabled,
+            .oe2-aplikasi-modal textarea:disabled {
+              background-color: #f3f4f6 !important;
+            }
+          `}</style>
           <div
             style={{
               width: "100%",
               maxWidth: "900px",
-              background: "#fff",
+              background: "#ffffff",
               borderRadius: "16px",
-              boxShadow: "0 24px 48px rgba(0, 0, 0, 0.2)",
+              boxShadow:
+                "0 20px 60px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.05)",
+              maxHeight: "90vh",
               display: "flex",
               flexDirection: "column",
-              maxHeight: "90vh",
-              overflow: "hidden",
+              animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Fixed Header */}
             <div
               style={{
-                background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)",
-                padding: "18px 22px",
-                borderRadius: "16px 16px 0 0",
+                background: "#ffffff",
+                borderBottom: "1px solid #f1f5f9",
+                padding: "20px 28px",
+                borderTopLeftRadius: "16px",
+                borderTopRightRadius: "16px",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -2952,19 +2983,20 @@ function OperatorEselon2DataAplikasi() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "12px",
+                  gap: "14px",
                 }}
               >
                 <div
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    background: "rgba(255, 255, 255, 0.15)",
+                    width: "40px",
+                    height: "40px",
+                    background:
+                      "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
                     borderRadius: "10px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "1.5px solid rgba(255, 255, 255, 0.2)",
+                    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
                   }}
                 >
                   {editMode ? (
@@ -2974,12 +3006,21 @@ function OperatorEselon2DataAplikasi() {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
                     >
                       <path
-                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13M18.5 2.5C18.8978 2.1022 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1022 21.5 2.5C21.8978 2.8978 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.1022 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
-                        stroke="white"
+                        d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13"
+                        stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M18.5 2.5C18.8978 2.1022 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.1022 21.5 2.5C21.8978 2.8978 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.1022 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       />
                     </svg>
                   ) : (
@@ -2989,6 +3030,7 @@ function OperatorEselon2DataAplikasi() {
                       viewBox="0 0 24 24"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#fff" }}
                     >
                       <rect
                         x="3"
@@ -2996,7 +3038,7 @@ function OperatorEselon2DataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -3005,7 +3047,7 @@ function OperatorEselon2DataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -3014,7 +3056,7 @@ function OperatorEselon2DataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                       <rect
@@ -3023,7 +3065,7 @@ function OperatorEselon2DataAplikasi() {
                         width="7"
                         height="7"
                         rx="1.5"
-                        stroke="white"
+                        stroke="currentColor"
                         strokeWidth="2"
                       />
                     </svg>
@@ -3032,9 +3074,10 @@ function OperatorEselon2DataAplikasi() {
                 <h2
                   style={{
                     margin: 0,
-                    color: "#ffffff",
-                    fontSize: "17px",
+                    color: "#0f172a",
+                    fontSize: "18px",
                     fontWeight: 700,
+                    letterSpacing: "-0.02em",
                   }}
                 >
                   {editMode ? "Edit Aplikasi" : "Tambah Aplikasi Baru"}
@@ -3043,35 +3086,38 @@ function OperatorEselon2DataAplikasi() {
               <button
                 onClick={() => setShowModal(false)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.2)",
-                  border: "1.5px solid rgba(255, 255, 255, 0.3)",
-                  borderRadius: "8px",
-                  width: "32px",
-                  height: "32px",
+                  background: "#f8fafc",
+                  border: "none",
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
+                  color: "#64748b",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#f1f5f9";
+                  e.currentTarget.style.color = "#0f172a";
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                onMouseOut={(e) => {
+                  e.currentTarget.style.background = "#f8fafc";
+                  e.currentTarget.style.color = "#64748b";
                 }}
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
                     d="M18 6L6 18M6 6L18 18"
-                    stroke="white"
-                    strokeWidth="2.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                 </svg>
@@ -3081,61 +3127,57 @@ function OperatorEselon2DataAplikasi() {
             {/* Scrollable Content */}
             <div
               style={{
-                padding: "24px",
                 overflowY: "auto",
                 flex: 1,
               }}
             >
-              <form onSubmit={handleSubmitForm}>
+              <form onSubmit={handleSubmitForm} style={{ padding: "32px" }}>
                 {/* SECTION: Informasi Dasar */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "24px",
-                    borderBottom: "1.5px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
-                  <div
+                  <h3
                     style={{
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#4f46e5",
+                      marginBottom: "20px",
+                      marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
-                      marginBottom: "16px",
+                      gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "20px",
-                        background:
-                          "linear-gradient(180deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    />
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#0f172a",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
                     >
-                      Informasi Dasar
-                    </h3>
-                  </div>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="12" y1="18" x2="12" y2="12" />
+                      <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
+                    Informasi Dasar
+                  </h3>
 
                   <div style={{ marginBottom: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        fontSize: "12px",
-                        color: "#475569",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Nama Aplikasi
@@ -3183,12 +3225,10 @@ function OperatorEselon2DataAplikasi() {
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
-                        fontSize: "12px",
-                        color: "#475569",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Deskripsi dan Fungsi Aplikasi
@@ -3240,53 +3280,56 @@ function OperatorEselon2DataAplikasi() {
                 {/* SECTION: Lokasi & Penggunaan */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
                     Lokasi & Penggunaan
                   </h3>
 
+                  {/* Eselon 1 dan Eselon 2 - 2 kolom */}
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
-                      marginBottom: "14px",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "16px",
+                      marginBottom: "18px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 1
@@ -3351,12 +3394,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Eselon 2
@@ -3418,17 +3459,18 @@ function OperatorEselon2DataAplikasi() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* Cara Akses - Full width */}
+                  <div style={{ marginBottom: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cara Akses Aplikasi
@@ -3516,7 +3558,7 @@ function OperatorEselon2DataAplikasi() {
                                     width: "14px",
                                     height: "14px",
                                     cursor: "pointer",
-                                    accentColor: "#0ea5e9",
+                                    accentColor: "#6366f1",
                                     flexShrink: 0,
                                   }}
                                 />
@@ -3557,40 +3599,45 @@ function OperatorEselon2DataAplikasi() {
                 {/* Detail Teknis */}
                 <div
                   style={{
-                    marginBottom: "24px",
-                    paddingBottom: "20px",
-                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "32px",
+                    paddingBottom: "28px",
+                    borderBottom: "1px solid #cbd5e1",
                   }}
                 >
                   <h3
                     style={{
-                      fontSize: "14px",
+                      fontSize: "13px",
                       fontWeight: 700,
-                      color: "#0f172a",
-                      marginBottom: "16px",
+                      color: "#4f46e5",
+                      marginBottom: "20px",
                       marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
                     }}
                   >
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "16px",
-                        background:
-                          "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)",
-                        borderRadius: "2px",
-                      }}
-                    ></div>
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                      <line x1="8" y1="21" x2="16" y2="21" />
+                      <line x1="12" y1="17" x2="12" y2="21" />
+                    </svg>
                     Detail Teknis
                   </h3>
 
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "14px",
+                      gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                      gap: "16px",
                       marginTop: "14px",
                     }}
                   >
@@ -3598,12 +3645,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "7px",
+                          marginBottom: "8px",
                           fontWeight: 600,
-                          color: "#475569",
-                          fontSize: "12px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Frekuensi Pemakaian
@@ -3673,8 +3718,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status Aplikasi
@@ -3714,13 +3761,18 @@ function OperatorEselon2DataAplikasi() {
                           ))}
                       </select>
                     </div>
+                  </div>
 
+                  {/* Ekosistem - Full width */}
+                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Ekosistem
@@ -3766,16 +3818,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Utama
@@ -3817,8 +3871,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PDN Backup
@@ -3861,16 +3917,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Internal
@@ -3931,8 +3989,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         PIC Eksternal
@@ -3995,16 +4055,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Internal
@@ -4032,8 +4094,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kontak PIC Eksternal
@@ -4058,12 +4122,14 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Domain
@@ -4089,12 +4155,14 @@ function OperatorEselon2DataAplikasi() {
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       User / Pengguna
@@ -4103,12 +4171,12 @@ function OperatorEselon2DataAplikasi() {
                       data-field="user_pengguna"
                       style={{
                         width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #e6eef6",
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: "1.5px solid",
                         borderColor: fieldErrors.user_pengguna
                           ? errorBorderColor
-                          : "#e6eef6",
+                          : "#cbd5e1",
                         boxShadow: fieldErrors.user_pengguna
                           ? errorBoxShadow
                           : "none",
@@ -4118,8 +4186,8 @@ function OperatorEselon2DataAplikasi() {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "8px",
+                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                          gap: "10px",
                         }}
                       >
                         {USER_PENGGUNA_OPTIONS.map((opt) => (
@@ -4129,11 +4197,12 @@ function OperatorEselon2DataAplikasi() {
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
-                              padding: "6px 8px",
+                              padding: "8px 12px",
                               cursor: "pointer",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4166,6 +4235,7 @@ function OperatorEselon2DataAplikasi() {
                                 width: "14px",
                                 height: "14px",
                                 cursor: "pointer",
+                                accentColor: "#6366f1",
                               }}
                             />
                             <span
@@ -4209,12 +4279,14 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Data Yang Digunakan
@@ -4242,12 +4314,14 @@ function OperatorEselon2DataAplikasi() {
                     />
                   </div>
 
-                  <div style={{ marginTop: "12px" }}>
+                  <div style={{ marginTop: "14px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "6px",
+                        marginBottom: "8px",
                         fontWeight: 600,
+                        color: "#334155",
+                        fontSize: "13px",
                       }}
                     >
                       Luaran/Output
@@ -4279,16 +4353,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Bahasa Pemrograman
@@ -4318,8 +4394,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Basis Data
@@ -4347,20 +4425,15 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Kerangka Pengembangan / Framework
@@ -4389,12 +4462,18 @@ function OperatorEselon2DataAplikasi() {
                         }}
                       />
                     </div>
+                  </div>
+
+                  {/* Unit Pengembang - Full width */}
+                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Pengembang
@@ -4403,29 +4482,30 @@ function OperatorEselon2DataAplikasi() {
                         data-field="unit_pengembang"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_pengembang
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.unit_pengembang
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "8px" }}>
+                        <div style={{ display: "grid", gap: "10px", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4445,7 +4525,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#6366f1" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4460,10 +4540,11 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4483,7 +4564,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#6366f1" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4498,10 +4579,11 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4518,7 +4600,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#6366f1" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4554,20 +4636,16 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
-                    }}
-                  >
+                  {/* Unit Operasional - Full width */}
+                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Unit Operasional Teknologi
@@ -4576,29 +4654,30 @@ function OperatorEselon2DataAplikasi() {
                         data-field="unit_operasional_teknologi"
                         style={{
                           width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.unit_operasional_teknologi
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.unit_operasional_teknologi
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "8px" }}>
+                        <div style={{ display: "grid", gap: "10px", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4618,7 +4697,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#6366f1" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4633,10 +4712,11 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: "1.5px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                           >
                             <input
@@ -4655,7 +4735,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#6366f1" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4692,15 +4772,24 @@ function OperatorEselon2DataAplikasi() {
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  {/* Nilai Pengembangan - Full width */}
+                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Nilai Pengembangan Aplikasi
+                        <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "12px", marginLeft: "6px" }}>
+                          Untuk kebutuhan BPK
+                        </span>
                       </label>
                       <input
                         data-field="nilai_pengembangan_aplikasi"
@@ -4732,16 +4821,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Utama
@@ -4751,29 +4842,29 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.pusat_komputasi_utama
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.pusat_komputasi_utama
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -4791,7 +4882,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4806,10 +4897,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -4827,7 +4918,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4842,10 +4933,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -4862,7 +4953,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4877,10 +4968,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -4898,7 +4989,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -4945,8 +5036,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Pusat Komputasi Backup
@@ -4956,29 +5049,29 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.pusat_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.pusat_komputasi_backup
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -4996,7 +5089,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5011,10 +5104,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5032,7 +5125,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5047,10 +5140,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5067,7 +5160,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5082,10 +5175,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5103,7 +5196,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5150,8 +5243,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Mandiri Komputasi Backup
@@ -5161,29 +5256,29 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.mandiri_komputasi_backup
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.mandiri_komputasi_backup
                             ? errorBoxShadow
                             : "none",
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5203,7 +5298,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5218,10 +5313,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5241,7 +5336,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5256,10 +5351,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5279,7 +5374,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5294,10 +5389,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5317,7 +5412,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5332,10 +5427,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5352,7 +5447,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5401,16 +5496,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Perangkat Lunak
@@ -5440,8 +5537,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Cloud
@@ -5451,12 +5550,12 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.cloud
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.cloud
                             ? errorBoxShadow
                             : "none",
@@ -5470,10 +5569,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5487,7 +5586,7 @@ function OperatorEselon2DataAplikasi() {
                                   buildCloudString("ya", cloudYaText),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5502,10 +5601,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5520,7 +5619,7 @@ function OperatorEselon2DataAplikasi() {
                                   buildCloudString("tidak", ""),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5566,16 +5665,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         SSL
@@ -5585,12 +5686,12 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.ssl
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.ssl ? errorBoxShadow : "none",
                           backgroundColor: "#fff",
                         }}
@@ -5602,10 +5703,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5620,7 +5721,7 @@ function OperatorEselon2DataAplikasi() {
                                   buildSslString("pusdatin", ""),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5635,10 +5736,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5655,7 +5756,7 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5699,8 +5800,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tanggal Expired SSL
@@ -5732,16 +5835,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Antivirus
@@ -5751,12 +5856,12 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "10px",
+                          padding: "12px",
                           borderRadius: "8px",
-                          border: "1px solid #e6eef6",
+                          border: "1px solid",
                           borderColor: fieldErrors.antivirus
                             ? errorBorderColor
-                            : "#e6eef6",
+                            : "#cbd5e1",
                           boxShadow: fieldErrors.antivirus
                             ? errorBoxShadow
                             : "none",
@@ -5770,10 +5875,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5787,7 +5892,7 @@ function OperatorEselon2DataAplikasi() {
                                   buildAntivirusString("ya", antivirusYaText),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5802,10 +5907,10 @@ function OperatorEselon2DataAplikasi() {
                               alignItems: "center",
                               gap: "8px",
                               cursor: "pointer",
-                              padding: "6px 8px",
-                              borderRadius: "6px",
-                              border: "1px solid #e6eef6",
-                              backgroundColor: "#fafbfc",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #cbd5e1",
+                              backgroundColor: "#f8fafc",
                             }}
                           >
                             <input
@@ -5820,7 +5925,7 @@ function OperatorEselon2DataAplikasi() {
                                   buildAntivirusString("tidak", ""),
                                 );
                               }}
-                              style={{ width: "14px", height: "14px" }}
+                              style={{ width: "14px", height: "14px", accentColor: "#0ea5e9" }}
                             />
                             <span
                               style={{ fontSize: "12.5px", color: "#334155" }}
@@ -5866,16 +5971,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Alamat IP Publik
@@ -5914,8 +6021,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Keterangan
@@ -5947,16 +6056,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Status BMN
@@ -5989,8 +6100,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Server Aplikasi
@@ -6027,16 +6140,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         Tipe Lisensi Bahasa Pemrograman
@@ -6072,8 +6187,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         API Internal Sistem Integrasi
@@ -6111,16 +6228,18 @@ function OperatorEselon2DataAplikasi() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
-                      gap: "12px",
-                      marginTop: "12px",
+                      gap: "14px",
+                      marginTop: "14px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         WAF
@@ -6178,8 +6297,10 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
+                          fontSize: "13px",
                         }}
                       >
                         VA/PT
@@ -6271,7 +6392,7 @@ function OperatorEselon2DataAplikasi() {
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
-                        gap: "12px",
+                        gap: "14px",
                       }}
                     >
                       {dynamicTables.map((table) => {
@@ -6305,8 +6426,9 @@ function OperatorEselon2DataAplikasi() {
                             <label
                               style={{
                                 display: "block",
-                                marginBottom: "6px",
+                                marginBottom: "8px",
                                 fontWeight: 600,
+                                color: "#334155",
                                 fontSize: "13px",
                               }}
                             >
@@ -6366,40 +6488,41 @@ function OperatorEselon2DataAplikasi() {
                     borderTop: "2px solid #e2e8f0",
                   }}
                 >
-                  <div
+                  <h3
                     style={{
-                      marginBottom: "16px",
-                      padding: "12px 16px",
-                      backgroundColor: "#f8fafc",
-                      borderLeft: "4px solid #6366f1",
-                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      color: "#4f46e5",
+                      marginBottom: "20px",
+                      marginTop: 0,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
                     }}
                   >
-                    <h3
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: 700,
-                        color: "#1e293b",
-                        margin: 0,
-                      }}
-                    >
-                      AKSES APLIKASI (AKUN) (UNTUK KEBUTUHAN BPK)
-                    </h3>
-                  </div>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    AKSES APLIKASI (AKUN)
+                  </h3>
 
                   <div
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "12px",
+                      gap: "16px",
                     }}
                   >
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
                           fontSize: "13px",
                         }}
                       >
@@ -6429,8 +6552,9 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
                           fontSize: "13px",
                         }}
                       >
@@ -6491,8 +6615,9 @@ function OperatorEselon2DataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "6px",
+                          marginBottom: "8px",
                           fontWeight: 600,
+                          color: "#334155",
                           fontSize: "13px",
                         }}
                       >
