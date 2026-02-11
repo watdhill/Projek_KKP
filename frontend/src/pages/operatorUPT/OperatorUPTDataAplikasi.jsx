@@ -219,7 +219,7 @@ function OperatorUPTDataAplikasi() {
     if (!t) return "";
     if (t === UNIT_PENGEMBANG_EXTERNAL) {
       const extra = String(externalText || "").trim();
-      return extra;
+      return extra ? `Eksternal - ${extra}` : UNIT_PENGEMBANG_EXTERNAL;
     }
     return t;
   };
@@ -239,6 +239,15 @@ function OperatorUPTDataAplikasi() {
       return { type: UNIT_PENGEMBANG_INTERNAL_ESELON_2, externalText: "" };
     }
 
+    // Handle "Eksternal - <text>"
+    const mExternal = raw.match(/^eksternal\s*-\s*(.+)$/i);
+    if (mExternal && mExternal[1]) {
+      return {
+        type: UNIT_PENGEMBANG_EXTERNAL,
+        externalText: String(mExternal[1]).trim(),
+      };
+    }
+
     const m = raw.match(/^eksternal\s*:\s*(.+)$/i);
     if (m && m[1]) {
       return {
@@ -247,7 +256,7 @@ function OperatorUPTDataAplikasi() {
       };
     }
 
-    // Fallback: value lama yang tidak cocok dianggap eksternal
+    // Fallback: value lama yang tidak cocok dianggap eksternal (direct text)
     return { type: UNIT_PENGEMBANG_EXTERNAL, externalText: raw };
   };
 
@@ -275,9 +284,20 @@ function OperatorUPTDataAplikasi() {
       return { type: UNIT_OPERASIONAL_PUSDATIN, lainnyaText: "" };
     }
 
-    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    const m = raw.match(/^lainnya\s*-\s*(.+)$/i);
     if (m && m[1]) {
-      return { type: UNIT_OPERASIONAL_LAINNYA, lainnyaText: String(m[1]).trim() };
+      return {
+        type: UNIT_OPERASIONAL_LAINNYA,
+        lainnyaText: String(m[1]).trim(),
+      };
+    }
+
+    const mLainnya = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (mLainnya && mLainnya[1]) {
+      return {
+        type: UNIT_OPERASIONAL_LAINNYA,
+        lainnyaText: String(mLainnya[1]).trim(),
+      };
     }
 
     return { type: UNIT_OPERASIONAL_LAINNYA, lainnyaText: raw };
@@ -318,11 +338,19 @@ function OperatorUPTDataAplikasi() {
       return { type: PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA, lainnyaText: "" };
     }
 
-    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    const m = raw.match(/^lainnya\s*-\s*(.+)$/i);
     if (m && m[1]) {
       return {
         type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
         lainnyaText: String(m[1]).trim(),
+      };
+    }
+
+    const mLainnya = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (mLainnya && mLainnya[1]) {
+      return {
+        type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+        lainnyaText: String(mLainnya[1]).trim(),
       };
     }
 
@@ -361,11 +389,19 @@ function OperatorUPTDataAplikasi() {
       return { type: PUSAT_KOMPUTASI_UTAMA_TIDAK_ADA, lainnyaText: "" };
     }
 
-    const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    const m = raw.match(/^lainnya\s*-\s*(.+)$/i);
     if (m && m[1]) {
       return {
         type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
         lainnyaText: String(m[1]).trim(),
+      };
+    }
+
+    const mLainnya = raw.match(/^lainnya\s*:\s*(.+)$/i);
+    if (mLainnya && mLainnya[1]) {
+      return {
+        type: PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+        lainnyaText: String(mLainnya[1]).trim(),
       };
     }
 
@@ -386,7 +422,9 @@ function OperatorUPTDataAplikasi() {
     if (t === MANDIRI_BACKUP_IN_STORAGE) return MANDIRI_BACKUP_IN_STORAGE;
     if (t === MANDIRI_BACKUP_EX_CLOUD) return MANDIRI_BACKUP_EX_CLOUD;
     if (t === MANDIRI_BACKUP_TIDAK_ADA) return MANDIRI_BACKUP_TIDAK_ADA;
-    if (t === MANDIRI_BACKUP_LAINNYA) return String(lainnyaText || "").trim();
+    if (t === MANDIRI_BACKUP_LAINNYA) {
+      return String(lainnyaText || "").trim();
+    }
     return "";
   };
 
@@ -411,6 +449,17 @@ function OperatorUPTDataAplikasi() {
       return { type: MANDIRI_BACKUP_TIDAK_ADA, lainnyaText: "" };
     }
 
+    // Handle "Lainnya - <text>" (strip prefix if present)
+    if (normalized.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: MANDIRI_BACKUP_LAINNYA,
+          lainnyaText: parts.slice(1).join("-").trim()
+        };
+      }
+    }
+
     const m = raw.match(/^lainnya\s*:\s*(.+)$/i);
     if (m && m[1]) {
       return { type: MANDIRI_BACKUP_LAINNYA, lainnyaText: String(m[1]).trim() };
@@ -430,7 +479,10 @@ function OperatorUPTDataAplikasi() {
     const t = String(type || "").trim();
     if (!t) return "";
     if (t === CLOUD_TIDAK) return CLOUD_TIDAK;
-    if (t === CLOUD_YA) return String(freeText || "").trim();
+    if (t === CLOUD_YA) {
+      const text = String(freeText || "").trim();
+      return text ? `Ya - ${text}` : CLOUD_YA;
+    }
     return "";
   };
 
@@ -441,6 +493,17 @@ function OperatorUPTDataAplikasi() {
     const normalized = raw.toLowerCase().replace(/\s+/g, " ");
     if (normalized === CLOUD_TIDAK.toLowerCase()) {
       return { type: CLOUD_TIDAK, freeText: "" };
+    }
+
+    // Handle "Ya - <text>"
+    if (normalized.startsWith("ya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: CLOUD_YA,
+          freeText: parts.slice(1).join("-").trim()
+        };
+      }
     }
 
     // Support legacy formats like "Ya: AWS" or plain provider text
@@ -469,7 +532,7 @@ function OperatorUPTDataAplikasi() {
     if (t === SSL_AKTIF_PUSDATIN) return SSL_AKTIF_PUSDATIN;
     if (t === SSL_AKTIF_UNIT_KERJA) {
       const extra = String(unitKerjaText || "").trim();
-      return extra ? `Aktif/${extra}` : "";
+      return extra ? `Aktif/Unit Kerja - ${extra}` : SSL_AKTIF_UNIT_KERJA;
     }
     return "";
   };
@@ -488,9 +551,25 @@ function OperatorUPTDataAplikasi() {
     if (aktifSlash && aktifSlash[1]) {
       const afterSlash = String(aktifSlash[1]).trim();
       const afterNorm = afterSlash.toLowerCase().replace(/\s+/g, " ");
+
       if (afterNorm === "pusdatin") {
         return { type: SSL_AKTIF_PUSDATIN, unitKerjaText: "" };
       }
+
+      // Check for "Unit Kerja - <text>" or "Unit Kerja"
+      if (afterNorm.startsWith("unit kerja")) {
+        // Check for " - " separator
+        const separatorIndex = afterSlash.indexOf("-");
+        if (separatorIndex !== -1) {
+          return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: afterSlash.substring(separatorIndex + 1).trim() };
+        }
+        // No separator, check if it's just "Unit Kerja"
+        const remainder = afterSlash.substring(10).trim(); // "Unit Kerja".length = 10
+        if (!remainder) return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: "" };
+
+        return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: remainder };
+      }
+
       return { type: SSL_AKTIF_UNIT_KERJA, unitKerjaText: afterSlash };
     }
 
@@ -926,12 +1005,12 @@ function OperatorUPTDataAplikasi() {
         ssl: app.ssl || "",
         ssl_expired: app.ssl_expired
           ? (() => {
-              const date = new Date(app.ssl_expired);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              return `${year}-${month}-${day}`;
-            })()
+            const date = new Date(app.ssl_expired);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          })()
           : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
@@ -1587,8 +1666,8 @@ function OperatorUPTDataAplikasi() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName,
-          )}`
+          originalAppName,
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -1639,7 +1718,7 @@ function OperatorUPTDataAplikasi() {
         showMessage(
           "error",
           "Aplikasi sudah terdaftar di database!\n\n" +
-            (payload?.message || ""),
+          (payload?.message || ""),
           7000,
         );
       } else if (
@@ -1654,15 +1733,15 @@ function OperatorUPTDataAplikasi() {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
           7000,
         );
       } else {
         showMessage(
           "error",
           "Error: " +
-            errorMsg +
-            "\n\nSilakan cek browser console (F12) untuk detail lengkap",
+          errorMsg +
+          "\n\nSilakan cek browser console (F12) untuk detail lengkap",
           8000,
         );
       }
@@ -2564,13 +2643,13 @@ function OperatorUPTDataAplikasi() {
                       >
                         {app.ssl_expired
                           ? new Date(app.ssl_expired).toLocaleDateString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
                           : "-"}
                       </td>
                       <td
@@ -3234,7 +3313,7 @@ function OperatorUPTDataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.upt_id} value={x.upt_id}>
@@ -3385,17 +3464,17 @@ function OperatorUPTDataAplikasi() {
                           master.cara_akses.filter(
                             (x) => x.status_aktif === 1 || x.status_aktif === true,
                           ).length === 0) && (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#94a3b8",
-                              textAlign: "center",
-                              padding: "20px",
-                            }}
-                          >
-                            Tidak ada data Cara Akses
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                padding: "20px",
+                              }}
+                            >
+                              Tidak ada data Cara Akses
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -4061,73 +4140,73 @@ function OperatorUPTDataAplikasi() {
                         {USER_PENGGUNA_OPTIONS.map((opt) => {
                           const checked = (userPenggunaSelected || []).includes(opt);
                           return (
-                          <label
-                            key={opt}
-                            style={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              padding: "10px 12px",
-                              cursor: "pointer",
-                              borderRadius: "10px",
-                              backgroundColor: checked ? "#eff6ff" : "#fafbfc",
-                              border: checked
-                                ? "1.5px solid #6366f1"
-                                : "1.5px solid #cbd5e1",
-                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "44px",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!checked) {
-                                e.currentTarget.style.backgroundColor = "#f1f5f9";
-                                e.currentTarget.style.borderColor = "#8b5cf6";
-                                e.currentTarget.style.transform = "translateY(-1px)";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!checked) {
-                                e.currentTarget.style.backgroundColor = "#fafbfc";
-                                e.currentTarget.style.borderColor = "#cbd5e1";
-                                e.currentTarget.style.transform = "translateY(0)";
-                              }
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={(e) => {
-                                const current = userPenggunaSelected || [];
-                                const nextSelected = e.target.checked
-                                  ? [...current, opt]
-                                  : current.filter((x) => x !== opt);
-
-                                const nextLainnya =
-                                  opt === "Lainnya" && !e.target.checked
-                                    ? ""
-                                    : userPenggunaLainnya;
-
-                                setUserPenggunaFromUi(nextSelected, nextLainnya);
-                              }}
+                            <label
+                              key={opt}
                               style={{
-                                width: "16px",
-                                height: "16px",
-                                marginRight: "10px",
-                                marginTop: "1px",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                padding: "10px 12px",
                                 cursor: "pointer",
-                                accentColor: "#6366f1",
-                                flexShrink: 0,
+                                borderRadius: "10px",
+                                backgroundColor: checked ? "#eff6ff" : "#fafbfc",
+                                border: checked
+                                  ? "1.5px solid #6366f1"
+                                  : "1.5px solid #cbd5e1",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                minHeight: "44px",
                               }}
-                            />
-                            <span style={{
-                              fontSize: "13px",
-                              color: checked ? "#4338ca" : "#334155",
-                              fontWeight: checked ? 600 : 500,
-                              lineHeight: "1.5",
-                              wordBreak: "break-word",
-                              flex: 1,
-                            }}>
-                              {opt}
-                            </span>
-                          </label>
+                              onMouseEnter={(e) => {
+                                if (!checked) {
+                                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#8b5cf6";
+                                  e.currentTarget.style.transform = "translateY(-1px)";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!checked) {
+                                  e.currentTarget.style.backgroundColor = "#fafbfc";
+                                  e.currentTarget.style.borderColor = "#cbd5e1";
+                                  e.currentTarget.style.transform = "translateY(0)";
+                                }
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const current = userPenggunaSelected || [];
+                                  const nextSelected = e.target.checked
+                                    ? [...current, opt]
+                                    : current.filter((x) => x !== opt);
+
+                                  const nextLainnya =
+                                    opt === "Lainnya" && !e.target.checked
+                                      ? ""
+                                      : userPenggunaLainnya;
+
+                                  setUserPenggunaFromUi(nextSelected, nextLainnya);
+                                }}
+                                style={{
+                                  width: "16px",
+                                  height: "16px",
+                                  marginRight: "10px",
+                                  marginTop: "1px",
+                                  cursor: "pointer",
+                                  accentColor: "#6366f1",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span style={{
+                                fontSize: "13px",
+                                color: checked ? "#4338ca" : "#334155",
+                                fontWeight: checked ? 600 : 500,
+                                lineHeight: "1.5",
+                                wordBreak: "break-word",
+                                flex: 1,
+                              }}>
+                                {opt}
+                              </span>
+                            </label>
                           );
                         })}
                       </div>
@@ -4969,36 +5048,36 @@ function OperatorUPTDataAplikasi() {
 
                         {pusatKomputasiUtamaType ===
                           PUSAT_KOMPUTASI_UTAMA_LAINNYA && (
-                          <input
-                            value={pusatKomputasiUtamaLainnya}
-                            onChange={(e) =>
-                              setPusatKomputasiUtamaFromUi(
-                                PUSAT_KOMPUTASI_UTAMA_LAINNYA,
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Isi pusat komputasi utama"
-                            style={{
-                              width: "100%",
-                              padding: "10px 12px",
-                              borderRadius: "10px",
-                              border: "1.5px solid #cbd5e1",
-                              fontSize: "14px",
-                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              outline: "none",
-                              backgroundColor: "#f8fafc",
-                              marginTop: "10px",
-                            }}
-                            onFocus={(e) => {
-                              e.currentTarget.style.borderColor = "#6366f1";
-                              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
-                            }}
-                            onBlur={(e) => {
-                              e.currentTarget.style.borderColor = "#cbd5e1";
-                              e.currentTarget.style.boxShadow = "none";
-                            }}
-                          />
-                        )}
+                            <input
+                              value={pusatKomputasiUtamaLainnya}
+                              onChange={(e) =>
+                                setPusatKomputasiUtamaFromUi(
+                                  PUSAT_KOMPUTASI_UTAMA_LAINNYA,
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Isi pusat komputasi utama"
+                              style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "10px",
+                                border: "1.5px solid #cbd5e1",
+                                fontSize: "14px",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                outline: "none",
+                                backgroundColor: "#f8fafc",
+                                marginTop: "10px",
+                              }}
+                              onFocus={(e) => {
+                                e.currentTarget.style.borderColor = "#6366f1";
+                                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
+                              }}
+                              onBlur={(e) => {
+                                e.currentTarget.style.borderColor = "#cbd5e1";
+                                e.currentTarget.style.boxShadow = "none";
+                              }}
+                            />
+                          )}
                       </div>
                     </div>
                     <div>
@@ -7478,9 +7557,9 @@ function OperatorUPTDataAplikasi() {
                   value={
                     selectedApp.ssl_expired
                       ? new Date(selectedApp.ssl_expired).toLocaleDateString(
-                          "id-ID",
-                          { year: "numeric", month: "long", day: "numeric" },
-                        )
+                        "id-ID",
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )
                       : null
                   }
                 />

@@ -195,7 +195,10 @@ function OperatorEselon2DataAplikasi() {
   const buildUnitPengembangString = (type, eksternalText) => {
     if (type === "sekretariat_eselon_1") return "Sekretariat Eselon 1";
     if (type === "internal_eselon_2") return "Internal Eselon 2";
-    if (type === "eksternal") return (eksternalText || "").trim();
+    if (type === "eksternal") {
+      const text = (eksternalText || "").trim();
+      return text ? `Eksternal - ${text}` : "Eksternal";
+    }
     return "";
   };
 
@@ -219,6 +222,18 @@ function OperatorEselon2DataAplikasi() {
       return { type: "internal_eselon_2", eksternalText: "" };
     }
 
+    // Handle "Eksternal - <text>"
+    if (lower.startsWith("eksternal -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "eksternal",
+          eksternalText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
+    // Legacy or direct text: treat as external text
     return { type: "eksternal", eksternalText: raw };
   };
 
@@ -243,6 +258,17 @@ function OperatorEselon2DataAplikasi() {
       compact.includes("itupusdatin") || compact.includes("itpusdatin");
     if (looksLikePusdatin && looksLikeITU) {
       return { type: "pusdatin", lainnyaText: "" };
+    }
+
+    // Check if it was saved with "Lainnya - " prefix previously, strip it
+    if (lower.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
     }
 
     return { type: "lainnya", lainnyaText: raw };
@@ -280,6 +306,17 @@ function OperatorEselon2DataAplikasi() {
       return { type: "dc_cyber", lainnyaText: "" };
     }
 
+    // Check if it was saved with "Lainnya - " prefix previously, strip it
+    if (lower.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
     return { type: "lainnya", lainnyaText: raw };
   };
 
@@ -315,6 +352,17 @@ function OperatorEselon2DataAplikasi() {
       return { type: "dc_cyber", lainnyaText: "" };
     }
 
+    // Check if it was saved with "Lainnya - " prefix previously, strip it
+    if (lower.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
     return { type: "lainnya", lainnyaText: raw };
   };
 
@@ -323,7 +371,9 @@ function OperatorEselon2DataAplikasi() {
     if (type === "in_storage") return "In STORAGE";
     if (type === "ex_cloud") return "Ex CLOUD";
     if (type === "tidak_ada") return "TIDAK ADA";
-    if (type === "lainnya") return (lainnyaText || "").trim();
+    if (type === "lainnya") {
+      return (lainnyaText || "").trim();
+    }
     return "";
   };
 
@@ -360,12 +410,27 @@ function OperatorEselon2DataAplikasi() {
       return { type: "ex_cloud", lainnyaText: "" };
     }
 
+    // Check if it was saved with "Lainnya - " prefix previously, strip it
+    if (lower.startsWith("lainnya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return {
+          type: "lainnya",
+          lainnyaText: parts.slice(1).join("-").trim(),
+        };
+      }
+    }
+
+    // Default to lainnya for any other value (just the text)
     return { type: "lainnya", lainnyaText: raw };
   };
 
   const buildCloudString = (type, yaText) => {
     if (type === "tidak") return "Tidak";
-    if (type === "ya") return (yaText || "").trim();
+    if (type === "ya") {
+      const text = (yaText || "").trim();
+      return text ? `Ya - ${text}` : "Ya";
+    }
     return "";
   };
 
@@ -377,6 +442,18 @@ function OperatorEselon2DataAplikasi() {
     if (lower === "tidak" || lower === "no")
       return { type: "tidak", yaText: "" };
 
+    // Handle "Ya - <text>"
+    if (lower.startsWith("ya -")) {
+      const parts = raw.split("-");
+      if (parts.length > 1) {
+        return { type: "ya", yaText: parts.slice(1).join("-").trim() };
+      }
+    }
+
+    // Legacy: if it's just "Ya"
+    if (lower === "ya") return { type: "ya", yaText: "" };
+
+    // Legacy: if it's just the text (e.g. "AWS")
     return { type: "ya", yaText: raw };
   };
 
@@ -384,8 +461,8 @@ function OperatorEselon2DataAplikasi() {
     if (type === "pusdatin") return "Aktif/Pusdatin";
     if (type === "unit_kerja") {
       const text = (unitKerjaText || "").trim();
-      if (!text) return "Aktif/";
-      return `Aktif/${text}`;
+      if (!text) return "Aktif/Unit Kerja";
+      return `Aktif/Unit Kerja - ${text}`;
     }
     return "";
   };
@@ -399,24 +476,36 @@ function OperatorEselon2DataAplikasi() {
       return { type: "pusdatin", unitKerjaText: "" };
     }
 
-    // New format: 'Aktif/<unit>'
+    // New format: 'Aktif/Unit Kerja - <text>' or 'Aktif/<text>'
     if (lower.startsWith("aktif/")) {
       const after = raw.slice(raw.indexOf("/") + 1).trim();
       if (!after) return { type: "unit_kerja", unitKerjaText: "" };
+
       if (after.toLowerCase().includes("pusdatin")) {
         return { type: "pusdatin", unitKerjaText: "" };
       }
-      // If someone saved legacy prefix after slash, strip it.
+
       const afterLower = after.toLowerCase();
+      // Check for "Unit Kerja - <text>" or "Unit Kerja"
       if (afterLower.startsWith("unit kerja")) {
-        const parts = after.split(/-|:/);
-        const tail = parts.length >= 2 ? parts.slice(1).join("-").trim() : "";
-        return { type: "unit_kerja", unitKerjaText: tail };
+        // Check for " - " separator
+        const separatorIndex = after.indexOf("-");
+        if (separatorIndex !== -1) {
+          return { type: "unit_kerja", unitKerjaText: after.substring(separatorIndex + 1).trim() };
+        }
+        // No separator, maybe just "Unit Kerja"
+        const remainder = after.substring(10).trim(); // "Unit Kerja".length = 10
+        if (!remainder) return { type: "unit_kerja", unitKerjaText: "" };
+
+        // If there is remainder but no hyphen, treat as text? Or assuming implicit separator?
+        // Let's stick to the hyphen check or just return the remainder
+        return { type: "unit_kerja", unitKerjaText: remainder };
       }
+
       return { type: "unit_kerja", unitKerjaText: after };
     }
 
-    // Try to extract unit kerja from common pattern: 'Aktif/Unit Kerja - X'
+    // Try to extract unit kerja from common pattern: 'Aktif/Unit Kerja - X' (if it doesn't start with Aktif/)
     if (lower.includes("unit") && lower.includes("kerja")) {
       const parts = raw.split(/-|:/);
       if (parts.length >= 2) {
@@ -809,12 +898,12 @@ function OperatorEselon2DataAplikasi() {
           : app.ssl || "",
         ssl_expired: app.ssl_expired
           ? (() => {
-              const date = new Date(app.ssl_expired);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              return `${year}-${month}-${day}`;
-            })()
+            const date = new Date(app.ssl_expired);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          })()
           : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
@@ -1755,8 +1844,8 @@ function OperatorEselon2DataAplikasi() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName,
-          )}`
+          originalAppName,
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -1807,7 +1896,7 @@ function OperatorEselon2DataAplikasi() {
         showMessage(
           "error",
           "Aplikasi sudah terdaftar di database!\n\n" +
-            (payload?.message || ""),
+          (payload?.message || ""),
           7000,
         );
       } else if (
@@ -1822,15 +1911,15 @@ function OperatorEselon2DataAplikasi() {
         showMessage(
           "error",
           "Nama aplikasi sudah ada di database!\n\n" +
-            "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
+          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
           7000,
         );
       } else {
         showMessage(
           "error",
           "Error: " +
-            errorMsg +
-            "\n\nSilakan cek browser console (F12) untuk detail lengkap",
+          errorMsg +
+          "\n\nSilakan cek browser console (F12) untuk detail lengkap",
           8000,
         );
       }
@@ -2734,13 +2823,13 @@ function OperatorEselon2DataAplikasi() {
                       >
                         {app.ssl_expired
                           ? new Date(app.ssl_expired).toLocaleDateString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
                           : "-"}
                       </td>
                       <td
@@ -3450,7 +3539,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -3488,9 +3577,9 @@ function OperatorEselon2DataAplikasi() {
                           overflowY: "auto",
                           ...(fieldErrors.cara_akses_id
                             ? {
-                                borderColor: errorBorderColor,
-                                boxShadow: errorBoxShadow,
-                              }
+                              borderColor: errorBorderColor,
+                              boxShadow: errorBoxShadow,
+                            }
                             : null),
                         }}
                       >
@@ -3598,17 +3687,17 @@ function OperatorEselon2DataAplikasi() {
                             (x) =>
                               x.status_aktif === 1 || x.status_aktif === true,
                           ).length === 0) && (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#94a3b8",
-                              textAlign: "center",
-                              padding: "12px",
-                            }}
-                          >
-                            Tidak ada data Cara Akses
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                padding: "12px",
+                              }}
+                            >
+                              Tidak ada data Cara Akses
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -3703,11 +3792,11 @@ function OperatorEselon2DataAplikasi() {
                           .sort((a, b) => {
                             const aKey = Number(
                               a?.frekuensi_pemakaian_id ??
-                                a?.frekuensi_pemakaian,
+                              a?.frekuensi_pemakaian,
                             );
                             const bKey = Number(
                               b?.frekuensi_pemakaian_id ??
-                                b?.frekuensi_pemakaian,
+                              b?.frekuensi_pemakaian,
                             );
 
                             const aIsNum = Number.isFinite(aKey);
@@ -3990,7 +4079,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon2_id ||
                                 String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)),
+                                String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -4054,7 +4143,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon2_id ||
                                 String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)),
+                                String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -4245,8 +4334,8 @@ function OperatorEselon2DataAplikasi() {
                                 const nextSelected = isChecked
                                   ? [...userPenggunaSelected, opt.value]
                                   : userPenggunaSelected.filter(
-                                      (v) => v !== opt.value,
-                                    );
+                                    (v) => v !== opt.value,
+                                  );
 
                                 let nextLainnya = userPenggunaLainnya;
                                 if (!nextSelected.includes("lainnya")) {
@@ -5193,8 +5282,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.pusat_komputasi_utama &&
-                                  pusatKomputasiUtamaType === "lainnya" &&
-                                  !(pusatKomputasiUtamaLainnya || "").trim()
+                                    pusatKomputasiUtamaType === "lainnya" &&
+                                    !(pusatKomputasiUtamaLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -5440,8 +5529,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.pusat_komputasi_backup &&
-                                  pusatKomputasiBackupType === "lainnya" &&
-                                  !(pusatKomputasiBackupLainnya || "").trim()
+                                    pusatKomputasiBackupType === "lainnya" &&
+                                    !(pusatKomputasiBackupLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -5741,8 +5830,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.mandiri_komputasi_backup &&
-                                  mandiriKomputasiBackupType === "lainnya" &&
-                                  !(mandiriKomputasiBackupLainnya || "").trim()
+                                    mandiriKomputasiBackupType === "lainnya" &&
+                                    !(mandiriKomputasiBackupLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -5930,8 +6019,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.cloud &&
-                                  cloudType === "ya" &&
-                                  !(cloudYaText || "").trim()
+                                    cloudType === "ya" &&
+                                    !(cloudYaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -6087,8 +6176,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.ssl &&
-                                  sslType === "unit_kerja" &&
-                                  !(sslUnitKerjaText || "").trim()
+                                    sslType === "unit_kerja" &&
+                                    !(sslUnitKerjaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -6276,8 +6365,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.antivirus &&
-                                  antivirusType === "ya" &&
-                                  !(antivirusYaText || "").trim()
+                                    antivirusType === "ya" &&
+                                    !(antivirusYaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -7557,9 +7646,9 @@ function OperatorEselon2DataAplikasi() {
                   value={
                     selectedApp.ssl_expired
                       ? new Date(selectedApp.ssl_expired).toLocaleDateString(
-                          "id-ID",
-                          { year: "numeric", month: "long", day: "numeric" },
-                        )
+                        "id-ID",
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )
                       : null
                   }
                 />
