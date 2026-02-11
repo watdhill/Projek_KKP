@@ -14,6 +14,75 @@ const { NotFoundError } = require("../middleware/errorHandler");
 const isDuplicateKeyError = (error) =>
   error && (error.code === "ER_DUP_ENTRY" || error.errno === 1062);
 
+/**
+ * Helper function to record application updates for dashboard display
+ * @param {object} params - Update parameters
+ * @param {string} params.namaAplikasi - Application name
+ * @param {string} params.actionType - 'CREATE' or 'UPDATE'
+ * @param {object} params.data - Application data (body from request)
+ * @param {string} params.changedFields - Comma-separated changed fields (for UPDATE)
+ * @param {string} params.userId - User ID who performed the action
+ * @param {string} params.ipAddress - IP address
+ * @param {string} params.userAgent - User agent string
+ */
+const recordApplicationUpdate = async (params) => {
+  try {
+    const { namaAplikasi, actionType, data, changedFields, userId, ipAddress, userAgent } = params;
+
+    // Fetch related data for snapshot
+    const [appData] = await pool.query(`
+      SELECT 
+        da.status_aplikasi,
+        sa.nama_status,
+        da.eselon1_id,
+        e1.nama_eselon1,
+        da.eselon2_id,
+        e2.nama_eselon2,
+        da.upt_id,
+        upt.nama_upt,
+        da.domain
+      FROM data_aplikasi da
+      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
+      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
+      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
+      WHERE da.nama_aplikasi = ?
+      LIMIT 1
+    `, [namaAplikasi]);
+
+    if (appData.length === 0) return; // App not found, skip
+
+    const app = appData[0];
+
+    await pool.query(`
+      INSERT INTO application_updates 
+        (nama_aplikasi, action_type, status_aplikasi_id, status_aplikasi_name,
+         eselon1_id, eselon1_name, eselon2_id, eselon2_name, upt_id, upt_name,
+         domain, changed_fields, updated_by, ip_address, user_agent)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      namaAplikasi,
+      actionType,
+      app.status_aplikasi,
+      app.nama_status,
+      app.eselon1_id,
+      app.nama_eselon1,
+      app.eselon2_id,
+      app.nama_eselon2,
+      app.upt_id,
+      app.nama_upt,
+      app.domain,
+      changedFields || null,
+      userId || 'system',
+      ipAddress,
+      userAgent
+    ]);
+  } catch (error) {
+    // Log error but don't throw - this is supplementary tracking
+    console.error('Failed to record application update:', error);
+  }
+};
+
 const sanitizeAksesAkunBody = (body) => {
   const next = { ...(body || {}) };
 
@@ -237,6 +306,16 @@ exports.createAplikasi = asyncHandler(async (req, res) => {
     ipAddress: getIpAddress(req),
     userAgent: getUserAgent(req),
   });
+
+  // Record application update for dashboard
+  await recordApplicationUpdate({
+    namaAplikasi: normalizedNamaAplikasi,
+    actionType: 'CREATE',
+    data: sanitizedBody,
+    userId: req.user?.userId,
+    ipAddress: getIpAddress(req),
+    userAgent: getUserAgent(req),
+  });
   // Duplicate error (ER_DUP_ENTRY) otomatis di-handle oleh errorHandler
 });
 
@@ -300,6 +379,17 @@ exports.updateAplikasi = asyncHandler(async (req, res) => {
     changes: Object.keys(stripSensitiveForAudit(sanitizedBody)).join(", "),
     detail: `Application updated: ${normalizedNamaAplikasi}`,
     description: `Data aplikasi ${normalizedNamaAplikasi} diubah`,
+    ipAddress: getIpAddress(req),
+    userAgent: getUserAgent(req),
+  });
+
+  // Record application update for dashboard
+  await recordApplicationUpdate({
+    namaAplikasi: normalizedNamaAplikasi || req.params.id,
+    actionType: 'UPDATE',
+    data: sanitizedBody,
+    changedFields: Object.keys(stripSensitiveForAudit(sanitizedBody)).join(", "),
+    userId: req.user?.userId,
     ipAddress: getIpAddress(req),
     userAgent: getUserAgent(req),
   });

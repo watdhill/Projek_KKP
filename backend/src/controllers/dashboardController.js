@@ -87,19 +87,19 @@ exports.getRecentUpdates = async (req, res) => {
 
     const query = `
       SELECT 
-        da.nama_aplikasi,
-        da.domain,
-        sa.nama_status,
-        e1.nama_eselon1,
-        e1.singkatan as singkatan_eselon1,
-        e2.nama_eselon2,
-        da.updated_at,
-        da.created_at
-      FROM data_aplikasi da
-      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
-      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
-      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
-      ORDER BY COALESCE(da.updated_at, da.created_at) DESC
+        au.update_id,
+        au.nama_aplikasi,
+        au.action_type,
+        au.domain,
+        au.status_aplikasi_name as nama_status,
+        au.eselon1_name as nama_eselon1,
+        au.eselon2_name as nama_eselon2,
+        au.upt_name as nama_upt,
+        au.changed_fields,
+        au.created_at as updated_at,
+        au.created_at
+      FROM application_updates au
+      ORDER BY au.created_at DESC
       LIMIT ?
     `;
 
@@ -252,34 +252,32 @@ exports.getOperatorRecentUpdates = async (req, res) => {
     const params = [];
 
     if (upt_id) {
-      whereClause = "WHERE da.upt_id = ?";
+      whereClause = "WHERE au.upt_id = ?";
       params.push(upt_id);
     } else if (eselon2_id) {
-      whereClause = "WHERE da.eselon2_id = ?";
+      whereClause = "WHERE au.eselon2_id = ?";
       params.push(eselon2_id);
     } else if (eselon1_id) {
-      whereClause = "WHERE da.eselon1_id = ?";
+      whereClause = "WHERE au.eselon1_id = ?";
       params.push(eselon1_id);
     }
 
     const query = `
       SELECT 
-        da.nama_aplikasi,
-        da.domain,
-        sa.nama_status,
-        e1.nama_eselon1,
-        e1.singkatan as singkatan_eselon1,
-        e2.nama_eselon2,
-        upt.nama_upt,
-        da.updated_at,
-        da.created_at
-      FROM data_aplikasi da
-      LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
-      LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
-      LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
-      LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
+        au.update_id,
+        au.nama_aplikasi,
+        au.action_type,
+        au.domain,
+        au.status_aplikasi_name as nama_status,
+        au.eselon1_name as nama_eselon1,
+        au.eselon2_name as nama_eselon2,
+        au.upt_name as nama_upt,
+        au.changed_fields,
+        au.created_at as updated_at,
+        au.created_at
+      FROM application_updates au
       ${whereClause}
-      ORDER BY COALESCE(da.updated_at, da.created_at) DESC
+      ORDER BY au.created_at DESC
       LIMIT ?
     `;
 
