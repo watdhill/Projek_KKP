@@ -1,2 +1,0 @@
-// Arsip hasil export
-// ...file dipindahkan dari backend/schema_output.txt
