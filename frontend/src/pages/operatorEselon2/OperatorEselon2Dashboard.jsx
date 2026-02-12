@@ -199,9 +199,9 @@ function OperatorEselon2Dashboard() {
       name.includes("dibangun")
     ) {
       return {
-        bg: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-        text: "#92400e",
-        border: "#fcd34d",
+        bg: "linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)",
+        text: "#c2410c",
+        border: "#fb923c",
       };
     }
 
