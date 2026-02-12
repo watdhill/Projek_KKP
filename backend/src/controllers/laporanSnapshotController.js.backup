@@ -1,0 +1,974 @@
+const pool = require("../config/database");
+const ExcelJS = require("exceljs");
+const PDFDocument = require("pdfkit");
+const fs = require("fs").promises;
+const path = require("path");
+
+/**
+ * ============================================
+ * HELPER FUNCTIONS FOR ARCHIVE EXPORT
+ * ============================================
+ */
+
+/**
+ * Map kode_field from master_laporan_field to actual column names in data_aplikasi
+ */
+function mapFieldName(kodeField) {
+  const fieldMapping = {
+    pdn_utama: "pdn_id",
+    pusat_komputasi_utama_pdn: "pdn_id", 
+    pdn_backup: "pdn_backup",
+    mandiri: "mandiri_komputasi_backup",
+    mandiri_backup: "mandiri_komputasi_backup",
+    api_internal_integrasi: "api_internal_status",
+    api_internal_sistem_integrasi: "api_internal_status",
+    va_pt: "va_pt_status",
+    va_pt_ya_tidak: "va_pt_status",
+    ya_tidak: "va_pt_status",
+    waktu_va_pt: "va_pt_waktu",
+    waktu: "va_pt_waktu",
+    api_internal_status_ssl: "ssl",
+    ssl: "ssl",
+    eselon_1: "nama_eselon1", 
+    eselon_2: "nama_eselon2",
+    framework: "kerangka_pengembangan",
+    frekuensi_update_data: "frekuensi_pemakaian",
+    eselon1_id: "eselon1_id",
+    eselon2_id: "eselon2_id",
+    upt_id: "upt_id",
+    cara_akses_id: "cara_akses_id",
+    frekuensi_pemakaian_id: "frekuensi_pemakaian",
+    status_aplikasi_id: "status_aplikasi",
+    environment_id: "environment_id",
+    pic_internal_id: "pic_internal_id",
+    pic_eksternal_id: "pic_eksternal_id",
+  };
+
+  return fieldMapping[kodeField] || kodeField;
+}
+
+/**
+ * Build hierarchy from master_laporan_field tree structure for archive export
+ */
+async function buildHierarchyFromMasterField(formatDetails) {
+  const structure = [];
+
+  // Get all field_ids from formatDetails
+  const fieldIds = formatDetails
+    .filter((d) => d.field_id)
+    .map((d) => d.field_id);
+
+  if (fieldIds.length === 0) {
+    return structure;
+  }
+
+  // Create Order Map from format details
+  const orderMap = new Map();
+  formatDetails.forEach((d) => {
+    if (d.field_id) orderMap.set(d.field_id, d.order_index);
+  });
+
+  // Query ALL master_laporan_field to ensure parents/hierarchy exists
+  const [allFields] = await pool.query(`
+    SELECT field_id, nama_field, kode_field, parent_id, level, urutan
+    FROM master_laporan_field
+  `);
+
+  // Build tree structure
+  const fieldMap = new Map();
+  allFields.forEach((field) => {
+    fieldMap.set(field.field_id, {
+      ...field,
+      children: [],
+      ownOrder: orderMap.has(field.field_id) ? orderMap.get(field.field_id) : 999999,
+    });
+  });
+
+  // Link children to parents
+  const roots = [];
+  allFields.forEach((field) => {
+    const node = fieldMap.get(field.field_id);
+    if (field.parent_id && fieldMap.has(field.parent_id)) {
+      fieldMap.get(field.parent_id).children.push(node);
+    } else {
+      roots.push(node);
+    }
+  });
+
+  // Calculate Effective Order and Sort Tree
+  function processAndSortNode(node) {
+    let minOrder = node.ownOrder;
+    if (node.children && node.children.length > 0) {
+      const childOrders = node.children.map((child) => processAndSortNode(child));
+      const minChildOrder = Math.min(...childOrders);
+      if (minChildOrder < minOrder) minOrder = minChildOrder;
+      node.children.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
+    }
+    node.effectiveOrder = minOrder;
+    return minOrder;
+  }
+
+  roots.forEach((root) => processAndSortNode(root));
+  roots.sort((a, b) => a.effectiveOrder - b.effectiveOrder);
+
+  // Convert tree to export structure
+  function convertToExportStructure(nodes) {
+    const result = [];
+    nodes.forEach((node) => {
+      const nodeIsSelected = fieldIds.includes(node.field_id);
+
+      if (node.level === 1) {
+        // Level 1: Judul (Header Group)
+        const group = {
+          type: "group",
+          judul: node.nama_field,
+          subGroups: new Map(),
+          fields: [],
+        };
+
+        // Process children (Level 2/3)
+        node.children.forEach((child) => {
+          if (child.level === 2) {
+            // Sub-Judul
+            const subFields = child.children
+              .filter((f) => f.level === 3 && fieldIds.includes(f.field_id))
+              .map((f) => ({
+                label: f.nama_field,
+                fieldName: f.kode_field,
+              }));
+
+            if (subFields.length > 0) {
+              group.subGroups.set(child.nama_field, subFields);
+            }
+          } else if (child.level === 3 && fieldIds.includes(child.field_id)) {
+            // Direct Level 3 under Level 1
+            group.fields.push({
+              label: child.nama_field,
+              fieldName: child.kode_field,
+            });
+          }
+        });
+
+        if (group.subGroups.size > 0 || group.fields.length > 0) {
+          result.push(group);
+        }
+      } else if (node.level === 3 && nodeIsSelected && !node.parent_id) {
+        // Standalone Level 3 field (no parent)
+        result.push({
+          type: "field",
+          label: node.nama_field,
+          fieldName: node.kode_field,
+        });
+      }
+    });
+
+    return result;
+  }
+
+  return convertToExportStructure(roots);
+}
+
+/**
+ * ============================================
+ * LAYER 3: REPORT SNAPSHOTS OPERATIONS  
+ * ============================================
+ * Controller untuk generate, manage, dan download snapshot files (Excel/PDF)
+ */
+
+// Storage directory for snapshots
+const STORAGE_DIR = path.join(__dirname, "../../storage/laporan-snapshots");
+
+/**
+ * Ensure storage directory exists
+ */
+async function ensureStorageDir() {
+  try {
+    await fs.access(STORAGE_DIR);
+  } catch {
+    await fs.mkdir(STORAGE_DIR, { recursive: true });
+  }
+}
+
+/**
+ * List all snapshots with pagination and filtering
+ * GET /api/laporan/snapshots
+ */
+exports.listSnapshots = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      year,
+      file_type,
+      is_official,
+      search,
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build WHERE clause
+    let whereConditions = [];
+    let params = [];
+
+    if (year) {
+      whereConditions.push("ls.snapshot_year = ?");
+      params.push(year);
+    }
+
+    if (file_type) {
+      whereConditions.push("ls.file_type = ?");
+      params.push(file_type);
+    }
+
+    if (is_official !== undefined) {
+      whereConditions.push("ls.is_official = ?");
+      params.push(is_official === "true" || is_official === "1");
+    }
+
+    if (search) {
+      whereConditions.push(
+        "(ls.snapshot_name LIKE ? OR ls.description LIKE ?)"
+      );
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    const whereClause =
+      whereConditions.length > 0
+        ? "WHERE " + whereConditions.join(" AND ")
+        : "";
+
+    // Get total count
+    const [countResult] = await pool.query(
+      `SELECT COUNT(*) as total FROM laporan_snapshots ls ${whereClause}`,
+      params
+    );
+
+    const total = countResult[0].total;
+
+    // Get snapshots with user and archive info
+    const [snapshots] = await pool.query(
+      `
+      SELECT 
+        ls.*,
+        u.nama as generated_by_username
+      FROM laporan_snapshots ls
+      LEFT JOIN users u ON ls.generated_by = u.user_id
+      ${whereClause}
+      ORDER BY ls.generated_at DESC
+      LIMIT ? OFFSET ?
+    `,
+      [...params, parseInt(limit), parseInt(offset)]
+    );
+
+    res.json({
+      success: true,
+      data: snapshots,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("List snapshots error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching snapshots",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Generate and save a new snapshot (Excel or PDF)
+ * POST /api/laporan/snapshots/generate
+ */
+exports.generateSnapshot = async (req, res) => {
+  try {
+    const {
+      snapshot_name,
+      snapshot_year,
+      file_type, // 'excel' or 'pdf'
+      selectedFormat, // Format ID to use from frontend
+      filters, // { status, eselon1_id, eselon2_id, upt_id }
+      description,
+      is_official = false,
+    } = req.body;
+
+    const user_id = req.user?.user_id || 1;
+
+    // Validation
+    if (!snapshot_name || !snapshot_year || !file_type) {
+      return res.status(400).json({
+        success: false,
+        message: "snapshot_name, snapshot_year, dan file_type wajib diisi",
+      });
+    }
+
+    if (!["excel", "pdf"].includes(file_type)) {
+      return res.status(400).json({
+        success: false,
+        message: "file_type harus 'excel' atau 'pdf'",
+      });
+    }
+
+    // Check if snapshot name already exists
+    const [existing] = await pool.query(
+      "SELECT id FROM laporan_snapshots WHERE snapshot_name = ?",
+      [snapshot_name]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nama snapshot sudah ada, gunakan nama yang berbeda",
+      });
+    }
+
+    // Ensure storage directory exists
+    await ensureStorageDir();
+
+    // Generate filename
+    const timestamp = Date.now();
+    const sanitizedName = snapshot_name
+      .replace(/[^a-zA-Z0-9_-]/g, "_")
+      .substring(0, 50);
+    const extension = file_type === "excel" ? "xlsx" : "pdf";
+    const filename = `${sanitizedName}_${snapshot_year}_${timestamp}.${extension}`;
+    const filePath = path.join(STORAGE_DIR, filename);
+    const relativeFilePath = `laporan-snapshots/${filename}`;
+
+    let fileSize = 0;
+    let totalRecords = 0;
+
+    // Generate file based on type
+    if (file_type === "excel") {
+      const result = await generateExcelSnapshot(
+        filePath,
+        snapshot_year,
+        selectedFormat, // Pass selectedFormat instead of archive_id
+        filters || {}
+      );
+      fileSize = result.fileSize;
+      totalRecords = result.totalRecords;
+    } else {
+      const result = await generatePDFSnapshot(
+        filePath,
+        snapshot_year,
+        selectedFormat, // Pass selectedFormat instead of archive_id
+        filters || {}
+      );
+      fileSize = result.fileSize;
+      totalRecords = result.totalRecords;
+    }
+        filePath,
+        snapshot_year,
+        archive_id,
+        filters || {}
+      );
+      fileSize = result.fileSize;
+      totalRecords = result.totalRecords;
+    }
+
+    // Save to database
+    const [insertResult] = await pool.query(
+      `
+      INSERT INTO laporan_snapshots 
+      (snapshot_name, snapshot_year, file_type, file_path, file_size, 
+       filters, total_records, generated_by, description)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+      [
+        snapshot_name,
+        snapshot_year,
+        file_type,
+        relativeFilePath,
+        fileSize,
+        JSON.stringify(filters || {}),
+        totalRecords,
+        user_id,
+        description || null,
+      ]
+    );
+
+    // Get the created snapshot
+    const [snapshot] = await pool.query(
+      `
+      SELECT 
+        ls.*,
+        u.nama as generated_by_username
+      FROM laporan_snapshots ls
+      LEFT JOIN users u ON ls.generated_by = u.user_id
+      WHERE ls.id = ?
+    `,
+      [insertResult.insertId]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Snapshot berhasil dibuat",
+      data: snapshot[0],
+    });
+  } catch (error) {
+    console.error("Generate snapshot error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error generating snapshot",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Download a snapshot file
+ * GET /api/laporan/snapshots/:id/download
+ */
+exports.downloadSnapshot = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get snapshot info
+    const [snapshots] = await pool.query(
+      "SELECT * FROM laporan_snapshots WHERE id = ?",
+      [id]
+    );
+
+    if (snapshots.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Snapshot tidak ditemukan",
+      });
+    }
+
+    const snapshot = snapshots[0];
+    const filePath = path.join(
+      __dirname,
+      "../../storage",
+      snapshot.file_path
+    );
+
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        message: "File snapshot tidak ditemukan",
+      });
+    }
+
+    // Determine content type
+    const contentType =
+      snapshot.file_type === "excel"
+        ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        : "application/pdf";
+
+    // Send file
+    res.setHeader("Content-Type", contentType);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${snapshot.snapshot_name}.${snapshot.file_type === "excel" ? "xlsx" : "pdf"}"`
+    );
+
+    const fileBuffer = await fs.readFile(filePath);
+    res.send(fileBuffer);
+  } catch (error) {
+    console.error("Download snapshot error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error downloading snapshot",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Delete a snapshot (file and database record)
+ * DELETE /api/laporan/snapshots/:id
+ */
+exports.deleteSnapshot = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get snapshot info
+    const [snapshots] = await pool.query(
+      "SELECT * FROM laporan_snapshots WHERE id = ?",
+      [id]
+    );
+
+    if (snapshots.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Snapshot tidak ditemukan",
+      });
+    }
+
+    const snapshot = snapshots[0];
+    const filePath = path.join(
+      __dirname,
+      "../../storage",
+      snapshot.file_path
+    );
+
+    // Delete file
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      console.warn("File already deleted or not found:", error.message);
+    }
+
+    // Delete database record
+    await pool.query("DELETE FROM laporan_snapshots WHERE id = ?", [id]);
+
+    res.json({
+      success: true,
+      message: "Snapshot berhasil dihapus",
+    });
+  } catch (error) {
+    console.error("Delete snapshot error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting snapshot",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get available years for snapshot generation
+ * GET /api/laporan/snapshots/years
+ */
+exports.getAvailableYears = async (req, res) => {
+  try {
+    // Get years from data archives
+    const [archiveYears] = await pool.query(`
+      SELECT DISTINCT archive_year as year
+      FROM data_aplikasi_archive
+      ORDER BY archive_year DESC
+    `);
+
+    // Also include current year and last 5 years
+    const currentYear = new Date().getFullYear();
+    const yearSet = new Set(archiveYears.map((y) => y.year));
+
+    for (let i = 0; i < 5; i++) {
+      yearSet.add(currentYear - i);
+    }
+
+    const yearList = Array.from(yearSet).sort((a, b) => b - a);
+
+    res.json({
+      success: true,
+      data: yearList,
+    });
+  } catch (error) {
+    console.error("Get available years error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching years",
+      error: error.message,
+    });
+  }
+};
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+/**
+ * Generate Excel snapshot with hierarchical format structure (same as regular export)
+ */
+async function generateExcelSnapshot(filePath, year, format_id, filters) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "KKP System - Archive";
+  workbook.created = new Date();
+
+  // Build data query based on year (archived or live)  
+  const dataQuery = buildDataQuery(year, filters, format_id);
+  const [data] = await pool.query(dataQuery.sql, dataQuery.params);
+  const totalRecords = data.length;
+
+  // If specific format selected, get format details and use hierarchical structure
+  if (format_id && format_id !== "all") {
+    // Get format details from archive for the specified format and year
+    const formatDetails = await getArchivedFormatDetails(format_id, year);
+    
+    if (formatDetails.length > 0) {
+      await createHierarchicalFormatSheet(workbook, format_id, year, formatDetails, data);
+    } else {
+      // Fallback to default if no format found
+      await createDefaultArchiveSheet(workbook, data, year);
+    }
+  } else {
+    // Multiple formats or no format specified - create default sheet
+    await createDefaultArchiveSheet(workbook, data, year);
+  }
+
+  // Write to file
+  await workbook.xlsx.writeFile(filePath);
+  const stats = await fs.stat(filePath);
+  
+  return {
+    fileSize: stats.size,
+    totalRecords
+  };
+}
+
+/**
+ * Get format details from archive tables
+ */
+async function getArchivedFormatDetails(formatId, year) {
+  const [details] = await pool.query(`
+    SELECT 
+      fda.field_name,
+      fda.kode_field, 
+      fda.order_index,
+      mlf.field_id,
+      mlf.nama_field as label_tampilan,
+      mlf.parent_id,  
+      mlf.level,
+      mlf.urutan
+    FROM format_laporan_detail_archive fda
+    JOIN format_laporan_archive fa ON fa.archive_id = fda.archive_id
+    LEFT JOIN master_laporan_field mlf ON mlf.kode_field = fda.kode_field
+    WHERE fa.format_laporan_id = ? AND fa.tahun_archive = ?
+    ORDER BY fda.order_index ASC
+  `, [formatId, year]);
+
+  return details;
+}
+
+/**
+ * Create hierarchical format sheet (same logic as createFormatSheet from laporanController)
+ */
+async function createHierarchicalFormatSheet(workbook, formatId, year, formatDetails, data) {
+  // Get format name
+  const [formatInfo] = await pool.query(`
+    SELECT nama_format 
+    FROM format_laporan_archive 
+    WHERE format_laporan_id = ? AND tahun_archive = ?
+    LIMIT 1
+  `, [formatId, year]);
+  
+  const sheetName = formatInfo.length > 0 
+    ? formatInfo[0].nama_format.substring(0, 31)
+    : `Format_${formatId}`;
+    
+  const worksheet = workbook.addWorksheet(sheetName);
+
+  // Build hierarchical structure using the same logic as regular export
+  const structure = await buildHierarchyFromMasterField(formatDetails);
+  
+  console.log(`[Archive Export] Built hierarchical structure:`, JSON.stringify(structure, null, 2));
+
+  // Calculate column positions and create headers (same logic as createFormatSheet)
+  let currentCol = 1;
+  const columnMapping = []; // Maps field_name to column index
+
+  // Determine header rows needed
+  let hasJudul = false;
+  let hasSubJudul = false;
+
+  structure.forEach((item) => {
+    if (item.type === "group") {
+      hasJudul = true;
+      if (item.subGroups.size > 0) {
+        hasSubJudul = true;
+      }
+    }
+  });
+
+  const headerStartRow = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
+
+  // Add row number column first
+  columnMapping.push({ fieldName: null, col: currentCol, isRowNumber: true });
+  worksheet.getCell(headerStartRow, currentCol).value = "No";
+  if (hasJudul && headerStartRow > 1) {
+    worksheet.mergeCells(1, currentCol, headerStartRow, currentCol);
+    worksheet.getCell(1, currentCol).value = "No";
+  }
+  currentCol++;
+
+  // Build headers with hierarchical structure
+  structure.forEach((item) => {
+    if (item.type === "field") {
+      // Standalone field
+      const col = currentCol++;
+      
+      worksheet.getCell(headerStartRow, col).value = item.label;
+      columnMapping.push({ fieldName: mapFieldName(item.fieldName), col });
+
+      // Merge cells vertically if there are hierarchical headers above
+      if (hasJudul && headerStartRow > 1) {
+        worksheet.mergeCells(1, col, headerStartRow, col);
+        worksheet.getCell(1, col).value = item.label;
+      }
+    } else if (item.type === "group") {
+      // Group with judul
+      const startCol = currentCol;
+      let groupColCount = 0;
+
+      if (item.subGroups.size > 0) {
+        // Has sub-groups
+        item.subGroups.forEach((fields, subJudul) => {
+          const subStartCol = currentCol;
+          fields.forEach((field) => {
+            const col = currentCol++;
+            worksheet.getCell(headerStartRow, col).value = field.label;
+            columnMapping.push({ fieldName: mapFieldName(field.fieldName), col });
+            groupColCount++;
+          });
+
+          // Sub-judul header (row 2)
+          if (hasSubJudul && currentCol > subStartCol) {
+            worksheet.mergeCells(2, subStartCol, 2, currentCol - 1);
+            worksheet.getCell(2, subStartCol).value = subJudul;
+          }
+        });
+      } else {
+        // No sub-groups, just fields
+        item.fields.forEach((field) => {
+          const col = currentCol++;
+          worksheet.getCell(headerStartRow, col).value = field.label;
+          columnMapping.push({ fieldName: mapFieldName(field.fieldName), col });
+          groupColCount++;
+        });
+      }
+
+      // Judul header (row 1)
+      if (groupColCount > 0) {
+        worksheet.mergeCells(1, startCol, 1, currentCol - 1);
+        worksheet.getCell(1, startCol).value = item.judul;
+      }
+    }
+  });
+
+  // Style headers
+  for (let row = 1; row <= headerStartRow; row++) {
+    for (let col = 1; col < currentCol; col++) {
+      const cell = worksheet.getCell(row, col);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE6E6FA" },
+      };
+      cell.font = { bold: true, size: 10 };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
+  }
+
+  // Add data rows
+  data.forEach((row, index) => {
+    const rowNum = headerStartRow + 1 + index;
+    
+    columnMapping.forEach((col) => {
+      let value;
+      if (col.isRowNumber) {
+        value = index + 1;
+      } else {
+        value = row[col.fieldName] || "-";
+        
+        // Format specific field types
+        if (col.fieldName && typeof value === 'string') {
+          if (value === '1' && (col.fieldName.includes('ssl') || col.fieldName.includes('https'))) {
+            value = 'Ya';
+          } else if (value === '0' && (col.fieldName.includes('ssl') || col.fieldName.includes('https'))) {
+            value = 'Tidak'; 
+          }
+        }
+      }
+      
+      const cell = worksheet.getCell(rowNum, col.col);
+      cell.value = value;
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+  });
+
+  // Auto-fit columns
+  worksheet.columns.forEach((column) => {
+    let maxLength = 0;
+    column.eachCell({ includeEmpty: false }, (cell) => {
+      const length = cell.value ? cell.value.toString().length : 10;
+      if (length > maxLength) {
+        maxLength = length;
+      }
+    });
+    column.width = Math.min(Math.max(maxLength + 2, 10), 50);
+  });
+}
+
+/**
+ * Create default archive sheet with basic columns
+ */
+async function createDefaultArchiveSheet(workbook, data, year) {
+  const worksheet = workbook.addWorksheet(`Laporan ${year}`);
+  
+  // Default columns
+  const columns = [
+    { header: "No", key: "no", width: 5 },
+    { header: "Nama Aplikasi", key: "nama_aplikasi", width: 30 },
+    { header: "Status", key: "status", width: 15 },
+    { header: "Domain", key: "domain_aplikasi", width: 30 },
+    { header: "Eselon 1", key: "nama_eselon1", width: 20 },
+    { header: "Eselon 2", key: "nama_eselon2", width: 20 },
+  ];
+
+  worksheet.columns = columns;
+
+  // Style header
+  const headerRow = worksheet.getRow(1);
+  headerRow.font = { bold: true };
+  headerRow.fill = {
+    type: "pattern",
+    pattern: "solid", 
+    fgColor: { argb: "FFE6E6FA" },
+  };
+
+  // Add data
+  data.forEach((row, index) => {
+    worksheet.addRow({
+      no: index + 1,
+      nama_aplikasi: row.nama_aplikasi || "-",
+      status: row.status || "-", 
+      domain_aplikasi: row.domain_aplikasi || "-",
+      nama_eselon1: row.nama_eselon1 || "-",
+      nama_eselon2: row.nama_eselon2 || "-",
+    });
+  });
+}
+
+/**
+ * Generate PDF snapshot and save to file
+ */
+async function generatePDFSnapshot(filePath, year, archive_id, filters) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 30, size: "A4" });
+      const writeStream = require("fs").createWriteStream(filePath);
+
+      doc.pipe(writeStream);
+
+      // Get data
+      const dataQuery = buildDataQuery(year, filters);
+      const [data] = await pool.query(dataQuery.sql, dataQuery.params);
+      const totalRecords = data.length;
+
+      // Title
+      doc.fontSize(16).text(`Laporan Aplikasi Tahun ${year}`, {
+        align: "center",
+      });
+      doc.moveDown();
+      doc.fontSize(10).text(`Total: ${totalRecords} aplikasi`, {
+        align: "center",
+      });
+      doc.moveDown();
+
+      // Add timestamp
+      doc.fontSize(8).text(`Generated: ${new Date().toLocaleString("id-ID")}`, {
+        align: "right",
+      });
+      doc.moveDown();
+
+      // Simple table
+      data.forEach((row, index) => {
+        if (doc.y > 700) {
+          doc.addPage();
+        }
+
+        doc
+          .fontSize(10)
+          .font("Helvetica-Bold")
+          .text(`${index + 1}. ${row.nama_aplikasi}`);
+        doc.fontSize(9).font("Helvetica").text(`   Status: ${row.status}`);
+        doc.text(`   Domain: ${row.domain_aplikasi || "-"}`);
+        doc.moveDown(0.5);
+      });
+
+      doc.end();
+
+      writeStream.on("finish", async () => {
+        const stats = await fs.stat(filePath);
+        resolve({
+          fileSize: stats.size,
+          totalRecords,
+        });
+      });
+
+      writeStream.on("error", reject);
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Build SQL query for data retrieval (from archive or live)
+ */
+function buildDataQuery(year, filters, format_id = null) {
+  const { status, eselon1_id, eselon2_id, upt_id } = filters;
+
+  // Determine if data is archived
+  const currentYear = new Date().getFullYear();
+  const useArchive = year < currentYear;
+
+  const tableName = useArchive ? "data_aplikasi_archive" : "data_aplikasi";
+
+  let whereClauses = [];
+  let params = [];
+
+  // For archived data, filter by archive_year
+  if (useArchive) {
+    whereClauses.push("archive_year = ?");
+    params.push(year);
+  }
+
+  if (status && status !== "all") {
+    whereClauses.push(`${useArchive ? 'status' : 'status_aplikasi'} = ?`);
+    params.push(status);
+  }
+
+  if (eselon1_id && eselon1_id !== "all") {
+    whereClauses.push("eselon1_id = ?");
+    params.push(eselon1_id);
+  }
+
+  if (eselon2_id && eselon2_id !== "all") {
+    whereClauses.push("eselon2_id = ?");
+    params.push(eselon2_id);
+  }
+
+  if (upt_id && upt_id !== "all") {
+    whereClauses.push("upt_id = ?");
+    params.push(upt_id);
+  }
+
+  const whereClause =
+    whereClauses.length > 0 ? "WHERE " + whereClauses.join(" AND ") : "";
+
+  const sql = `
+    SELECT 
+      *
+    FROM ${tableName}
+    ${whereClause}
+    ORDER BY nama_aplikasi ASC
+  `;
+
+  return { sql, params, format: format_id };
+}
+    ORDER BY nama_aplikasi
+  `;
+
+  return { sql, params, format, useArchive };
+}
