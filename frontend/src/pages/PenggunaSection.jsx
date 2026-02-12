@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 function PenggunaSection() {
   const [users, setUsers] = useState([]);
@@ -51,6 +51,46 @@ function PenggunaSection() {
     }
     return () => clearTimeout(t);
   }, [submitSuccess]);
+
+  // Filtered Eselon2/UPT based on selected Eselon1
+  const filteredEselon2UptOptions = useMemo(() => {
+    const selectedEselon1Id = filterEselon1 ? parseInt(filterEselon1) : null;
+    
+    console.log("=== FILTERING ESELON2/UPT ===");
+    console.log("Selected Eselon1 ID:", selectedEselon1Id);
+    console.log("Total Eselon2:", eselon2List.length);
+    console.log("Total UPT:", uptList.length);
+    
+    const filteredEselon2 = eselon2List.filter((e2) => {
+      if (!selectedEselon1Id) return true;
+      const match = e2.eselon1_id === selectedEselon1Id;
+      console.log(`E2: ${e2.nama_eselon2} - eselon1_id: ${e2.eselon1_id}, match: ${match}`);
+      return match;
+    });
+    
+    const filteredUpt = uptList.filter((upt) => {
+      if (!selectedEselon1Id) return true;
+      const match = upt.eselon1_id === selectedEselon1Id;
+      console.log(`UPT: ${upt.nama_upt} - eselon1_id: ${upt.eselon1_id}, match: ${match}`);
+      return match;
+    });
+    
+    console.log("Filtered Eselon2 count:", filteredEselon2.length);
+    console.log("Filtered UPT count:", filteredUpt.length);
+    
+    return [
+      ...filteredEselon2.map((e2) => ({
+        id: `e2-${e2.eselon2_id}`,
+        value: e2.eselon2_id,
+        label: e2.nama_eselon2 + " (Eselon 2)",
+      })),
+      ...filteredUpt.map((upt) => ({
+        id: `upt-${upt.upt_id}`,
+        value: upt.upt_id,
+        label: upt.nama_upt + " (UPT)",
+      })),
+    ];
+  }, [filterEselon1, eselon2List, uptList]);
 
   // Filter users based on search and criteria
   useEffect(() => {
@@ -573,7 +613,7 @@ function PenggunaSection() {
                     value={filterEselon1}
                     onChange={(e) => {
                       setFilterEselon1(e.target.value);
-                      setFilterEselon2("");
+                      setFilterEselon2Upt("");
                     }}
                     style={{
                       width: "100%",
@@ -620,29 +660,8 @@ function PenggunaSection() {
                     }}
                   >
                     <option value="">Semua</option>
-                    {[
-                      ...eselon2List
-                        .filter(
-                          (e2) =>
-                            !filterEselon1 ||
-                            e2.eselon1_id === parseInt(filterEselon1),
-                        )
-                        .map((e2) => ({
-                          id: e2.eselon2_id,
-                          label: e2.nama_eselon2 + " (Eselon 2)",
-                        })),
-                      ...uptList
-                        .filter(
-                          (upt) =>
-                            !filterEselon1 ||
-                            upt.eselon1_id === parseInt(filterEselon1),
-                        )
-                        .map((upt) => ({
-                          id: upt.upt_id,
-                          label: upt.nama_upt + " (UPT)",
-                        })),
-                    ].map((item) => (
-                      <option key={item.id} value={item.id}>
+                    {filteredEselon2UptOptions.map((item) => (
+                      <option key={item.id} value={item.value}>
                         {item.label}
                       </option>
                     ))}

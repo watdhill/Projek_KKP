@@ -2141,6 +2141,12 @@ function MasterDataSection() {
                         {/* Items in group */}
                         {grouped[e1Id]
                           .sort((a, b) => {
+                            if (activeTab === "eselon2" || activeTab === "upt") {
+                              const noA = Number(a.no) || 0;
+                              const noB = Number(b.no) || 0;
+                              if (noA !== noB) return noA - noB;
+                            }
+
                             // Sort by Eselon 2 name
                             const e2A = a.nama_eselon2 || "";
                             const e2B = b.nama_eselon2 || "";
