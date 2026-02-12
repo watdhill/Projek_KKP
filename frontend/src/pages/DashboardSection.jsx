@@ -169,13 +169,13 @@ function DashboardSection() {
       return { bg: "#fee2e2", text: "#991b1b" };
     }
 
-    // Dalam Pengembangan / Development / Sedang Dibangun = Abu-abu (matching chart)
+    // Dalam Pengembangan / Development / Sedang Dibangun = Oranye (matching chart)
     if (
       name.includes("development") ||
       name.includes("pengembangan") ||
       name.includes("dibangun")
     ) {
-      return { bg: "#e5e7eb", text: "#374151" };
+      return { bg: "#fed7aa", text: "#c2410c" };
     }
 
     // Maintenance = Kuning

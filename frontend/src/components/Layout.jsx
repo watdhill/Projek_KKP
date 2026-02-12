@@ -199,7 +199,10 @@ function Layout({ navItems }) {
                 <img src={kkpLogo} alt="KKP Logo" className="sidebar-logo" />
               </div>
               <div className="brand-badge">
-                <span className="brand-badge-text">Nama Aplikasi</span>
+                <span className="brand-badge-text" style={{ whiteSpace: "pre-line", fontSize: "0.79rem" }}>
+                  Sistem Informasi
+                  Manajemen Aplikasi
+                </span>
               </div>
             </div>
           ) : null}

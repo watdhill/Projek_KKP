@@ -814,6 +814,9 @@ function MasterDataSection() {
     if (status === 1 || status === true || status === "Aktif") {
       return { bg: "#dcfce7", text: "#166534", label: "Aktif" };
     }
+    if (status === "Sedang Dibangun" || status === "Pengembangan") {
+      return { bg: "#fed7aa", text: "#c2410c", label: "Sedang Dibangun" };
+    }
     return { bg: "#fee2e2", text: "#991b1b", label: "Nonaktif" };
   };
 
@@ -2021,9 +2024,6 @@ function MasterDataSection() {
         <div
           style={{
             backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
-            overflow: "hidden",
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
           }}
         >
