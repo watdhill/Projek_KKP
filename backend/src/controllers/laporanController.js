@@ -1,6 +1,7 @@
 const pool = require("../config/database");
 const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
+const { decryptAkunPassword } = require("../utils/fieldEncryption");
 
 // ============================================
 // FIELD NAME MAPPING
@@ -405,6 +406,7 @@ exports.getPreviewData = async (req, res) => {
         da.luaran_output,
         da.bahasa_pemrograman,
         da.basis_data,
+        da.kerangka_pengembangan,
         da.kerangka_pengembangan as framework,
         da.unit_pengembang,
         da.unit_operasional_teknologi,
@@ -425,9 +427,14 @@ exports.getPreviewData = async (req, res) => {
         da.tipe_lisensi_bahasa,
         da.api_internal_status as api_internal_integrasi,
         da.ssl,
+        da.ssl_expired,
+        env.jenis_environment as ekosistem,
+        env.jenis_environment as environment_id,
+        da.waf_lainnya,
+        da.akses_aplikasi_username,
+        da.akses_aplikasi_password_enc,
         da.cara_akses_multiple,
-        /* Fix: Map frekuensi_pemakaian to frekuensi_update_data since column doesn't exist */
-        da.frekuensi_pemakaian as frekuensi_update_data
+        fp.nama_frekuensi as frekuensi_update_data
       FROM data_aplikasi da
       LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
       LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
@@ -436,6 +443,8 @@ exports.getPreviewData = async (req, res) => {
       LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
       LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
       LEFT JOIN pdn pd1 ON da.pdn_id = pd1.pdn_id
+      LEFT JOIN frekuensi_pemakaian fp ON da.frekuensi_pemakaian = fp.frekuensi_pemakaian
+      LEFT JOIN environment env ON da.environment_id = env.environment_id
       WHERE 1=1
     `;
 
@@ -502,13 +511,54 @@ exports.getPreviewData = async (req, res) => {
       const kontakPicEksternal =
         row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
 
+      // WAF Logic
+      let wafValue = row.waf;
+      const wafLower = (wafValue || "").toLowerCase().trim();
+      
+      // If "Lainnya" or "WAF - Lainnya", prefer the content of waf_lainnya
+      if (
+        wafLower === "lainnya" || 
+        wafLower === "waf - lainnya" || 
+        wafLower === "waf-lainnya"
+      ) {
+         // Use waf_lainnya if available, otherwise keep original value (e.g. "Lainnya")
+         if (row.waf_lainnya && row.waf_lainnya.trim() !== "" && row.waf_lainnya !== "-") {
+             wafValue = row.waf_lainnya;
+         }
+      }
+
+      // SSL Logic
+      let sslValue = row.ssl;
+      if (row.ssl === 1 || row.ssl === '1') sslValue = 'Ya';
+      if (row.ssl === 0 || row.ssl === '0') sslValue = 'Tidak';
+
+      // Decrypt Password
+      let password = row.akses_aplikasi_password_enc;
+      try {
+        if (password) {
+          password = decryptAkunPassword(password);
+        }
+      } catch (err) {
+        console.error("Error decrypting password for app:", row.nama_aplikasi, err);
+        // Fallback or leave as encrypted if failure, or set to error message
+        password = "(Error Decrypting)"; 
+      }
+
       return {
         ...row,
+        waf: wafValue,
+        waf_lainnya: wafValue, // Map 'waf_lainnya' to the resolved value so if preview uses this column it gets the real value
+        ssl: sslValue,
         cara_akses: caraAksesStr, // Standardize to 'cara_akses' field expected by frontend
         pic_internal: picInternal,
         pic_eksternal: picEksternal,
         kontak_pic_internal: kontakPicInternal,
         kontak_pic_eksternal: kontakPicEksternal,
+        akses_aplikasi_password_enc: password, // Send decrypted password
+        password_akses_aplikasi: password, // Map to frontend friendly name if needed
+        mandiri_komputasi: row.mandiri_komputasi_backup, // Ensure this alias exists
+        mandiri_backup: row.mandiri_komputasi_backup, // Ensure this alias exists
+        mandiri: row.mandiri_komputasi_backup // Ensure this alias exists
       };
     });
 
@@ -701,6 +751,35 @@ async function createDefaultSheet(workbook, filters) {
   });
 }
 
+// Helper: Map field names
+function mapFieldName(kodeField) {
+  const fieldMapping = {
+    pdn_utama: "pdn_utama", // In getFilteredData it is pdn_utama
+    pdn_backup: "pdn_backup",
+    mandiri: "mandiri", // in getFilteredData it is mandiri
+    ssl: "ssl",
+    eselon_1: "nama_eselon1",
+    eselon_2: "nama_eselon2",
+    "nama_aplikasi": "nama_aplikasi",
+    "deskripsi": "deskripsi",
+    "platform": "platform",
+    "jenis_aplikasi": "jenis_aplikasi",
+    "status": "nama_status", // Status needs mapping if kode_field is status
+    "framework": "kerangka_pengembangan",
+    "frekuensi_update_data": "nama_frekuensi", 
+    "api_internal_integrasi": "api_internal_status",
+    "waf_lainnya": "waf",
+    "environment_id": "jenis_environment"
+  };
+  
+  // Specific check for status if kode_field is 'status' but data is 'nama_status'
+  if (kodeField === 'status') return 'nama_status';
+  if (kodeField === 'eselon_1') return 'nama_eselon1';
+  if (kodeField === 'eselon_2') return 'nama_eselon2';
+  
+  return fieldMapping[kodeField] || kodeField;
+}
+
 // Helper: Create sheet for specific format with hierarchical headers
 async function createFormatSheet(workbook, format, filters) {
   const worksheet = workbook.addWorksheet(format.nama_format.substring(0, 31)); // Excel sheet name limit
@@ -719,7 +798,7 @@ async function createFormatSheet(workbook, format, filters) {
 
   console.log(
     `[createFormatSheet] Built structure:`,
-    JSON.stringify(structure, null, 2),
+    structure.length
   );
 
   // Calculate column positions and create headers
@@ -733,7 +812,7 @@ async function createFormatSheet(workbook, format, filters) {
   structure.forEach((item) => {
     if (item.type === "group") {
       hasJudul = true;
-      if (item.subGroups.size > 0) {
+      if (item.subGroups && item.subGroups.size > 0) {
         hasSubJudul = true;
       }
     }
@@ -741,36 +820,55 @@ async function createFormatSheet(workbook, format, filters) {
 
   const headerStartRow = hasJudul ? (hasSubJudul ? 3 : 2) : 1;
 
+  // Add row number column first -- REMOVED per request
+  // columnMapping.push({ fieldName: null, col: currentCol, isRowNumber: true });
+  // worksheet.getCell(headerStartRow, currentCol).value = "No";
+  // if (hasJudul && headerStartRow > 1) {
+  //   worksheet.mergeCells(1, currentCol, headerStartRow, currentCol);
+  //   worksheet.getCell(1, currentCol).value = "No";
+  // }
+  // currentCol++;
+
   // Build headers
   structure.forEach((item) => {
     if (item.type === "field") {
       // Standalone field
       const col = currentCol++;
 
+      // Override Label if needed
+      let label = item.label;
+      if (label === 'Frekuensi Update Data') label = 'Frekuensi Pemakaian';
+      if (label === 'WAF Lainnya') label = 'WAF';
+
       // Set header value at the appropriate row
-      worksheet.getCell(headerStartRow, col).value = item.label;
-      columnMapping.push({ fieldName: item.fieldName, col });
+      worksheet.getCell(headerStartRow, col).value = label;
+      columnMapping.push({ fieldName: mapFieldName(item.fieldName), col });
 
       // Merge cells vertically if there are hierarchical headers above
       if (hasJudul && headerStartRow > 1) {
         // Merge from row 1 to headerStartRow for this column
         worksheet.mergeCells(1, col, headerStartRow, col);
         // Set the value in the merged cell (row 1)
-        worksheet.getCell(1, col).value = item.label;
+        worksheet.getCell(1, col).value = label;
       }
     } else if (item.type === "group") {
       // Group with judul
       const startCol = currentCol;
       let groupColCount = 0;
 
-      if (item.subGroups.size > 0) {
+      if (item.subGroups && item.subGroups.size > 0) {
         // Has sub-groups
         item.subGroups.forEach((fields, subJudul) => {
           const subStartCol = currentCol;
           fields.forEach((field) => {
             const col = currentCol++;
-            worksheet.getCell(headerStartRow, col).value = field.label;
-            columnMapping.push({ fieldName: field.fieldName, col });
+            
+            let label = field.label;
+            if (label === 'WAF Lainnya') label = 'WAF';
+            if (label === 'Frekuensi Update Data') label = 'Frekuensi Pemakaian';
+
+            worksheet.getCell(headerStartRow, col).value = label;
+            columnMapping.push({ fieldName: mapFieldName(field.fieldName), col });
             groupColCount++;
           });
 
@@ -782,12 +880,19 @@ async function createFormatSheet(workbook, format, filters) {
         });
       } else {
         // No sub-groups, just fields
-        item.fields.forEach((field) => {
-          const col = currentCol++;
-          worksheet.getCell(headerStartRow, col).value = field.label;
-          columnMapping.push({ fieldName: field.fieldName, col });
-          groupColCount++;
-        });
+        if (item.fields) {
+          item.fields.forEach((field) => {
+            const col = currentCol++;
+
+            let label = field.label;
+            if (label === 'WAF Lainnya') label = 'WAF';
+            if (label === 'Frekuensi Update Data') label = 'Frekuensi Pemakaian';
+
+            worksheet.getCell(headerStartRow, col).value = label;
+            columnMapping.push({ fieldName: mapFieldName(field.fieldName), col });
+            groupColCount++;
+          });
+        }
       }
 
       // Judul header (row 1)
@@ -800,24 +905,22 @@ async function createFormatSheet(workbook, format, filters) {
 
   // Style headers
   for (let row = 1; row <= headerStartRow; row++) {
-    const headerRow = worksheet.getRow(row);
-    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-    headerRow.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: row === 1 ? "FF4472C4" : "FF8EAADB" },
-    };
-    headerRow.alignment = { horizontal: "center", vertical: "middle" };
-
-    // Add borders to all header cells
-    headerRow.eachCell({ includeEmpty: true }, (cell) => {
-      cell.border = {
-        top: { style: "thin", color: { argb: "FFFFFFFF" } },
-        left: { style: "thin", color: { argb: "FFFFFFFF" } },
-        bottom: { style: "thin", color: { argb: "FFFFFFFF" } },
-        right: { style: "thin", color: { argb: "FFFFFFFF" } },
+    for (let col = 1; col < currentCol; col++) {
+      const cell = worksheet.getCell(row, col);
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE6E6FA" }, // Light Lavender/Gray to match Archive style
       };
-    });
+      cell.font = { bold: true, size: 10 };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
   }
 
   // Get data
@@ -825,20 +928,48 @@ async function createFormatSheet(workbook, format, filters) {
 
   // Add data rows
   data.forEach((rowData, index) => {
-    const row = worksheet.getRow(headerStartRow + index + 1);
-    columnMapping.forEach(({ fieldName, col }) => {
-      // Skip if fieldName is null (field doesn't exist in data_aplikasi)
-      if (fieldName) {
-        row.getCell(col).value = rowData[fieldName] || "-";
+    const rowNum = headerStartRow + index + 1;
+    const row = worksheet.getRow(rowNum);
+    
+    columnMapping.forEach(({ fieldName, col, isRowNumber }) => {
+      let value;
+      if (isRowNumber) {
+        value = index + 1;
       } else {
-        row.getCell(col).value = "-";
+        value = rowData[fieldName] || "-";
+        
+        // Format specific field types
+        if (fieldName && typeof value === 'string') {
+          // Format SSL/HTTPS columns
+          if ((value === '1' || value === 1) && (fieldName.includes('ssl') || fieldName.includes('https'))) {
+            value = 'Ya';
+          } else if ((value === '0' || value === 0) && (fieldName.includes('ssl') || fieldName.includes('https'))) {
+            value = 'Tidak'; 
+          }
+        }
       }
+
+      const cell = worksheet.getCell(rowNum, col);
+      cell.value = value;
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
     });
   });
 
   // Auto-fit columns
   worksheet.columns.forEach((column) => {
-    column.width = 15;
+    let maxLength = 0;
+    column.eachCell({ includeEmpty: false }, (cell) => {
+      const length = cell.value ? cell.value.toString().length : 10;
+      if (length > maxLength) {
+        maxLength = length;
+      }
+    });
+    column.width = Math.min(Math.max(maxLength + 2, 10), 50);
   });
 }
 
@@ -869,12 +1000,16 @@ async function getFilteredData(filters) {
       da.mandiri_komputasi_backup as mandiri,
       da.mandiri_komputasi_backup as mandiri_backup,
 
-      sa.nama_status
+      sa.nama_status,
+      fp.nama_frekuensi,
+      env.jenis_environment as jenis_environment
     FROM data_aplikasi da
     LEFT JOIN master_eselon1 e1 ON da.eselon1_id = e1.eselon1_id
     LEFT JOIN master_eselon2 e2 ON da.eselon2_id = e2.eselon2_id
     LEFT JOIN master_upt upt ON da.upt_id = upt.upt_id
     LEFT JOIN status_aplikasi sa ON da.status_aplikasi = sa.status_aplikasi_id
+    LEFT JOIN frekuensi_pemakaian fp ON da.frekuensi_pemakaian = fp.frekuensi_pemakaian
+    LEFT JOIN environment env ON da.environment_id = env.environment_id
     LEFT JOIN pic_internal pi ON da.pic_internal_id = pi.pic_internal_id
     LEFT JOIN pic_eksternal pe ON da.pic_eksternal_id = pe.pic_eksternal_id
     LEFT JOIN pdn pd1 ON da.pdn_id = pd1.pdn_id
@@ -941,6 +1076,15 @@ async function getFilteredData(filters) {
     const kontakPicEksternal =
       row.kontak_pic_eksternal_master || row.kontak_pic_eksternal;
 
+    // WAF Logic: If "Lainnya", use "waf_lainnya" field
+    let wafValue = row.waf;
+    if (
+      (row.waf && row.waf.toLowerCase() === "lainnya") ||
+      (row.waf && row.waf.toLowerCase() === "waf - lainnya")
+    ) {
+      wafValue = row.waf_lainnya || row.waf;
+    }
+
     return {
       ...row,
       cara_akses: caraAksesStr, // Standardize
@@ -948,6 +1092,7 @@ async function getFilteredData(filters) {
       pic_eksternal: picEksternal,
       kontak_pic_internal: kontakPicInternal,
       kontak_pic_eksternal: kontakPicEksternal,
+      waf: wafValue,
     };
   });
 
@@ -1056,9 +1201,15 @@ exports.exportPDF = async (req, res) => {
       }
     });
 
+    let fontSize = 7;
+    // Dynamic font size
+    if (totalColumns > 15) fontSize = 6;
+    if (totalColumns > 20) fontSize = 5;
+    if (totalColumns > 25) fontSize = 4.5;
+    
+    // Increase basic row height to accommodate wrapping
+    const rowHeight = 25; 
     const columnWidth = pageWidth / totalColumns;
-    const rowHeight = 18;
-    const fontSize = 7;
 
     // Determine header rows
     let hasJudul = false;
@@ -1086,22 +1237,27 @@ exports.exportPDF = async (req, res) => {
       } = options;
 
       // Draw border
-      doc.rect(x, y, width, height).stroke();
-
-      // Fill background if needed
+      doc.lineWidth(0.5);
+      
       if (fill) {
         doc.rect(x, y, width, height).fillAndStroke("#e0e0e0", "#000000");
+      } else {
+        doc.rect(x, y, width, height).stroke();
       }
 
-      // Draw text
+      // Draw text with wrapping and vertical centering
       doc.fontSize(fs).fillColor("#000000");
-      const textY = y + (height - fs) / 2;
-      doc.text(text || "-", x + 2, textY, {
+      
+      const textOptions = {
         width: width - 4,
-        height: height,
         align: align,
-        ellipsis: true,
-      });
+      };
+
+      const textHeight = doc.heightOfString(text || "-", textOptions);
+      // Calculate vertical center, but clamp to top padding if text is taller than cell
+      const textY = textHeight < (height - 4) ? y + (height - textHeight) / 2 : y + 2;
+
+      doc.text(text || "-", x + 2, textY, textOptions);
     };
 
     // Render Level 1 (Judul) if exists
@@ -1123,14 +1279,16 @@ exports.exportPDF = async (req, res) => {
           }
 
           const width = columnWidth * colSpan;
-          drawCell(x, startY, width, rowHeight, item.judul, { fill: true });
-          x += width;
+          if (width > 0) {
+             drawCell(x, startY, width, rowHeight, item.judul, { fill: true });
+             x += width;
+          }
         }
       });
     }
 
-    // Render Level 2 (Sub-Judul) if exists
-    if (hasSubJudul) {
+    // Render Level 2 (Sub-Judul or Fields for Groups without SubJudul)
+    if (hasJudul && headerRows >= 2) {
       let x = startX;
       const y = startY + rowHeight;
 
@@ -1140,36 +1298,78 @@ exports.exportPDF = async (req, res) => {
           x += columnWidth;
         } else if (item.type === "group") {
           if (item.subGroups.size > 0) {
+            // Has Sub-groups: Draw Sub-group Headers
             item.subGroups.forEach((fields, subJudul) => {
               const width = columnWidth * fields.length;
               drawCell(x, y, width, rowHeight, subJudul, { fill: true });
               x += width;
             });
           } else {
-            // No sub-groups, merge to field row
-            const width = columnWidth * item.fields.length;
-            x += width;
+            // No sub-groups: Draw Fields vertically spanning remaining rows
+            // If headerRows=2: Height=1. If headerRows=3: Height=2.
+            const height = rowHeight * (headerRows - 1);
+            item.fields.forEach((f) => {
+               drawCell(x, y, columnWidth, height, f.label, { fill: true });
+               x += columnWidth;
+            });
           }
         }
       });
     }
 
-    // Render Level 3 (Field labels)
-    const fieldY = startY + rowHeight * (headerRows - 1);
-    let x = startX;
+    // Render Level 3 (Fields for Groups with SubJudul only)
+    if (hasSubJudul && headerRows === 3) {
+      const fieldY = startY + rowHeight * 2;
+      let x = startX;
 
-    columnMapping.forEach((col) => {
-      drawCell(x, fieldY, columnWidth, rowHeight, col.label, { fill: true });
-      x += columnWidth;
-    });
+      structure.forEach((item) => {
+        if (item.type === "field") {
+           x += columnWidth; // Skip
+        } else if (item.type === "group") {
+           if (item.subGroups.size > 0) {
+              item.subGroups.forEach((fields) => {
+                 fields.forEach((f) => {
+                    drawCell(x, fieldY, columnWidth, rowHeight, f.label, { fill: true });
+                    x += columnWidth;
+                 });
+              });
+           } else {
+              // Group w/o sub-groups (drawn in L2)
+              x += columnWidth * item.fields.length;
+           }
+        }
+      });
+    } else if (!hasJudul) {
+       // HeaderRows = 1 case. Draw all fields.
+       let x = startX;
+       columnMapping.forEach((col) => {
+          drawCell(x, startY, columnWidth, rowHeight, col.label, { fill: true });
+          x += columnWidth;
+       });
+    }
 
-    // Render data rows
-    startY = fieldY + rowHeight;
+    // Move startY to the beginning of data rows
+    startY += rowHeight * headerRows;
     doc.font("Helvetica");
 
     data.forEach((row, index) => {
+      // 1. Calculate dynamic height for this row based on content
+      let maxRowHeight = rowHeight;
+      const processedValues = [];
+
+      columnMapping.forEach((col) => {
+        const value = col.fieldName ? row[col.fieldName] || "-" : "-";
+        const strValue = String(value);
+        processedValues.push(strValue);
+
+        const textHeight = doc.heightOfString(strValue, { width: columnWidth - 4, align: 'center' });
+        if (textHeight + 10 > maxRowHeight) {
+            maxRowHeight = textHeight + 10;
+        }
+      });
+
       // Check if need new page
-      if (startY + rowHeight > doc.page.height - doc.page.margins.bottom) {
+      if (startY + maxRowHeight > doc.page.height - doc.page.margins.bottom) {
         doc.addPage();
         startY = doc.page.margins.top;
 
@@ -1189,15 +1389,14 @@ exports.exportPDF = async (req, res) => {
 
       // Render data cells
       x = startX;
-      columnMapping.forEach((col) => {
-        const value = col.fieldName ? row[col.fieldName] || "-" : "-";
-        drawCell(x, startY, columnWidth, rowHeight, String(value), {
-          align: "left",
+      columnMapping.forEach((col, idx) => {
+        drawCell(x, startY, columnWidth, maxRowHeight, processedValues[idx], {
+          align: "center",
         });
         x += columnWidth;
       });
 
-      startY += rowHeight;
+      startY += maxRowHeight;
     });
 
     doc.end();
@@ -1491,3 +1690,9 @@ async function renderPDFTableSection(doc, structure, data) {
     startY += rowHeight;
   });
 }
+
+// Export helper functions for reuse in other controllers
+module.exports.mapFieldName = mapFieldName;
+module.exports.parseHierarchicalLabel = parseHierarchicalLabel;
+module.exports.buildHierarchyFromMasterField = buildHierarchyFromMasterField;
+module.exports.getFormatDetails = getFormatDetails;

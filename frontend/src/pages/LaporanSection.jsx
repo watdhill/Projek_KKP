@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import "../styles/spin-animation.css";
+import ArsipLaporanTab from "../components/ArsipLaporanTab";
 
 function LaporanSection() {
+  // Tab state
+  const [activeTab, setActiveTab] = useState("export"); // 'export' or 'archive'
+  
   const [formatLaporan, setFormatLaporan] = useState([]);
   const [eselon1List, setEselon1List] = useState([]);
   const [eselon2List, setEselon2List] = useState([]);
@@ -266,14 +270,64 @@ function LaporanSection() {
         </div>
       </div>
 
-      {/* Filter Section */}
+      {/* Tab Navigation */}
       <div
         style={{
-          background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-          borderRadius: "12px",
-          padding: "16px",
-          boxShadow:
-            "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+          display: "flex",
+          gap: "8px",
+          marginBottom: "20px",
+          borderBottom: "2px solid #e2e8f0",
+        }}
+      >
+        <button
+          onClick={() => setActiveTab("export")}
+          style={{
+            padding: "12px 24px",
+            background: "none",
+            border: "none",
+            borderBottom:
+              activeTab === "export" ? "2px solid #4f46e5" : "2px solid transparent",
+            color: activeTab === "export" ? "#4f46e5" : "#64748b",
+            fontSize: "13px",
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            marginBottom: "-2px",
+          }}
+        >
+          Export Laporan
+        </button>
+        <button
+          onClick={() => setActiveTab("archive")}
+          style={{
+            padding: "12px 24px",
+            background: "none",
+            border: "none",
+            borderBottom:
+              activeTab === "archive" ? "2px solid #4f46e5" : "2px solid transparent",
+            color: activeTab === "archive" ? "#4f46e5" : "#64748b",
+            fontSize: "13px",
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            marginBottom: "-2px",
+          }}
+        >
+          Arsip Tahunan
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "export" ? (
+        <>
+          {/* Filter Section */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+              borderRadius: "12px",
+              padding: "16px",
+              boxShadow:
+                "0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
           border: "1px solid #e2e8f0",
           marginBottom: "16px",
         }}
@@ -1082,6 +1136,11 @@ function LaporanSection() {
           </>
         )}
       </div>
+      </>
+      ) : (
+        /* Archive Tab */
+        <ArsipLaporanTab />
+      )}
     </section>
   );
 }
