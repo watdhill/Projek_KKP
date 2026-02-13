@@ -10,6 +10,8 @@ function OperatorEselon2DataAplikasi() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [filterEselon1, setFilterEselon1] = useState("");
   const [filterEselon2, setFilterEselon2] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
@@ -620,6 +622,11 @@ function OperatorEselon2DataAplikasi() {
     };
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, filterEselon1, filterEselon2]);
+
   const filtered = apps.filter((a) => {
     if (statusFilter !== "all") {
       const status = (a.nama_status || "").toLowerCase();
@@ -642,6 +649,13 @@ function OperatorEselon2DataAplikasi() {
       (a.nama_eselon1 || "").toLowerCase().includes(s)
     );
   });
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedApps = filtered.slice(startIndex, endIndex);
+  const shownCount = Math.min(currentPage * itemsPerPage, filtered.length);
 
   const getStatusBadge = (app) => {
     const status = (app.nama_status || "Aktif").toLowerCase();
@@ -1885,42 +1899,26 @@ function OperatorEselon2DataAplikasi() {
       );
     } catch (err) {
       console.error("Full error:", err);
-      const errorMsg = err?.message || String(err);
       const status = err?.status;
       const payload = err?.payload;
-      const serverError = payload?.error;
-      const serverCode = payload?.code;
 
-      // Handle specific error types
-      if (status === 409 && payload?.errorCode === "DUPLICATE_DOMAIN") {
+      // Handle duplicate errors (nama aplikasi or domain)
+      if (status === 400 && payload?.message) {
+        // Backend returns specific error messages
+        showMessage("error", payload.message, 5000);
+      }
+      // Handle other duplicate errors (fallback for 409 status)
+      else if (status === 409) {
         showMessage(
           "error",
-          "Aplikasi sudah terdaftar di database!\n\n" +
-          (payload?.message || ""),
-          7000,
-        );
-      } else if (
-        status === 409 ||
-        serverCode === "DUPLICATE_NAMA_APLIKASI" ||
-        (errorMsg.includes("Duplicate entry") &&
-          errorMsg.includes("PRIMARY")) ||
-        (typeof serverError === "string" &&
-          serverError.includes("Duplicate entry") &&
-          serverError.includes("PRIMARY"))
-      ) {
-        showMessage(
-          "error",
-          "Nama aplikasi sudah ada di database!\n\n" +
-          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
-          7000,
+          payload?.message || "Data sudah terdaftar di database",
+          5000,
         );
       } else {
         showMessage(
           "error",
-          "Error: " +
-          errorMsg +
-          "\n\nSilakan cek browser console (F12) untuk detail lengkap",
-          8000,
+          "Error: " + (err?.message || err),
+          7000,
         );
       }
     } finally {
@@ -2636,7 +2634,7 @@ function OperatorEselon2DataAplikasi() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((app, i) => {
+                {paginatedApps.map((app, i) => {
                   const badge = getStatusBadge(app);
                   const unit = app.nama_eselon1 || app.nama_eselon2 || "-";
 
@@ -2688,7 +2686,7 @@ function OperatorEselon2DataAplikasi() {
                           verticalAlign: "middle",
                         }}
                       >
-                        {i + 1}
+                        {startIndex + i + 1}
                       </td>
                       <td
                         style={{
@@ -2979,21 +2977,167 @@ function OperatorEselon2DataAplikasi() {
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: "16px",
-          padding: "10px 14px",
-          background: "linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%)",
-          borderRadius: "10px",
-          border: "1.5px solid #f1f5f9",
-          color: "#64748b",
-          fontSize: "12px",
-          fontWeight: 600,
-        }}
-      >
-        <span style={{ color: "#0f172a" }}>Total:</span> {filtered.length}{" "}
-        aplikasi ditampilkan
-      </div>
+      {/* Pagination Controls */}
+      {!loading && filtered.length > 0 && totalPages > 1 && (
+        <div
+          style={{
+            marginTop: "20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1.5px solid #cbd5e1",
+              background: currentPage === 1 ? "#f1f5f9" : "#fff",
+              color: currentPage === 1 ? "#94a3b8" : "#475569",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 18L9 12L15 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Sebelumnya
+          </button>
+
+          <div style={{ display: "flex", gap: "4px" }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const isFirstOrLast = page === 1 || page === totalPages;
+              const isNearCurrent = Math.abs(page - currentPage) <= 1;
+              const showEllipsis =
+                (page === 2 && currentPage > 3) ||
+                (page === totalPages - 1 &&
+                  currentPage < totalPages - 2);
+
+              if (showEllipsis) {
+                return (
+                  <span
+                    key={page}
+                    style={{
+                      padding: "8px 12px",
+                      color: "#94a3b8",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ...
+                  </span>
+                );
+              }
+
+              if (!isFirstOrLast && !isNearCurrent) {
+                return null;
+              }
+
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1.5px solid",
+                    borderColor:
+                      currentPage === page ? "#6366f1" : "#cbd5e1",
+                    background:
+                      currentPage === page
+                        ? "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                        : "#fff",
+                    color: currentPage === page ? "#fff" : "#475569",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    minWidth: "40px",
+                  }}
+                >
+                  {page}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1.5px solid #cbd5e1",
+              background: currentPage === totalPages ? "#f1f5f9" : "#fff",
+              color: currentPage === totalPages ? "#94a3b8" : "#475569",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            Selanjutnya
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 18L15 12L9 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {!loading && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "10px 14px",
+            background: "linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%)",
+            borderRadius: "10px",
+            border: "1.5px solid #f1f5f9",
+            color: "#64748b",
+            fontSize: "12px",
+            fontWeight: 600,
+          }}
+        >
+          Menampilkan {shownCount} dari {filtered.length} aplikasi
+        </div>
+      )}
 
       {/* Modal for input/edit */}
       {showModal && (
@@ -3269,7 +3413,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Nama Aplikasi
+                      Nama Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input
                       data-field="nama_aplikasi"
@@ -3320,7 +3464,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Deskripsi dan Fungsi Aplikasi
+                      Deskripsi dan Fungsi Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="deskripsi_fungsi"
@@ -3562,7 +3706,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Cara Akses Aplikasi
+                        Cara Akses Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
 
                       <div
@@ -3758,7 +3902,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Frekuensi Pemakaian
+                        Frekuensi Pemakaian <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="frekuensi_pemakaian"
@@ -3831,7 +3975,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Status Aplikasi
+                        Status Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="status_aplikasi"
@@ -3882,7 +4026,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Ekosistem
+                        Ekosistem <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="environment_id"
@@ -3939,7 +4083,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        PDN Utama
+                        PDN Utama <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pdn_id"
@@ -3984,7 +4128,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        PDN Backup
+                        PDN Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pdn_backup"
@@ -4038,7 +4182,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        PIC Internal
+                        PIC Internal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pic_internal"
@@ -4102,7 +4246,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        PIC Eksternal
+                        PIC Eksternal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pic_eksternal"
@@ -4176,7 +4320,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Kontak PIC Internal
+                        Kontak PIC Internal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kontak_pic_internal"
@@ -4207,7 +4351,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Kontak PIC Eksternal
+                        Kontak PIC Eksternal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kontak_pic_eksternal"
@@ -4239,7 +4383,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Domain
+                      Domain <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input
                       data-field="domain"
@@ -4272,7 +4416,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      User / Pengguna
+                      User / Pengguna <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <div
                       data-field="user_pengguna"
@@ -4414,7 +4558,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Data Yang Digunakan
+                      Data Yang Digunakan <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="data_digunakan"
@@ -4449,7 +4593,7 @@ function OperatorEselon2DataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Luaran/Output
+                      Luaran/Output <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="luaran_output"
@@ -4492,7 +4636,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Bahasa Pemrograman
+                        Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="bahasa_pemrograman"
@@ -4525,7 +4669,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Basis Data
+                        Basis Data <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="basis_data"
@@ -4561,7 +4705,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Kerangka Pengembangan / Framework
+                        Kerangka Pengembangan / Framework <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kerangka_pengembangan"
@@ -4601,7 +4745,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Unit Pengembang
+                        Unit Pengembang <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="unit_pengembang"
@@ -4830,7 +4974,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Unit Operasional Teknologi
+                        Unit Operasional Teknologi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="unit_operasional_teknologi"
@@ -5055,7 +5199,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Pusat Komputasi Utama
+                        Pusat Komputasi Utama <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="pusat_komputasi_utama"
@@ -5302,7 +5446,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Pusat Komputasi Backup
+                        Pusat Komputasi Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="pusat_komputasi_backup"
@@ -5549,7 +5693,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Mandiri Komputasi Backup
+                        Mandiri Komputasi Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="mandiri_komputasi_backup"
@@ -5860,7 +6004,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Perangkat Lunak
+                        Perangkat Lunak <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="perangkat_lunak"
@@ -5893,7 +6037,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Cloud
+                        Cloud <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="cloud"
@@ -6049,7 +6193,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        SSL
+                        SSL <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="ssl"
@@ -6196,7 +6340,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Tanggal Expired SSL
+                        Tanggal Expired SSL <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         type="date"
@@ -6239,7 +6383,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Antivirus
+                        Antivirus <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="antivirus"
@@ -6395,7 +6539,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Alamat IP Publik
+                        Alamat IP Publik <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="alamat_ip_publik"
@@ -6437,7 +6581,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Keterangan
+                        Keterangan <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="keterangan"
@@ -6480,7 +6624,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Status BMN
+                        Status BMN <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="status_bmn"
@@ -6516,7 +6660,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Server Aplikasi
+                        Server Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="server_aplikasi"
@@ -6564,7 +6708,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Tipe Lisensi Bahasa Pemrograman
+                        Tipe Lisensi Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="tipe_lisensi_bahasa"
@@ -6603,7 +6747,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        API Internal Sistem Integrasi
+                        API Internal Sistem Integrasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="api_internal_status"
@@ -6652,7 +6796,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        WAF
+                        WAF <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
@@ -6713,7 +6857,7 @@ function OperatorEselon2DataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        VA/PT
+                        VA/PT <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
@@ -7104,6 +7248,19 @@ function OperatorEselon2DataAplikasi() {
                     OPSIONAL. JIKA MENGISI PASSWORD, KONFIRMASI HARUS SAMA.
                   </p>
                 </div>
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "20px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Catatan: Field yang ditandai dengan{" "}
+                  <span style={{ color: "#ef4444" }}>*</span> wajib diisi
+                </small>
 
                 <div
                   style={{

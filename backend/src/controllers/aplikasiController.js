@@ -264,6 +264,39 @@ exports.createAplikasi = asyncHandler(async (req, res) => {
     });
   }
 
+  // Check for duplicate nama_aplikasi
+  const [existingByNama] = await pool.query(
+    "SELECT nama_aplikasi FROM data_aplikasi WHERE nama_aplikasi = ?",
+    [normalizedNamaAplikasi]
+  );
+
+  if (existingByNama.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Nama aplikasi sudah terdaftar",
+    });
+  }
+
+  // Check for duplicate domain (only if domain is provided and not empty)
+  const normalizedDomain = 
+    typeof sanitizedBody.domain === "string" 
+      ? sanitizedBody.domain.trim() 
+      : sanitizedBody.domain;
+
+  if (normalizedDomain) {
+    const [existingByDomain] = await pool.query(
+      "SELECT nama_aplikasi, domain FROM data_aplikasi WHERE domain = ?",
+      [normalizedDomain]
+    );
+
+    if (existingByDomain.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Domain sudah terdaftar",
+      });
+    }
+  }
+
   // Build dynamic query to support all fields including dynamic master fields
   const fields = [];
   const values = [];
@@ -333,6 +366,39 @@ exports.updateAplikasi = asyncHandler(async (req, res) => {
       success: false,
       message: "Nama aplikasi wajib diisi",
     });
+  }
+
+  // Check for duplicate nama_aplikasi (exclude current record)
+  const [existingByNama] = await pool.query(
+    "SELECT nama_aplikasi FROM data_aplikasi WHERE nama_aplikasi = ? AND nama_aplikasi != ?",
+    [normalizedNamaAplikasi, req.params.id]
+  );
+
+  if (existingByNama.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Nama aplikasi sudah terdaftar",
+    });
+  }
+
+  // Check for duplicate domain (only if domain is provided and not empty, exclude current record)
+  const normalizedDomain = 
+    typeof sanitizedBody.domain === "string" 
+      ? sanitizedBody.domain.trim() 
+      : sanitizedBody.domain;
+
+  if (normalizedDomain) {
+    const [existingByDomain] = await pool.query(
+      "SELECT nama_aplikasi, domain FROM data_aplikasi WHERE domain = ? AND nama_aplikasi != ?",
+      [normalizedDomain, req.params.id]
+    );
+
+    if (existingByDomain.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Domain sudah terdaftar",
+      });
+    }
   }
 
   // Build dynamic UPDATE query to support all fields including dynamic master fields
