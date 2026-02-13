@@ -47,6 +47,8 @@ function OperatorUPTDataAplikasi() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [filterEselon1, setFilterEselon1] = useState("");
   const [filterUpt, setFilterUpt] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
@@ -721,6 +723,11 @@ function OperatorUPTDataAplikasi() {
     };
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, filterEselon1, filterUpt]);
+
   const filtered = apps.filter((a) => {
     if (statusFilter !== "all") {
       const status = (a.nama_status || "").toLowerCase();
@@ -743,6 +750,13 @@ function OperatorUPTDataAplikasi() {
       (a.nama_eselon1 || "").toLowerCase().includes(s)
     );
   });
+
+  // Pagination calculation
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedApps = filtered.slice(startIndex, endIndex);
+  const shownCount = Math.min(currentPage * itemsPerPage, filtered.length);
 
   const getStatusBadge = (app) => {
     const status = (app.nama_status || "Aktif").toLowerCase();
@@ -1707,42 +1721,26 @@ function OperatorUPTDataAplikasi() {
       );
     } catch (err) {
       console.error("Full error:", err);
-      const errorMsg = err?.message || String(err);
       const status = err?.status;
       const payload = err?.payload;
-      const serverError = payload?.error;
-      const serverCode = payload?.code;
 
-      // Handle specific error types
-      if (status === 409 && payload?.errorCode === "DUPLICATE_DOMAIN") {
+      // Handle duplicate errors (nama aplikasi or domain)
+      if (status === 400 && payload?.message) {
+        // Backend returns specific error messages
+        showMessage("error", payload.message, 5000);
+      }
+      // Handle other duplicate errors (fallback for 409 status)
+      else if (status === 409) {
         showMessage(
           "error",
-          "Aplikasi sudah terdaftar di database!\n\n" +
-          (payload?.message || ""),
-          7000,
-        );
-      } else if (
-        status === 409 ||
-        serverCode === "DUPLICATE_NAMA_APLIKASI" ||
-        (errorMsg.includes("Duplicate entry") &&
-          errorMsg.includes("PRIMARY")) ||
-        (typeof serverError === "string" &&
-          serverError.includes("Duplicate entry") &&
-          serverError.includes("PRIMARY"))
-      ) {
-        showMessage(
-          "error",
-          "Nama aplikasi sudah ada di database!\n\n" +
-          "Silakan gunakan nama yang berbeda atau edit aplikasi yang sudah ada.",
-          7000,
+          payload?.message || "Data sudah terdaftar di database",
+          5000,
         );
       } else {
         showMessage(
           "error",
-          "Error: " +
-          errorMsg +
-          "\n\nSilakan cek browser console (F12) untuk detail lengkap",
-          8000,
+          "Error: " + (err?.message || err),
+          7000,
         );
       }
     } finally {
@@ -2456,7 +2454,7 @@ function OperatorUPTDataAplikasi() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((app, i) => {
+                {paginatedApps.map((app, i) => {
                   const badge = getStatusBadge(app);
                   const unit = app.nama_eselon1 || app.nama_upt || "-";
 
@@ -2508,7 +2506,7 @@ function OperatorUPTDataAplikasi() {
                           verticalAlign: "middle",
                         }}
                       >
-                        {i + 1}
+                        {startIndex + i + 1}
                       </td>
                       <td
                         style={{
@@ -2799,21 +2797,167 @@ function OperatorUPTDataAplikasi() {
         </div>
       )}
 
-      <div
-        style={{
-          marginTop: "16px",
-          padding: "10px 14px",
-          background: "linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%)",
-          borderRadius: "10px",
-          border: "1.5px solid #f1f5f9",
-          color: "#64748b",
-          fontSize: "12px",
-          fontWeight: 600,
-        }}
-      >
-        <span style={{ color: "#0f172a" }}>Total:</span> {filtered.length}{" "}
-        aplikasi ditampilkan
-      </div>
+      {/* Pagination Controls */}
+      {!loading && filtered.length > 0 && totalPages > 1 && (
+        <div
+          style={{
+            marginTop: "20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+          }}
+        >
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1.5px solid #cbd5e1",
+              background: currentPage === 1 ? "#f1f5f9" : "#fff",
+              color: currentPage === 1 ? "#94a3b8" : "#475569",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 18L9 12L15 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Sebelumnya
+          </button>
+
+          <div style={{ display: "flex", gap: "4px" }}>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              const isFirstOrLast = page === 1 || page === totalPages;
+              const isNearCurrent = Math.abs(page - currentPage) <= 1;
+              const showEllipsis =
+                (page === 2 && currentPage > 3) ||
+                (page === totalPages - 1 &&
+                  currentPage < totalPages - 2);
+
+              if (showEllipsis) {
+                return (
+                  <span
+                    key={page}
+                    style={{
+                      padding: "8px 12px",
+                      color: "#94a3b8",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ...
+                  </span>
+                );
+              }
+
+              if (!isFirstOrLast && !isNearCurrent) {
+                return null;
+              }
+
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1.5px solid",
+                    borderColor:
+                      currentPage === page ? "#6366f1" : "#cbd5e1",
+                    background:
+                      currentPage === page
+                        ? "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)"
+                        : "#fff",
+                    color: currentPage === page ? "#fff" : "#475569",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    minWidth: "40px",
+                  }}
+                >
+                  {page}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1.5px solid #cbd5e1",
+              background: currentPage === totalPages ? "#f1f5f9" : "#fff",
+              color: currentPage === totalPages ? "#94a3b8" : "#475569",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              transition: "all 0.2s",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            Selanjutnya
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 18L15 12L9 6"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {!loading && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "10px 14px",
+            background: "linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%)",
+            borderRadius: "10px",
+            border: "1.5px solid #f1f5f9",
+            color: "#64748b",
+            fontSize: "12px",
+            fontWeight: 600,
+          }}
+        >
+          Menampilkan {shownCount} dari {filtered.length} aplikasi
+        </div>
+      )}
 
       {/* Modal for input/edit */}
       {showModal && (
@@ -3051,7 +3195,7 @@ function OperatorUPTDataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Nama Aplikasi
+                      Nama Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input
                       data-field="nama_aplikasi"
@@ -3102,7 +3246,7 @@ function OperatorUPTDataAplikasi() {
                         fontSize: "13px",
                       }}
                     >
-                      Deskripsi dan Fungsi Aplikasi
+                      Deskripsi dan Fungsi Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="deskripsi_fungsi"
@@ -3333,7 +3477,7 @@ function OperatorUPTDataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Cara Akses Aplikasi
+                        Cara Akses Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         data-field="cara_akses_id"
@@ -3527,7 +3671,7 @@ function OperatorUPTDataAplikasi() {
                           fontSize: "13px",
                         }}
                       >
-                        Frekuensi Pemakaian
+                        Frekuensi Pemakaian <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="frekuensi_pemakaian"
@@ -3605,7 +3749,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Status Aplikasi
+                        Status Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="status_aplikasi"
@@ -3664,7 +3808,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Ekosistem
+                        Ekosistem <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="environment_id"
@@ -3732,7 +3876,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        PDN Utama
+                        PDN Utama <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pdn_id"
@@ -3788,7 +3932,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        PDN Backup
+                        PDN Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pdn_backup"
@@ -3853,7 +3997,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        PIC Internal
+                        PIC Internal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pic_internal"
@@ -3925,7 +4069,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        PIC Eksternal
+                        PIC Eksternal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="pic_eksternal"
@@ -4007,7 +4151,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Kontak PIC Internal
+                        Kontak PIC Internal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kontak_pic_internal"
@@ -4038,7 +4182,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Kontak PIC Eksternal
+                        Kontak PIC Eksternal <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kontak_pic_eksternal"
@@ -4070,7 +4214,7 @@ function OperatorUPTDataAplikasi() {
                         fontWeight: 600,
                       }}
                     >
-                      Domain
+                      Domain <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <input
                       data-field="domain"
@@ -4113,7 +4257,7 @@ function OperatorUPTDataAplikasi() {
                         fontWeight: 600,
                       }}
                     >
-                      User / Pengguna
+                      User / Pengguna <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <div
                       data-field="user_pengguna"
@@ -4245,7 +4389,7 @@ function OperatorUPTDataAplikasi() {
                         fontWeight: 600,
                       }}
                     >
-                      Data Yang Digunakan
+                      Data Yang Digunakan <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="data_digunakan"
@@ -4293,7 +4437,7 @@ function OperatorUPTDataAplikasi() {
                         fontWeight: 600,
                       }}
                     >
-                      Luaran/Output
+                      Luaran/Output <span style={{ color: '#ef4444' }}>*</span>
                     </label>
                     <textarea
                       data-field="luaran_output"
@@ -4349,7 +4493,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Bahasa Pemrograman
+                        Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="bahasa_pemrograman"
@@ -4392,7 +4536,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Basis Data
+                        Basis Data <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="basis_data"
@@ -4445,7 +4589,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Kerangka Pengembangan / Framework
+                        Kerangka Pengembangan / Framework <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="kerangka_pengembangan"
@@ -4491,7 +4635,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Unit Pengembang
+                        Unit Pengembang <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -4679,7 +4823,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Unit Operasional Teknologi
+                        Unit Operasional Teknologi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -4870,7 +5014,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Pusat Komputasi Utama
+                        Pusat Komputasi Utama <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -5088,7 +5232,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Pusat Komputasi Backup
+                        Pusat Komputasi Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -5305,7 +5449,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Mandiri Komputasi Backup
+                        Mandiri Komputasi Backup <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -5570,7 +5714,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Perangkat Lunak
+                        Perangkat Lunak <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="perangkat_lunak"
@@ -5613,7 +5757,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Cloud
+                        Cloud <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -5745,7 +5889,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        SSL
+                        SSL <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -5867,7 +6011,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Tanggal Expired SSL
+                        Tanggal Expired SSL <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         type="date"
@@ -5920,7 +6064,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Antivirus
+                        Antivirus <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div
                         style={{
@@ -6056,7 +6200,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Alamat IP Publik
+                        Alamat IP Publik <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="alamat_ip_publik"
@@ -6108,7 +6252,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Keterangan
+                        Keterangan <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <input
                         data-field="keterangan"
@@ -6161,7 +6305,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Status BMN
+                        Status BMN <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="status_bmn"
@@ -6208,7 +6352,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Server Aplikasi
+                        Server Aplikasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="server_aplikasi"
@@ -6267,7 +6411,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        Tipe Lisensi Bahasa Pemrograman
+                        Tipe Lisensi Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="tipe_lisensi_bahasa"
@@ -6317,7 +6461,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        API Internal Sistem Integrasi
+                        API Internal Sistem Integrasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <select
                         data-field="api_internal_status"
@@ -6377,7 +6521,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        WAF
+                        WAF <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
@@ -6461,7 +6605,7 @@ function OperatorUPTDataAplikasi() {
                           fontWeight: 600,
                         }}
                       >
-                        VA/PT
+                        VA/PT <span style={{ color: '#ef4444' }}>*</span>
                       </label>
                       <div style={{ display: "flex", gap: "8px" }}>
                         <select
@@ -7010,6 +7154,19 @@ function OperatorUPTDataAplikasi() {
                     OPSIONAL. JIKA MENGISI PASSWORD, KONFIRMASI HARUS SAMA.
                   </small>
                 </div>
+
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "20px",
+                    fontSize: "12px",
+                    color: "#64748b",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Catatan: Field yang ditandai dengan{" "}
+                  <span style={{ color: "#ef4444" }}>*</span> wajib diisi
+                </small>
 
                 <div
                   style={{
