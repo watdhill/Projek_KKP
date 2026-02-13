@@ -806,7 +806,13 @@ function OperatorEselon2Dashboard() {
                                         .includes("pengembangan") ||
                                       item.nama
                                         .toLowerCase()
-                                        .includes("development")
+                                        .includes("development") ||
+                                      item.nama
+                                        .toLowerCase()
+                                        .includes("dibangun") ||
+                                      item.nama
+                                        .toLowerCase()
+                                        .includes("sedang")
                                     ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
                                     : item.nama.toLowerCase().includes("aktif")
                                       ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"

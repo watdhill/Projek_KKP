@@ -748,11 +748,11 @@ function OperatorUPTDataAplikasi() {
     const status = (app.nama_status || "Aktif").toLowerCase();
     if (status === "aktif")
       return { label: "Aktif", bg: "#dcfce7", color: "#166534" };
-    if (status.includes("pengembang") || status.includes("pengembangan"))
+    if (status.includes("pengembang") || status.includes("pengembangan") || status.includes("dibangun") || status.includes("sedang"))
       return {
         label: app.nama_status || "Pengembangan",
-        bg: "#fff7ed",
-        color: "#b45309",
+        bg: "#fed7aa",
+        color: "#c2410c",
       };
     return {
       label: app.nama_status || "Tidak Aktif",
