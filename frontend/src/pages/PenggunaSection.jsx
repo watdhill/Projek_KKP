@@ -228,6 +228,10 @@ function PenggunaSection() {
       return "Semua field wajib diisi";
     }
 
+    if (!isEditMode && !formData.nip) {
+      return "NIP wajib diisi";
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       return "Format email tidak valid";
@@ -1714,13 +1718,14 @@ function PenggunaSection() {
                       fontSize: "13px",
                     }}
                   >
-                    NIP
+                    NIP {!isEditMode && <span style={{ color: "#ef4444" }}>*</span>}
                   </label>
                   <input
                     type="text"
                     name="nip"
                     value={formData.nip}
                     onChange={handleInputChange}
+                    required={!isEditMode}
                     placeholder="18 digit angka"
                     maxLength="18"
                     style={{
