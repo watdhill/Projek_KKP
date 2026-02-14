@@ -359,6 +359,13 @@ exports.createUser = async (req, res) => {
       });
     }
 
+    if (!nip) {
+      return res.status(400).json({
+        success: false,
+        message: "NIP wajib diisi",
+      });
+    }
+
     // Validasi: email harus berakhiran @kkp.go.id
     if (!email.endsWith("@kkp.go.id")) {
       return res.status(400).json({
@@ -367,14 +374,14 @@ exports.createUser = async (req, res) => {
       });
     }
 
+    const nipClean = String(nip).trim();
+
     // Validasi: NIP harus 18 digit dan hanya angka
-    if (nip) {
-      if (!/^\d{18}$/.test(nip)) {
-        return res.status(400).json({
-          success: false,
-          message: "NIP harus 18 digit dan hanya berisi angka",
-        });
-      }
+    if (!/^\d{18}$/.test(nipClean)) {
+      return res.status(400).json({
+        success: false,
+        message: "NIP harus 18 digit dan hanya berisi angka",
+      });
     }
 
     // Validasi: password minimal 8 karakter, mengandung huruf besar, huruf kecil, angka, dan simbol apa saja (tanpa spasi)
@@ -399,7 +406,7 @@ exports.createUser = async (req, res) => {
         eselon2_id,
         upt_id,
         nama,
-        nip,
+        nipClean,
         email,
         jabatan,
         kontak,
@@ -412,7 +419,7 @@ exports.createUser = async (req, res) => {
         tableName: 'users',
         action: 'CREATE',
         recordId: result.insertId,
-        newValues: { role_id, eselon1_id, eselon2_id, upt_id, nama, nip, email, jabatan, kontak },
+        newValues: { role_id, eselon1_id, eselon2_id, upt_id, nama, nip: nipClean, email, jabatan, kontak },
         detail: `New user created: ${nama} (${email})`,
         description: `User ${nama} ditambahkan ke sistem`,
         ipAddress: getIpAddress(req),
@@ -422,7 +429,7 @@ exports.createUser = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "User berhasil ditambahkan",
-      data: { user_id: result.insertId, nama, nip, email, jabatan, kontak },
+      data: { user_id: result.insertId, nama, nip: nipClean, email, jabatan, kontak },
     });
   } catch (error) {
     res.status(500).json({
