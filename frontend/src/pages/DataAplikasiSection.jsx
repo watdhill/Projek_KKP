@@ -78,6 +78,8 @@ function DataAplikasiSection() {
   const [aksesConfirmTouched, setAksesConfirmTouched] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState(""); // "status" or "ssl_expired"
+  const [sortDirection, setSortDirection] = useState("asc"); // "asc" or "desc"
   const [formData, setFormData] = useState({
     nama_aplikasi: "",
     domain: "",
@@ -212,12 +214,63 @@ function DataAplikasiSection() {
     );
   });
 
-  // Pagination calculation
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // Sorting logic
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    if (sortColumn === "status") {
+      const statusA = (a.nama_status || "").toLowerCase();
+      const statusB = (b.nama_status || "").toLowerCase();
+
+      // Define status priority for logical ordering
+      const statusPriority = { "aktif": 1, "pengembangan": 2, "tidak aktif": 3 };
+      const priorityA = statusPriority[statusA] || 999;
+      const priorityB = statusPriority[statusB] || 999;
+
+      if (sortDirection === "asc") {
+        return priorityA - priorityB;
+      } else {
+        return priorityB - priorityA;
+      }
+    }
+
+    if (sortColumn === "ssl_expired") {
+      const dateA = a.ssl_expired ? new Date(a.ssl_expired) : null;
+      const dateB = b.ssl_expired ? new Date(b.ssl_expired) : null;
+
+      // Handle null dates (put at the end)
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      if (sortDirection === "asc") {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    }
+
+    return 0;
+  });
+
+  // Pagination calculation (use sorted data instead of filtered)
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedApps = filtered.slice(startIndex, endIndex);
-  const shownCount = Math.min(currentPage * itemsPerPage, filtered.length);
+  const paginatedApps = sorted.slice(startIndex, endIndex);
+  const shownCount = Math.min(currentPage * itemsPerPage, sorted.length);
+
+  // Handle sorting toggle
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   const getStatusBadge = (app) => {
     const status = (app.nama_status || "Aktif").toLowerCase();
@@ -2594,7 +2647,7 @@ function DataAplikasiSection() {
                   <th
                     style={{
                       width: "140px",
-                      padding: "10px 14px",
+                      padding: "8px 10px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -2603,7 +2656,80 @@ function DataAplikasiSection() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Status Aplikasi
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleSort("status")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: 0,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          color: sortColumn === "status" ? "#4f46e5" : "#475569",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          transition: "color 0.2s ease",
+                        }}
+                        onMouseOver={(e) => {
+                          if (sortColumn !== "status") {
+                            e.currentTarget.style.color = "#1e293b";
+                          }
+                        }}
+                        onMouseOut={(e) => {
+                          if (sortColumn !== "status") {
+                            e.currentTarget.style.color = "#475569";
+                          }
+                        }}
+                      >
+                        <span>Status Aplikasi</span>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{
+                            opacity: sortColumn === "status" ? 1 : 0.6,
+                            transition: "opacity 0.2s ease",
+                          }}
+                        >
+                          {sortColumn === "status" && sortDirection === "asc" ? (
+                            <path
+                              d="M12 4L6 10H18L12 4Z"
+                              fill="currentColor"
+                            />
+                          ) : sortColumn === "status" && sortDirection === "desc" ? (
+                            <path
+                              d="M12 20L18 14H6L12 20Z"
+                              fill="currentColor"
+                            />
+                          ) : (
+                            <>
+                              <path
+                                d="M12 4L6 10H18L12 4Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                              <path
+                                d="M12 20L18 14H6L12 20Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                            </>
+                          )}
+                        </svg>
+                      </button>
+                    </div>
                   </th>
                   <th
                     style={{
@@ -2617,7 +2743,72 @@ function DataAplikasiSection() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Tanggal Expired SSL
+                    <button
+                      onClick={() => handleSort("ssl_expired")}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        padding: 0,
+                        fontWeight: 700,
+                        fontSize: "11px",
+                        color: sortColumn === "ssl_expired" ? "#4f46e5" : "#475569",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                        transition: "color 0.2s ease",
+                      }}
+                      onMouseOver={(e) => {
+                        if (sortColumn !== "ssl_expired") {
+                          e.currentTarget.style.color = "#1e293b";
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (sortColumn !== "ssl_expired") {
+                          e.currentTarget.style.color = "#475569";
+                        }
+                      }}
+                    >
+                      <span>Expired SSL</span>
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          opacity: sortColumn === "ssl_expired" ? 1 : 0.6,
+                          transition: "opacity 0.2s ease",
+                        }}
+                      >
+                        {sortColumn === "ssl_expired" && sortDirection === "asc" ? (
+                          <path
+                            d="M12 4L6 10H18L12 4Z"
+                            fill="currentColor"
+                          />
+                        ) : sortColumn === "ssl_expired" && sortDirection === "desc" ? (
+                          <path
+                            d="M12 20L18 14H6L12 20Z"
+                            fill="currentColor"
+                          />
+                        ) : (
+                          <>
+                            <path
+                              d="M12 4L6 10H18L12 4Z"
+                              fill="currentColor"
+                              opacity="0.6"
+                            />
+                            <path
+                              d="M12 20L18 14H6L12 20Z"
+                              fill="currentColor"
+                              opacity="0.6"
+                            />
+                          </>
+                        )}
+                      </svg>
+                    </button>
                   </th>
                   <th
                     style={{
@@ -2825,32 +3016,40 @@ function DataAplikasiSection() {
                           verticalAlign: "middle",
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            display: "inline-flex",
+                            display: "flex",
                             alignItems: "center",
-                            gap: "4px",
-                            padding: "3px 8px",
-                            borderRadius: "10px",
-                            backgroundColor: badge.bg,
-                            color: badge.color,
-                            fontWeight: 700,
-                            fontSize: "10px",
-                            letterSpacing: "0.01em",
-                            textTransform: "uppercase",
+                            height: "100%",
                           }}
                         >
                           <span
                             style={{
-                              width: "4px",
-                              height: "4px",
-                              borderRadius: "50%",
-                              backgroundColor: badge.color,
-                              display: "inline-block",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 8px",
+                              borderRadius: "10px",
+                              backgroundColor: badge.bg,
+                              color: badge.color,
+                              fontWeight: 700,
+                              fontSize: "10px",
+                              letterSpacing: "0.01em",
+                              textTransform: "uppercase",
                             }}
-                          />
-                          {badge.label}
-                        </span>
+                          >
+                            <span
+                              style={{
+                                width: "4px",
+                                height: "4px",
+                                borderRadius: "50%",
+                                backgroundColor: badge.color,
+                                display: "inline-block",
+                              }}
+                            />
+                            {badge.label}
+                          </span>
+                        </div>
                       </td>
                       <td
                         style={{

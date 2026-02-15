@@ -12,6 +12,8 @@ function OperatorEselon2DataAplikasi() {
   const [filterEselon2, setFilterEselon2] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState("");
+  const [sortDirection, setSortDirection] = useState("asc");
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [originalAppName, setOriginalAppName] = useState("");
@@ -650,12 +652,74 @@ function OperatorEselon2DataAplikasi() {
     );
   });
 
-  // Pagination calculation
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // Sorting logic
+  const sorted = [...filtered].sort((a, b) => {
+    if (!sortColumn) return 0;
+
+    if (sortColumn === "status") {
+      const statusPriority = {
+        "aktif": 1,
+        "pengembangan": 2,
+        "tidak aktif": 3,
+      };
+
+      const getStatusKey = (app) => {
+        const status = (app.nama_status || "Aktif").toLowerCase();
+        if (status === "aktif") return "aktif";
+        if (status.includes("pengembang") || status.includes("pengembangan") || status.includes("dibangun") || status.includes("sedang")) {
+          return "pengembangan";
+        }
+        return "tidak aktif";
+      };
+
+      const statusA = getStatusKey(a);
+      const statusB = getStatusKey(b);
+      const priorityA = statusPriority[statusA] || 999;
+      const priorityB = statusPriority[statusB] || 999;
+
+      if (sortDirection === "asc") {
+        return priorityA - priorityB;
+      } else {
+        return priorityB - priorityA;
+      }
+    }
+
+    if (sortColumn === "ssl_expired") {
+      const dateA = a.ssl_expired ? new Date(a.ssl_expired) : null;
+      const dateB = b.ssl_expired ? new Date(b.ssl_expired) : null;
+
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1; // null dates go to the end
+      if (!dateB) return -1;
+
+      if (sortDirection === "asc") {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    }
+
+    return 0;
+  });
+
+  // Pagination calculation (use sorted data instead of filtered)
+  const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedApps = filtered.slice(startIndex, endIndex);
-  const shownCount = Math.min(currentPage * itemsPerPage, filtered.length);
+  const paginatedApps = sorted.slice(startIndex, endIndex);
+  const shownCount = Math.min(currentPage * itemsPerPage, sorted.length);
+
+  // Handle sorting toggle
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Toggle direction if same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // New column, default to ascending
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   const getStatusBadge = (app) => {
     const status = (app.nama_status || "Aktif").toLowerCase();
@@ -2578,7 +2642,7 @@ function OperatorEselon2DataAplikasi() {
                   <th
                     style={{
                       width: "140px",
-                      padding: "12px 16px",
+                      padding: "8px 10px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -2587,12 +2651,85 @@ function OperatorEselon2DataAplikasi() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Status Aplikasi
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleSort("status")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: 0,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          color: sortColumn === "status" ? "#4f46e5" : "#475569",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          transition: "color 0.2s ease",
+                        }}
+                        onMouseOver={(e) => {
+                          if (sortColumn !== "status") {
+                            e.currentTarget.style.color = "#1e293b";
+                          }
+                        }}
+                        onMouseOut={(e) => {
+                          if (sortColumn !== "status") {
+                            e.currentTarget.style.color = "#475569";
+                          }
+                        }}
+                      >
+                        <span>Status Aplikasi</span>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{
+                            opacity: sortColumn === "status" ? 1 : 0.6,
+                            transition: "opacity 0.2s ease",
+                          }}
+                        >
+                          {sortColumn === "status" && sortDirection === "asc" ? (
+                            <path
+                              d="M12 4L6 10H18L12 4Z"
+                              fill="currentColor"
+                            />
+                          ) : sortColumn === "status" && sortDirection === "desc" ? (
+                            <path
+                              d="M12 20L18 14H6L12 20Z"
+                              fill="currentColor"
+                            />
+                          ) : (
+                            <>
+                              <path
+                                d="M12 4L6 10H18L12 4Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                              <path
+                                d="M12 20L18 14H6L12 20Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                            </>
+                          )}
+                        </svg>
+                      </button>
+                    </div>
                   </th>
                   <th
                     style={{
                       width: "160px",
-                      padding: "12px 16px",
+                      padding: "8px 10px",
                       textAlign: "left",
                       fontWeight: 700,
                       fontSize: "11px",
@@ -2601,7 +2738,80 @@ function OperatorEselon2DataAplikasi() {
                       letterSpacing: "0.05em",
                     }}
                   >
-                    Tanggal Expired SSL
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        height: "100%",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleSort("ssl_expired")}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: 0,
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          color: sortColumn === "ssl_expired" ? "#4f46e5" : "#475569",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.05em",
+                          transition: "color 0.2s ease",
+                        }}
+                        onMouseOver={(e) => {
+                          if (sortColumn !== "ssl_expired") {
+                            e.currentTarget.style.color = "#1e293b";
+                          }
+                        }}
+                        onMouseOut={(e) => {
+                          if (sortColumn !== "ssl_expired") {
+                            e.currentTarget.style.color = "#475569";
+                          }
+                        }}
+                      >
+                        <span>Expired SSL</span>
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{
+                            opacity: sortColumn === "ssl_expired" ? 1 : 0.6,
+                            transition: "opacity 0.2s ease",
+                          }}
+                        >
+                          {sortColumn === "ssl_expired" && sortDirection === "asc" ? (
+                            <path
+                              d="M12 4L6 10H18L12 4Z"
+                              fill="currentColor"
+                            />
+                          ) : sortColumn === "ssl_expired" && sortDirection === "desc" ? (
+                            <path
+                              d="M12 20L18 14H6L12 20Z"
+                              fill="currentColor"
+                            />
+                          ) : (
+                            <>
+                              <path
+                                d="M12 4L6 10H18L12 4Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                              <path
+                                d="M12 20L18 14H6L12 20Z"
+                                fill="currentColor"
+                                opacity="0.6"
+                              />
+                            </>
+                          )}
+                        </svg>
+                      </button>
+                    </div>
                   </th>
                   <th
                     style={{
@@ -2782,32 +2992,40 @@ function OperatorEselon2DataAplikasi() {
                           verticalAlign: "middle",
                         }}
                       >
-                        <span
+                        <div
                           style={{
-                            display: "inline-flex",
+                            display: "flex",
                             alignItems: "center",
-                            gap: "4px",
-                            padding: "3px 8px",
-                            borderRadius: "10px",
-                            backgroundColor: badge.bg,
-                            color: badge.color,
-                            fontWeight: 700,
-                            fontSize: "10px",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.03em",
+                            height: "100%",
                           }}
                         >
                           <span
                             style={{
-                              width: "4px",
-                              height: "4px",
-                              borderRadius: "50%",
-                              backgroundColor: badge.color,
-                              display: "inline-block",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 8px",
+                              borderRadius: "10px",
+                              backgroundColor: badge.bg,
+                              color: badge.color,
+                              fontWeight: 700,
+                              fontSize: "10px",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.03em",
                             }}
-                          />
-                          {badge.label}
-                        </span>
+                          >
+                            <span
+                              style={{
+                                width: "4px",
+                                height: "4px",
+                                borderRadius: "50%",
+                                backgroundColor: badge.color,
+                                display: "inline-block",
+                              }}
+                            />
+                            {badge.label}
+                          </span>
+                        </div>
                       </td>
                       <td
                         style={{
