@@ -6519,48 +6519,84 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "8px",
+                          marginBottom: "12px",
                           fontWeight: 600,
                         }}
                       >
                         Status BMN <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <select
-                        data-field="status_bmn"
-                        value={formData.status_bmn}
-                        onChange={(e) =>
-                          handleFormChange("status_bmn", e.target.value)
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "10px",
-                          border: "1.5px solid",
-                          borderColor: fieldErrors.status_bmn
-                            ? errorBorderColor
-                            : "#cbd5e1",
-                          fontSize: "14px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          backgroundColor: "#f8fafc",
-                          boxShadow: fieldErrors.status_bmn
-                            ? errorBoxShadow
-                            : "none",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#6366f1";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = fieldErrors.status_bmn ? errorBorderColor : "#cbd5e1";
-                          e.currentTarget.style.boxShadow = fieldErrors.status_bmn ? errorBoxShadow : "none";
-                        }}
-                      >
-                        <option value="">-Pilih-</option>
-                        <option value="ya">Ya</option>
-                        <option value="tidak">Tidak</option>
-                      </select>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        {[
+                          { value: "ya", label: "Ya" },
+                          { value: "tidak", label: "Tidak" },
+                        ].map((option) => {
+                          const isChecked = formData.status_bmn === option.value;
+                          return (
+                            <label
+                              key={option.value}
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "10px 14px",
+                                cursor: "pointer",
+                                borderRadius: "10px",
+                                backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
+                                border: isChecked
+                                  ? "1.5px solid #6366f1"
+                                  : fieldErrors.status_bmn
+                                    ? `1.5px solid ${errorBorderColor}`
+                                    : "1.5px solid #cbd5e1",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                boxShadow: fieldErrors.status_bmn
+                                  ? errorBoxShadow
+                                  : "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#8b5cf6";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                                  e.currentTarget.style.borderColor = fieldErrors.status_bmn
+                                    ? errorBorderColor
+                                    : "#cbd5e1";
+                                }
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                name="status_bmn"
+                                value={option.value}
+                                checked={isChecked}
+                                onChange={(e) =>
+                                  handleFormChange("status_bmn", e.target.value)
+                                }
+                                style={{
+                                  width: "18px",
+                                  height: "18px",
+                                  marginRight: "10px",
+                                  cursor: "pointer",
+                                  accentColor: "#6366f1",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "14px",
+                                  color: isChecked ? "#4338ca" : "#334155",
+                                  fontWeight: isChecked ? 600 : 500,
+                                }}
+                              >
+                                {option.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                     <div>
                       <label
@@ -6625,101 +6661,167 @@ function OperatorUPTDataAplikasi() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "8px",
+                          marginBottom: "12px",
                           fontWeight: 600,
                         }}
                       >
                         Tipe Lisensi Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <select
-                        data-field="tipe_lisensi_bahasa"
-                        value={formData.tipe_lisensi_bahasa}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "tipe_lisensi_bahasa",
-                            e.target.value,
-                          )
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "10px",
-                          border: "1.5px solid",
-                          borderColor: fieldErrors.tipe_lisensi_bahasa
-                            ? errorBorderColor
-                            : "#cbd5e1",
-                          fontSize: "14px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          backgroundColor: "#f8fafc",
-                          boxShadow: fieldErrors.tipe_lisensi_bahasa
-                            ? errorBoxShadow
-                            : "none",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#6366f1";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = fieldErrors.tipe_lisensi_bahasa ? errorBorderColor : "#cbd5e1";
-                          e.currentTarget.style.boxShadow = fieldErrors.tipe_lisensi_bahasa ? errorBoxShadow : "none";
-                        }}
-                      >
-                        <option value="">-Pilih-</option>
-                        <option value="Open Source">Open Source</option>
-                        <option value="Lisensi">Lisensi</option>
-                      </select>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        {[
+                          { value: "Open Source", label: "Open Source" },
+                          { value: "Lisensi", label: "Lisensi" },
+                        ].map((option) => {
+                          const isChecked = formData.tipe_lisensi_bahasa === option.value;
+                          return (
+                            <label
+                              key={option.value}
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "10px 14px",
+                                cursor: "pointer",
+                                borderRadius: "10px",
+                                backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
+                                border: isChecked
+                                  ? "1.5px solid #6366f1"
+                                  : fieldErrors.tipe_lisensi_bahasa
+                                    ? `1.5px solid ${errorBorderColor}`
+                                    : "1.5px solid #cbd5e1",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                boxShadow: fieldErrors.tipe_lisensi_bahasa
+                                  ? errorBoxShadow
+                                  : "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#8b5cf6";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                                  e.currentTarget.style.borderColor = fieldErrors.tipe_lisensi_bahasa
+                                    ? errorBorderColor
+                                    : "#cbd5e1";
+                                }
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                name="tipe_lisensi_bahasa"
+                                value={option.value}
+                                checked={isChecked}
+                                onChange={(e) =>
+                                  handleFormChange("tipe_lisensi_bahasa", e.target.value)
+                                }
+                                style={{
+                                  width: "18px",
+                                  height: "18px",
+                                  marginRight: "10px",
+                                  cursor: "pointer",
+                                  accentColor: "#6366f1",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "14px",
+                                  color: isChecked ? "#4338ca" : "#334155",
+                                  fontWeight: isChecked ? 600 : 500,
+                                }}
+                              >
+                                {option.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                     <div>
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "8px",
+                          marginBottom: "12px",
                           fontWeight: 600,
                         }}
                       >
                         API Internal Sistem Integrasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <select
-                        data-field="api_internal_status"
-                        value={formData.api_internal_status}
-                        onChange={(e) =>
-                          handleFormChange(
-                            "api_internal_status",
-                            e.target.value,
-                          )
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "10px",
-                          border: "1.5px solid",
-                          borderColor: fieldErrors.api_internal_status
-                            ? errorBorderColor
-                            : "#cbd5e1",
-                          fontSize: "14px",
-                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                          outline: "none",
-                          cursor: "pointer",
-                          backgroundColor: "#f8fafc",
-                          boxShadow: fieldErrors.api_internal_status
-                            ? errorBoxShadow
-                            : "none",
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = "#6366f1";
-                          e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99, 102, 241, 0.08)";
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = fieldErrors.api_internal_status ? errorBorderColor : "#cbd5e1";
-                          e.currentTarget.style.boxShadow = fieldErrors.api_internal_status ? errorBoxShadow : "none";
-                        }}
-                      >
-                        <option value="">-Pilih-</option>
-                        <option value="tersedia">Tersedia</option>
-                        <option value="tidak">Tidak</option>
-                      </select>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        {[
+                          { value: "tersedia", label: "Tersedia" },
+                          { value: "tidak", label: "Tidak" },
+                        ].map((option) => {
+                          const isChecked = formData.api_internal_status === option.value;
+                          return (
+                            <label
+                              key={option.value}
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                alignItems: "center",
+                                padding: "10px 14px",
+                                cursor: "pointer",
+                                borderRadius: "10px",
+                                backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
+                                border: isChecked
+                                  ? "1.5px solid #6366f1"
+                                  : fieldErrors.api_internal_status
+                                    ? `1.5px solid ${errorBorderColor}`
+                                    : "1.5px solid #cbd5e1",
+                                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                boxShadow: fieldErrors.api_internal_status
+                                  ? errorBoxShadow
+                                  : "none",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                  e.currentTarget.style.borderColor = "#8b5cf6";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isChecked) {
+                                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                                  e.currentTarget.style.borderColor = fieldErrors.api_internal_status
+                                    ? errorBorderColor
+                                    : "#cbd5e1";
+                                }
+                              }}
+                            >
+                              <input
+                                type="radio"
+                                name="api_internal_status"
+                                value={option.value}
+                                checked={isChecked}
+                                onChange={(e) =>
+                                  handleFormChange("api_internal_status", e.target.value)
+                                }
+                                style={{
+                                  width: "18px",
+                                  height: "18px",
+                                  marginRight: "10px",
+                                  cursor: "pointer",
+                                  accentColor: "#6366f1",
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span
+                                style={{
+                                  fontSize: "14px",
+                                  color: isChecked ? "#4338ca" : "#334155",
+                                  fontWeight: isChecked ? 600 : 500,
+                                }}
+                              >
+                                {option.label}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
