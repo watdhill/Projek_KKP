@@ -1,5 +1,7 @@
 // Frontend Error Handler untuk handle API errors secara konsisten
 
+import { clearAuthStorage, hasValidStoredToken } from "./authStorage";
+
 /**
  * Handle API errors dan return object dengan informasi error yang user-friendly
  * @param {Error | Response} error - Error object atau response object
@@ -54,7 +56,9 @@ const handleHttpError = (status, data) => {
         message:
           data.message || "Sesi Anda telah berakhir. Silakan login kembali.",
         type: "error",
-        shouldLogout: true,
+        // Jangan auto-logout hanya karena 401.
+        // 401 bisa terjadi karena request tanpa token/endpoint tertentu.
+        shouldLogout: false,
       };
 
     case 403:
@@ -63,7 +67,8 @@ const handleHttpError = (status, data) => {
         message:
           data.message || "Anda tidak memiliki izin untuk melakukan aksi ini",
         type: "error",
-        shouldLogout: false,
+        // Auto-logout hanya jika token benar-benar invalid/expired
+        shouldLogout: hasValidStoredToken() && data.error === "INVALID_TOKEN",
       };
 
     case 404:
@@ -136,7 +141,7 @@ export const fetchWithErrorHandling = async (url, options = {}) => {
 
       // Auto logout jika 401
       if (errorInfo.shouldLogout) {
-        localStorage.clear();
+        clearAuthStorage();
         window.location.href = "/login";
       }
 
