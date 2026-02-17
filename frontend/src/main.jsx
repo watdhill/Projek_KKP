@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
+import { getStoredToken } from "./utils/authStorage";
 
 const originalFetch = window.fetch;
 const rewriteApiUrl = (rawUrl) => {
@@ -20,7 +21,7 @@ window.fetch = (input, init = {}) => {
   const url = rewriteApiUrl(rawUrl);
   const isApiRequest = url.includes("/api/");
   const isAuthRequest = url.includes("/api/users/auth");
-  const token = localStorage.getItem("token");
+  const token = getStoredToken();
 
   const baseRequest = input instanceof Request ? new Request(url, input) : null;
 

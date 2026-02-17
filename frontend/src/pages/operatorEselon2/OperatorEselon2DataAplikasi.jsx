@@ -6932,13 +6932,13 @@ function OperatorEselon2DataAplikasi() {
                           style={{
                             display: "grid",
                             gap: "8px",
-                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                           }}
                         >
                           <label
                             style={{
                               display: "flex",
-                              alignItems: "flex-start",
+                              alignItems: "center",
                               padding: "6px 8px",
                               cursor: "pointer",
                               borderRadius: "8px",
@@ -6986,7 +6986,11 @@ function OperatorEselon2DataAplikasi() {
                               }}
                             />
                             <span
-                              style={{ fontSize: "12.5px", color: "#334155" }}
+                              style={{
+                                fontSize: "12.5px",
+                                color: "#334155",
+                                whiteSpace: "nowrap",
+                              }}
                             >
                               Aktif/Pusdatin
                             </span>
@@ -6995,7 +6999,7 @@ function OperatorEselon2DataAplikasi() {
                           <label
                             style={{
                               display: "flex",
-                              alignItems: "flex-start",
+                              alignItems: "center",
                               padding: "6px 8px",
                               cursor: "pointer",
                               borderRadius: "8px",
@@ -7047,7 +7051,11 @@ function OperatorEselon2DataAplikasi() {
                               }}
                             />
                             <span
-                              style={{ fontSize: "12.5px", color: "#334155" }}
+                              style={{
+                                fontSize: "12.5px",
+                                color: "#334155",
+                                whiteSpace: "nowrap",
+                              }}
                             >
                               Aktif/Unit Kerja
                             </span>

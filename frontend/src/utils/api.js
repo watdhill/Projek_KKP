@@ -1,11 +1,13 @@
 // API utility untuk handle JWT authentication
 
+import { clearAuthStorage, getStoredToken } from "./authStorage";
+
 /**
  * Get auth headers with JWT token
  * @returns {Object} Headers object with Authorization bearer token
  */
 export const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = getStoredToken();
   return {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
@@ -29,15 +31,11 @@ export const authFetch = async (url, options = {}) => {
     },
   });
 
-  // Handle token expiration
-  if (response.status === 403 || response.status === 401) {
+  // Handle token expiration (JWT invalid/expired)
+  if (response.status === 403) {
     const data = await response.json();
-    if (
-      data.error === "INVALID_TOKEN" ||
-      data.error === "AUTHENTICATION_REQUIRED"
-    ) {
-      // Token expired atau invalid, redirect ke login
-      localStorage.clear();
+    if (data.error === "INVALID_TOKEN") {
+      clearAuthStorage();
       window.location.href = "/login";
       throw new Error("Session expired. Please login again.");
     }
@@ -51,14 +49,14 @@ export const authFetch = async (url, options = {}) => {
  * @returns {boolean}
  */
 export const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+  return !!getStoredToken();
 };
 
 /**
  * Logout user - clear localStorage and redirect
  */
 export const logout = () => {
-  localStorage.clear();
+  clearAuthStorage();
   window.location.href = "/login";
 };
 

@@ -29,6 +29,8 @@ import LoginPage from "./pages/LoginPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
+import { hasValidStoredToken } from "./utils/authStorage";
+
 const adminNav = [
   { label: "Dashboard", path: "/admin", icon: "dashboard" },
   { label: "Master Data", path: "/admin/master-data", icon: "master" },
@@ -86,11 +88,20 @@ const roleHome = {
 function RequireAuth({ allowedRoles, children }) {
   const role =
     typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
-  if (!role) return <Navigate to="/login" replace />;
+  if (!role || !hasValidStoredToken()) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(role)) {
     return <Navigate to={roleHome[role] || "/login"} replace />;
   }
   return children;
+}
+
+function HomeRedirect() {
+  const role =
+    typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+  if (role && hasValidStoredToken()) {
+    return <Navigate to={roleHome[role] || "/login"} replace />;
+  }
+  return <Navigate to="/login" replace />;
 }
 
 function App() {
@@ -100,7 +111,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<HomeRedirect />} />
 
         {/* Admin area */}
         <Route
