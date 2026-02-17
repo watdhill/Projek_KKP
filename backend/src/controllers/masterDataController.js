@@ -251,15 +251,24 @@ exports.getAllMasterData = async (req, res) => {
       params.push(req.query.eselon1_id);
     }
 
-    let orderClause = ` ORDER BY ${config.idField} DESC`;
-    if (type === "eselon1") {
-      orderClause = ` ORDER BY no ASC`;
-    } else if (type === "eselon2") {
-      orderClause = ` ORDER BY no ASC`;
-    } else if (type === "status_aplikasi") {
-      orderClause = ` ORDER BY nama_status ASC`;
-    } else if (type === "environment") {
-      orderClause = ` ORDER BY jenis_environment ASC`;
+    const nameFields = {
+      frekuensi_pemakaian: "nama_frekuensi",
+      status_aplikasi: "nama_status",
+      environment: "jenis_environment",
+      cara_akses: "nama_cara_akses",
+      pdn: "kode_pdn",
+      format_laporan: "nama_format",
+      pic_internal: "nama_pic_internal",
+      pic_eksternal: "nama_pic_eksternal",
+    };
+
+    let orderClause = ` ORDER BY status_aktif DESC, ${config.idField} DESC`;
+    if (type === "eselon1" || type === "eselon2") {
+      orderClause = ` ORDER BY status_aktif DESC, no ASC`;
+    } else if (type === "upt") {
+      orderClause = ` ORDER BY status_aktif DESC, ${config.idField} DESC`;
+    } else if (nameFields[type]) {
+      orderClause = ` ORDER BY status_aktif DESC, ${nameFields[type]} ASC`;
     }
     query += orderClause;
 
