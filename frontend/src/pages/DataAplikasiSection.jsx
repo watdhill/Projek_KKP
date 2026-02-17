@@ -4867,7 +4867,7 @@ function DataAplikasiSection() {
                     />
                   </div>
 
-                  <div style={{ marginTop: "16px" }}>
+                  <div style={{ marginTop: "10px" }}>
                     <label
                       style={{
                         display: "block",
@@ -4882,7 +4882,7 @@ function DataAplikasiSection() {
                     <div
                       data-field="user_pengguna"
                       style={{
-                        padding: "12px",
+                        padding: "8px",
                         borderRadius: "10px",
                         border: "1.5px solid",
                         borderColor: fieldErrors.user_pengguna
@@ -4894,8 +4894,8 @@ function DataAplikasiSection() {
                       <div
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                          gap: "10px",
+                          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                          gap: "8px",
                         }}
                       >
                         {USER_PENGGUNA_OPTIONS.map((opt) => {
@@ -4909,15 +4909,14 @@ function DataAplikasiSection() {
                               style={{
                                 display: "flex",
                                 alignItems: "flex-start",
-                                padding: "10px 12px",
+                                padding: "6px 8px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                 border: checked
                                   ? "1.5px solid #6366f1"
                                   : "1.5px solid #cbd5e1",
                                 transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                                minHeight: "48px",
                               }}
                               onMouseEnter={(e) => {
                                 if (!checked) {
@@ -4969,9 +4968,9 @@ function DataAplikasiSection() {
                                   );
                                 }}
                                 style={{
-                                  width: "16px",
-                                  height: "16px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   marginTop: "1px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
@@ -4980,17 +4979,12 @@ function DataAplikasiSection() {
                               />
                               <span
                                 style={{
-                                  fontSize: "13px",
+                                  fontSize: "12.5px",
                                   color: checked ? "#4338ca" : "#334155",
                                   fontWeight: checked ? 600 : 500,
-                                  lineHeight: "1.5",
+                                  lineHeight: "1.4",
                                   wordBreak: "break-word",
                                   flex: 1,
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
                                 }}
                               >
                                 {opt.label}
@@ -5034,11 +5028,11 @@ function DataAplikasiSection() {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: "16px" }}>
+                  <div style={{ marginTop: "10px" }}>
                     <label
                       style={{
                         display: "block",
-                        marginBottom: "8px",
+                        marginBottom: "6px",
                         fontWeight: 600,
                         color: "#334155",
                         fontSize: "13px",
@@ -5283,8 +5277,8 @@ function DataAplikasiSection() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                            gap: "10px",
+                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                            gap: "8px",
                           }}
                         >
                           {UNIT_PENGEMBANG_OPTIONS.map((opt) => {
@@ -5295,15 +5289,14 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "flex-start",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
-                                  borderRadius: "10px",
+                                  borderRadius: "8px",
                                   backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                   border: checked
                                     ? "1.5px solid #6366f1"
                                     : "1.5px solid #cbd5e1",
                                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                                  minHeight: "48px",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!checked) {
@@ -5416,8 +5409,13 @@ function DataAplikasiSection() {
                     </div>
                   </div>
 
-                  {/* Unit Operasional Teknologi - Full width dengan 2 kolom */}
-                  <div style={{ marginTop: "16px" }}>
+                  {/* Unit Operasional Teknologi & Nilai Pengembangan - Side by side */}
+                  <div style={{
+                    marginTop: "16px",
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "14px"
+                  }}>
                     <div>
                       <label
                         style={{
@@ -5461,15 +5459,14 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "flex-start",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
-                                  borderRadius: "10px",
+                                  borderRadius: "8px",
                                   backgroundColor: checked ? "#eff6ff" : "#fafbfc",
                                   border: checked
                                     ? "1.5px solid #6366f1"
                                     : "1.5px solid #cbd5e1",
                                   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                                  minHeight: "48px",
                                 }}
                                 onMouseEnter={(e) => {
                                   if (!checked) {
@@ -5520,9 +5517,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     marginTop: "1px",
                                     cursor: "pointer",
                                     accentColor: "#6366f1",
@@ -5531,17 +5528,12 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: checked ? "#4338ca" : "#334155",
                                     fontWeight: checked ? 600 : 500,
-                                    lineHeight: "1.5",
+                                    lineHeight: "1.4",
                                     wordBreak: "break-word",
                                     flex: 1,
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
                                   }}
                                 >
                                   {opt.label}
@@ -5676,7 +5668,7 @@ function DataAplikasiSection() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gridTemplateColumns: "1fr",
                             gap: "8px",
                           }}
                         >
@@ -5689,7 +5681,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -5743,9 +5735,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     cursor: "pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
@@ -5753,10 +5745,10 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -5832,7 +5824,7 @@ function DataAplikasiSection() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gridTemplateColumns: "1fr",
                             gap: "8px",
                           }}
                         >
@@ -5845,7 +5837,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -5899,9 +5891,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     cursor: "pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
@@ -5909,10 +5901,10 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -5988,7 +5980,7 @@ function DataAplikasiSection() {
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                            gridTemplateColumns: "1fr",
                             gap: "8px",
                           }}
                         >
@@ -6001,7 +5993,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -6055,9 +6047,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     cursor: "pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
@@ -6065,10 +6057,10 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -6201,7 +6193,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -6249,20 +6241,20 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
-                                    cursor: "pointer",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
+                                    cursor: " pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
                                   }}
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -6355,7 +6347,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -6406,9 +6398,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     cursor: "pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
@@ -6416,10 +6408,10 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -6548,7 +6540,7 @@ function DataAplikasiSection() {
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
-                                  padding: "10px 12px",
+                                  padding: "6px 8px",
                                   cursor: "pointer",
                                   borderRadius: "8px",
                                   backgroundColor: checked ? "#e0f2fe" : "#fff",
@@ -6596,9 +6588,9 @@ function DataAplikasiSection() {
                                     );
                                   }}
                                   style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    marginRight: "10px",
+                                    width: "14px",
+                                    height: "14px",
+                                    marginRight: "8px",
                                     cursor: "pointer",
                                     accentColor: "#0ea5e9",
                                     flexShrink: 0,
@@ -6606,10 +6598,10 @@ function DataAplikasiSection() {
                                 />
                                 <span
                                   style={{
-                                    fontSize: "13px",
+                                    fontSize: "12.5px",
                                     color: "#334155",
                                     fontWeight: 500,
-                                    lineHeight: "1.3",
+                                    lineHeight: "1.4",
                                   }}
                                 >
                                   {opt.label}
@@ -6753,7 +6745,7 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "12px",
+                          marginBottom: "6px",
                           fontWeight: 600,
                           color: "#334155",
                           fontSize: "13px",
@@ -6774,9 +6766,9 @@ function DataAplikasiSection() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 10px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -6812,9 +6804,9 @@ function DataAplikasiSection() {
                                   handleFormChange("status_bmn", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,
@@ -6822,7 +6814,7 @@ function DataAplikasiSection() {
                               />
                               <span
                                 style={{
-                                  fontSize: "14px",
+                                  fontSize: "13px",
                                   color: isChecked ? "#4338ca" : "#334155",
                                   fontWeight: isChecked ? 600 : 500,
                                 }}
@@ -6887,7 +6879,7 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "12px",
+                          marginBottom: "6px",
                           fontWeight: 600,
                           color: "#334155",
                           fontSize: "13px",
@@ -6908,9 +6900,9 @@ function DataAplikasiSection() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 10px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -6946,9 +6938,9 @@ function DataAplikasiSection() {
                                   handleFormChange("tipe_lisensi_bahasa", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,
@@ -6972,7 +6964,7 @@ function DataAplikasiSection() {
                       <label
                         style={{
                           display: "block",
-                          marginBottom: "12px",
+                          marginBottom: "6px",
                           fontWeight: 600,
                           color: "#334155",
                           fontSize: "13px",
@@ -6993,9 +6985,9 @@ function DataAplikasiSection() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 10px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -7031,9 +7023,9 @@ function DataAplikasiSection() {
                                   handleFormChange("api_internal_status", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,

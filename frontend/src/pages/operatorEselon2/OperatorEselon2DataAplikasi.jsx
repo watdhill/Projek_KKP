@@ -4656,7 +4656,7 @@ function OperatorEselon2DataAplikasi() {
                         style={{
                           display: "grid",
                           gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                          gap: "10px",
+                          gap: "8px",
                         }}
                       >
                         {USER_PENGGUNA_OPTIONS.map((opt) => (
@@ -4665,13 +4665,12 @@ function OperatorEselon2DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: userPenggunaSelected.includes(opt.value) ? "#eff6ff" : "#fafbfc",
                               border: userPenggunaSelected.includes(opt.value) ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (!userPenggunaSelected.includes(opt.value)) {
@@ -4715,9 +4714,9 @@ function OperatorEselon2DataAplikasi() {
                                 );
                               }}
                               style={{
-                                width: "16px",
-                                height: "16px",
-                                marginRight: "10px",
+                                width: "14px",
+                                height: "14px",
+                                marginRight: "8px",
                                 marginTop: "1px",
                                 cursor: "pointer",
                                 accentColor: "#6366f1",
@@ -4726,10 +4725,10 @@ function OperatorEselon2DataAplikasi() {
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: userPenggunaSelected.includes(opt.value) ? "#4338ca" : "#334155",
                                 fontWeight: userPenggunaSelected.includes(opt.value) ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               {opt.label}
@@ -4981,18 +4980,17 @@ function OperatorEselon2DataAplikasi() {
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "10px", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                        <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: unitPengembangType === "sekretariat_eselon_1" ? "#eff6ff" : "#fafbfc",
                               border: unitPengembangType === "sekretariat_eselon_1" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (unitPengembangType !== "sekretariat_eselon_1") {
@@ -5026,14 +5024,14 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: unitPengembangType === "sekretariat_eselon_1" ? "#4338ca" : "#334155",
                                 fontWeight: unitPengembangType === "sekretariat_eselon_1" ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               Sekretariat Eselon 1
@@ -5044,13 +5042,12 @@ function OperatorEselon2DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: unitPengembangType === "internal_eselon_2" ? "#eff6ff" : "#fafbfc",
                               border: unitPengembangType === "internal_eselon_2" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (unitPengembangType !== "internal_eselon_2") {
@@ -5084,14 +5081,14 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: unitPengembangType === "internal_eselon_2" ? "#4338ca" : "#334155",
                                 fontWeight: unitPengembangType === "internal_eselon_2" ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               Internal Eselon 2
@@ -5102,13 +5099,12 @@ function OperatorEselon2DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: unitPengembangType === "eksternal" ? "#eff6ff" : "#fafbfc",
                               border: unitPengembangType === "eksternal" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (unitPengembangType !== "eksternal") {
@@ -5139,14 +5135,14 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: unitPengembangType === "eksternal" ? "#4338ca" : "#334155",
                                 fontWeight: unitPengembangType === "eksternal" ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               Eksternal (Lainnya)
@@ -5180,8 +5176,15 @@ function OperatorEselon2DataAplikasi() {
                     </div>
                   </div>
 
-                  {/* Unit Operasional - Full width */}
-                  <div style={{ marginTop: "14px" }}>
+                  {/* Unit Operasional and Nilai Pengembangan - 2 columns */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "14px",
+                      marginTop: "14px",
+                    }}
+                  >
                     <div>
                       <label
                         style={{
@@ -5210,18 +5213,17 @@ function OperatorEselon2DataAplikasi() {
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gap: "10px", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                        <div style={{ display: "grid", gap: "8px", gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
                           <label
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: unitOperasionalTeknologiType === "pusdatin" ? "#eff6ff" : "#fafbfc",
                               border: unitOperasionalTeknologiType === "pusdatin" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (unitOperasionalTeknologiType !== "pusdatin") {
@@ -5255,14 +5257,14 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: unitOperasionalTeknologiType === "pusdatin" ? "#4338ca" : "#334155",
                                 fontWeight: unitOperasionalTeknologiType === "pusdatin" ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               Pusdatin
@@ -5273,13 +5275,12 @@ function OperatorEselon2DataAplikasi() {
                             style={{
                               display: "flex",
                               alignItems: "flex-start",
-                              padding: "10px 12px",
+                              padding: "6px 8px",
                               cursor: "pointer",
-                              borderRadius: "10px",
+                              borderRadius: "8px",
                               backgroundColor: unitOperasionalTeknologiType === "lainnya" ? "#eff6ff" : "#fafbfc",
                               border: unitOperasionalTeknologiType === "lainnya" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
                               transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                              minHeight: "48px",
                             }}
                             onMouseEnter={(e) => {
                               if (unitOperasionalTeknologiType !== "lainnya") {
@@ -5312,14 +5313,14 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
                               style={{
-                                fontSize: "13px",
+                                fontSize: "12.5px",
                                 color: unitOperasionalTeknologiType === "lainnya" ? "#4338ca" : "#334155",
                                 fontWeight: unitOperasionalTeknologiType === "lainnya" ? 600 : 500,
-                                lineHeight: "1.5",
+                                lineHeight: "1.4",
                               }}
                             >
                               Lainnya
@@ -5354,10 +5355,7 @@ function OperatorEselon2DataAplikasi() {
                         )}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Nilai Pengembangan - Full width */}
-                  <div style={{ marginTop: "14px" }}>
                     <div>
                       <label
                         style={{
@@ -5424,9 +5422,9 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pusat_komputasi_utama
                             ? errorBorderColor
                             : "#cbd5e1",
@@ -5436,12 +5434,12 @@ function OperatorEselon2DataAplikasi() {
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
-                              alignItems: "center",
-                              padding: "10px 12px",
+                              alignItems: "flex-start",
+                              padding: "6px 8px",
                               cursor: "pointer",
                               borderRadius: "8px",
                               backgroundColor: pusatKomputasiUtamaType === "dc_gambir" ? "#e0f2fe" : "#fff",
@@ -5486,22 +5484,26 @@ function OperatorEselon2DataAplikasi() {
                           <label
                             style={{
                               display: "flex",
-                              alignItems: "center",
-                              padding: "10px 12px",
+                              alignItems: "flex-start",
+                              padding: "6px 8px",
                               cursor: "pointer",
                               borderRadius: "8px",
-                              backgroundColor: pusatKomputasiUtamaType === "dc_cyber" ? "#e0f2fe" : "#fff",
-                              border: pusatKomputasiUtamaType === "dc_cyber" ? "1px solid #0ea5e9" : "1px solid #cbd5e1",
-                              transition: "all 0.15s",
+                              backgroundColor: pusatKomputasiUtamaType === "dc_cyber" ? "#eff6ff" : "#fafbfc",
+                              border: pusatKomputasiUtamaType === "dc_cyber" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                             onMouseEnter={(e) => {
                               if (pusatKomputasiUtamaType !== "dc_cyber") {
                                 e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (pusatKomputasiUtamaType !== "dc_cyber") {
-                                e.currentTarget.style.backgroundColor = "#fff";
+                                e.currentTarget.style.backgroundColor = "#fafbfc";
+                                e.currentTarget.style.borderColor = "#cbd5e1";
+                                e.currentTarget.style.transform = "translateY(0)";
                               }
                             }}
                           >
@@ -5520,10 +5522,15 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
-                              style={{ fontSize: "12.5px", color: "#334155" }}
+                              style={{
+                                fontSize: "12.5px",
+                                color: pusatKomputasiUtamaType === "dc_cyber" ? "#4338ca" : "#334155",
+                                fontWeight: pusatKomputasiUtamaType === "dc_cyber" ? 600 : 500,
+                                lineHeight: "1.4",
+                              }}
                             >
                               DC Cyber
                             </span>
@@ -5671,9 +5678,9 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.pusat_komputasi_backup
                             ? errorBorderColor
                             : "#cbd5e1",
@@ -5683,26 +5690,30 @@ function OperatorEselon2DataAplikasi() {
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
-                              alignItems: "center",
-                              padding: "10px 12px",
+                              alignItems: "flex-start",
+                              padding: "6px 8px",
                               cursor: "pointer",
                               borderRadius: "8px",
-                              backgroundColor: pusatKomputasiBackupType === "dc_gambir" ? "#e0f2fe" : "#fff",
-                              border: pusatKomputasiBackupType === "dc_gambir" ? "1px solid #0ea5e9" : "1px solid #cbd5e1",
-                              transition: "all 0.15s",
+                              backgroundColor: pusatKomputasiBackupType === "dc_gambir" ? "#eff6ff" : "#fafbfc",
+                              border: pusatKomputasiBackupType === "dc_gambir" ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+                              transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                             }}
                             onMouseEnter={(e) => {
                               if (pusatKomputasiBackupType !== "dc_gambir") {
                                 e.currentTarget.style.backgroundColor = "#f1f5f9";
+                                e.currentTarget.style.borderColor = "#8b5cf6";
+                                e.currentTarget.style.transform = "translateY(-1px)";
                               }
                             }}
                             onMouseLeave={(e) => {
                               if (pusatKomputasiBackupType !== "dc_gambir") {
-                                e.currentTarget.style.backgroundColor = "#fff";
+                                e.currentTarget.style.backgroundColor = "#fafbfc";
+                                e.currentTarget.style.borderColor = "#cbd5e1";
+                                e.currentTarget.style.transform = "translateY(0)";
                               }
                             }}
                           >
@@ -5721,10 +5732,15 @@ function OperatorEselon2DataAplikasi() {
                                   ),
                                 );
                               }}
-                              style={{ width: "16px", height: "16px", marginRight: "10px", cursor: "pointer", accentColor: "#0ea5e9", flexShrink: 0 }}
+                              style={{ width: "14px", height: "14px", marginRight: "8px", marginTop: "1px", cursor: "pointer", accentColor: "#6366f1", flexShrink: 0 }}
                             />
                             <span
-                              style={{ fontSize: "12.5px", color: "#334155" }}
+                              style={{
+                                fontSize: "12.5px",
+                                color: pusatKomputasiBackupType === "dc_gambir" ? "#4338ca" : "#334155",
+                                fontWeight: pusatKomputasiBackupType === "dc_gambir" ? 600 : 500,
+                                lineHeight: "1.4",
+                              }}
                             >
                               DC Gambir
                             </span>
@@ -5918,9 +5934,9 @@ function OperatorEselon2DataAplikasi() {
                         tabIndex={-1}
                         style={{
                           width: "100%",
-                          padding: "12px",
-                          borderRadius: "8px",
-                          border: "1px solid",
+                          padding: "14px",
+                          borderRadius: "10px",
+                          border: "1.5px solid",
                           borderColor: fieldErrors.mandiri_komputasi_backup
                             ? errorBorderColor
                             : "#cbd5e1",
@@ -5930,7 +5946,7 @@ function OperatorEselon2DataAplikasi() {
                           backgroundColor: "#fff",
                         }}
                       >
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                           <label
                             style={{
                               display: "flex",
@@ -6844,7 +6860,7 @@ function OperatorEselon2DataAplikasi() {
                       >
                         Status BMN <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div style={{ display: "flex", gap: "8px" }}>
                         {[
                           { value: "ya", label: "Ya" },
                           { value: "tidak", label: "Tidak" },
@@ -6857,9 +6873,9 @@ function OperatorEselon2DataAplikasi() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 8px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -6895,9 +6911,9 @@ function OperatorEselon2DataAplikasi() {
                                   handleFormChange("status_bmn", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,
@@ -6905,9 +6921,10 @@ function OperatorEselon2DataAplikasi() {
                               />
                               <span
                                 style={{
-                                  fontSize: "14px",
+                                  fontSize: "12.5px",
                                   color: isChecked ? "#4338ca" : "#334155",
                                   fontWeight: isChecked ? 600 : 500,
+                                  lineHeight: "1.4",
                                 }}
                               >
                                 {option.label}
@@ -6977,7 +6994,7 @@ function OperatorEselon2DataAplikasi() {
                       >
                         Tipe Lisensi Bahasa Pemrograman <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div style={{ display: "flex", gap: "8px" }}>
                         {[
                           { value: "Open Source", label: "Open Source" },
                           { value: "Lisensi", label: "Lisensi" },
@@ -6990,9 +7007,9 @@ function OperatorEselon2DataAplikasi() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 8px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -7028,9 +7045,9 @@ function OperatorEselon2DataAplikasi() {
                                   handleFormChange("tipe_lisensi_bahasa", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,
@@ -7038,9 +7055,10 @@ function OperatorEselon2DataAplikasi() {
                               />
                               <span
                                 style={{
-                                  fontSize: "14px",
+                                  fontSize: "12.5px",
                                   color: isChecked ? "#4338ca" : "#334155",
                                   fontWeight: isChecked ? 600 : 500,
+                                  lineHeight: "1.4",
                                 }}
                               >
                                 {option.label}
@@ -7062,7 +7080,7 @@ function OperatorEselon2DataAplikasi() {
                       >
                         API Internal Sistem Integrasi <span style={{ color: '#ef4444' }}>*</span>
                       </label>
-                      <div style={{ display: "flex", gap: "10px" }}>
+                      <div style={{ display: "flex", gap: "8px" }}>
                         {[
                           { value: "tersedia", label: "Tersedia" },
                           { value: "tidak", label: "Tidak" },
@@ -7075,9 +7093,9 @@ function OperatorEselon2DataAplikasi() {
                                 flex: 1,
                                 display: "flex",
                                 alignItems: "center",
-                                padding: "10px 14px",
+                                padding: "6px 8px",
                                 cursor: "pointer",
-                                borderRadius: "10px",
+                                borderRadius: "8px",
                                 backgroundColor: isChecked ? "#eff6ff" : "#f8fafc",
                                 border: isChecked
                                   ? "1.5px solid #6366f1"
@@ -7113,9 +7131,9 @@ function OperatorEselon2DataAplikasi() {
                                   handleFormChange("api_internal_status", e.target.value)
                                 }
                                 style={{
-                                  width: "18px",
-                                  height: "18px",
-                                  marginRight: "10px",
+                                  width: "14px",
+                                  height: "14px",
+                                  marginRight: "8px",
                                   cursor: "pointer",
                                   accentColor: "#6366f1",
                                   flexShrink: 0,
@@ -7123,9 +7141,10 @@ function OperatorEselon2DataAplikasi() {
                               />
                               <span
                                 style={{
-                                  fontSize: "14px",
+                                  fontSize: "12.5px",
                                   color: isChecked ? "#4338ca" : "#334155",
                                   fontWeight: isChecked ? 600 : 500,
+                                  lineHeight: "1.4",
                                 }}
                               >
                                 {option.label}
@@ -7737,658 +7756,663 @@ function OperatorEselon2DataAplikasi() {
               </form>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* Modal Konfirmasi */}
-      {showConfirmModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.7)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 70,
-            animation: "fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-        >
+      {
+        showConfirmModal && (
           <div
             style={{
-              background: "#fff",
-              borderRadius: "16px",
-              boxShadow:
-                "0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1)",
-              maxWidth: "480px",
-              width: "90%",
-              animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(15, 23, 42, 0.7)",
+              backdropFilter: "blur(6px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 70,
+              animation: "fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
             <div
               style={{
-                padding: "24px",
-                borderBottom: "1px solid #f1f5f9",
-                textAlign: "center",
+                background: "#fff",
+                borderRadius: "16px",
+                boxShadow:
+                  "0 20px 60px rgba(0, 0, 0, 0.15), 0 0 1px rgba(0, 0, 0, 0.1)",
+                maxWidth: "480px",
+                width: "90%",
+                animation: "slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
               <div
                 style={{
-                  width: "56px",
-                  height: "56px",
-                  borderRadius: "50%",
-                  background:
-                    "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                  boxShadow: "0 4px 12px rgba(251, 191, 36, 0.3)",
+                  padding: "24px",
+                  borderBottom: "1px solid #f1f5f9",
+                  textAlign: "center",
                 }}
               >
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
-                    stroke="white"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-              <h3
-                style={{
-                  margin: "0 0 12px",
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#1e293b",
-                }}
-              >
-                Konfirmasi
-              </h3>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "15px",
-                  color: "#64748b",
-                  lineHeight: 1.5,
-                }}
-              >
-                {editMode
-                  ? "Apakah anda yakin ingin memperbarui data?"
-                  : "Apakah data yang diisi sudah benar?"}
-              </p>
-            </div>
-            <div
-              style={{
-                padding: "20px 24px",
-                display: "flex",
-                gap: "12px",
-              }}
-            >
-              <button
-                onClick={handleConfirmSave}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "#4f46e5",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Ya
-              </button>
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  backgroundColor: "#f1f5f9",
-                  color: "#64748b",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "8px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                Tidak
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Detail Modal */}
-      {showDetailModal && selectedApp && (
-        <div
-          onClick={() => setShowDetailModal(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            padding: "20px",
-            animation: "fadeIn 0.2s ease-out",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "16px",
-              width: "100%",
-              maxWidth: "900px",
-              maxHeight: "90vh",
-              overflow: "hidden",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-              animation: "slideUp 0.3s ease-out",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: "18px 24px",
-                borderBottom: "none",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ flex: 1 }}>
                 <div
                   style={{
+                    width: "56px",
+                    height: "56px",
+                    borderRadius: "50%",
+                    background:
+                      "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
                     display: "flex",
                     alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "0",
+                    justifyContent: "center",
+                    margin: "0 auto 16px",
+                    boxShadow: "0 4px 12px rgba(251, 191, 36, 0.3)",
                   }}
                 >
-                  <div
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      background: "rgba(255,255,255,0.2)",
-                      backdropFilter: "blur(10px)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                   >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    >
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <path d="M9 3v18" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2
-                      style={{
-                        margin: 0,
-                        fontSize: "16px",
-                        fontWeight: 700,
-                        color: "#ffffff",
-                        marginBottom: "2px",
-                        textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      {selectedApp.nama_aplikasi}
-                    </h2>
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "11px",
-                        color: "rgba(255,255,255,0.9)",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Informasi lengkap aplikasi
-                    </p>
-                  </div>
+                    <path
+                      d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                      stroke="white"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
+                <h3
+                  style={{
+                    margin: "0 0 12px",
+                    fontSize: "18px",
+                    fontWeight: 700,
+                    color: "#1e293b",
+                  }}
+                >
+                  Konfirmasi
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "15px",
+                    color: "#64748b",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {editMode
+                    ? "Apakah anda yakin ingin memperbarui data?"
+                    : "Apakah data yang diisi sudah benar?"}
+                </p>
               </div>
-              <button
-                onClick={() => setShowDetailModal(false)}
+              <div
                 style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "12px",
-                  border: "none",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(10px)",
-                  color: "#ffffff",
-                  cursor: "pointer",
+                  padding: "20px 24px",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    "rgba(255,255,255,0.3)";
-                  e.currentTarget.style.transform = "scale(1.05)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    "rgba(255,255,255,0.2)";
-                  e.currentTarget.style.transform = "scale(1)";
+                  gap: "12px",
                 }}
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <button
+                  onClick={handleConfirmSave}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    backgroundColor: "#4f46e5",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
+                  Ya
+                </button>
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: "12px",
+                    backgroundColor: "#f1f5f9",
+                    color: "#64748b",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "8px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  Tidak
+                </button>
+              </div>
             </div>
+          </div>
+        )
+      }
 
-            {/* Content */}
+      {/* Detail Modal */}
+      {
+        showDetailModal && selectedApp && (
+          <div
+            onClick={() => setShowDetailModal(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999,
+              padding: "20px",
+              animation: "fadeIn 0.2s ease-out",
+            }}
+          >
             <div
+              onClick={(e) => e.stopPropagation()}
               style={{
-                padding: "20px 24px",
-                overflowY: "auto",
-                flex: 1,
-                backgroundColor: "#f9fafb",
+                backgroundColor: "#fff",
+                borderRadius: "16px",
+                width: "100%",
+                maxWidth: "900px",
+                maxHeight: "90vh",
+                overflow: "hidden",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                animation: "slideUp 0.3s ease-out",
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              {/* Basic Info */}
-              <DetailSection title="Informasi Umum">
-                <DetailField
-                  label="Nama Aplikasi"
-                  value={selectedApp.nama_aplikasi}
-                />
-                <DetailField
-                  label="Domain"
-                  value={selectedApp.domain}
-                  isLink={true}
-                />
-                <DetailField
-                  label="Status"
-                  value={selectedApp.nama_status}
-                  isBadge={true}
-                />
-                <DetailField
-                  label="Frekuensi Pemakaian"
-                  value={selectedApp.frekuensi_pemakaian}
-                />
-              </DetailSection>
+              {/* Header */}
+              <div
+                style={{
+                  padding: "18px 24px",
+                  borderBottom: "none",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "0",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "8px",
+                        background: "rgba(255,255,255,0.2)",
+                        backdropFilter: "blur(10px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#fff"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M9 3v18" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2
+                        style={{
+                          margin: 0,
+                          fontSize: "16px",
+                          fontWeight: 700,
+                          color: "#ffffff",
+                          marginBottom: "2px",
+                          textShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        {selectedApp.nama_aplikasi}
+                      </h2>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "11px",
+                          color: "rgba(255,255,255,0.9)",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Informasi lengkap aplikasi
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "12px",
+                    border: "none",
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    backdropFilter: "blur(10px)",
+                    color: "#ffffff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255,255,255,0.3)";
+                    e.currentTarget.style.transform = "scale(1.05)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      "rgba(255,255,255,0.2)";
+                    e.currentTarget.style.transform = "scale(1)";
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
 
-              {/* Description */}
-              <DetailSection title="Deskripsi & Fungsi">
-                <DetailField
-                  label="Deskripsi/Fungsi"
-                  value={selectedApp.deskripsi_fungsi}
-                  isTextarea={true}
-                />
-                <DetailField
-                  label="User/Pengguna"
-                  value={selectedApp.user_pengguna}
-                  isTextarea={true}
-                />
-                <DetailField
-                  label="Data yang Digunakan"
-                  value={selectedApp.data_digunakan}
-                  isTextarea={true}
-                />
-                <DetailField
-                  label="Luaran/Output"
-                  value={selectedApp.luaran_output}
-                  isTextarea={true}
-                />
-              </DetailSection>
-
-              {/* Organization */}
-              <DetailSection title="Unit & PIC">
-                <DetailField
-                  label="Eselon 1"
-                  value={selectedApp.nama_eselon1}
-                />
-                <DetailField
-                  label="Eselon 2"
-                  value={selectedApp.nama_eselon2}
-                />
-                <DetailField label="UPT" value={selectedApp.nama_upt} />
-                <DetailField
-                  label="PIC Internal"
-                  value={selectedApp.nama_pic_internal}
-                />
-                <DetailField
-                  label="Kontak PIC Internal"
-                  value={selectedApp.kontak_pic_internal}
-                />
-                <DetailField
-                  label="PIC Eksternal"
-                  value={selectedApp.nama_pic_eksternal}
-                />
-                <DetailField
-                  label="Kontak PIC Eksternal"
-                  value={selectedApp.kontak_pic_eksternal}
-                />
-              </DetailSection>
-
-              {/* Technical Info */}
-              <DetailSection title="Informasi Teknis">
-                <DetailField
-                  label="Bahasa Pemrograman"
-                  value={selectedApp.bahasa_pemrograman}
-                />
-                <DetailField
-                  label="Basis Data"
-                  value={selectedApp.basis_data}
-                />
-                <DetailField
-                  label="Kerangka Pengembangan"
-                  value={selectedApp.kerangka_pengembangan}
-                />
-                <DetailField
-                  label="Environment"
-                  value={selectedApp.nama_environment}
-                />
-                <DetailField
-                  label="Cara Akses"
-                  value={(() => {
-                    if (selectedApp.nama_cara_akses) {
-                      try {
-                        const parsed = JSON.parse(selectedApp.nama_cara_akses);
-                        return Array.isArray(parsed)
-                          ? parsed.join(", ")
-                          : selectedApp.nama_cara_akses;
-                      } catch {
-                        return selectedApp.nama_cara_akses;
-                      }
-                    }
-                    return null;
-                  })()}
-                />
-                <DetailField
-                  label="Alamat IP Publik"
-                  value={selectedApp.alamat_ip_publik}
-                />
-                <DetailField
-                  label="Server Aplikasi"
-                  value={selectedApp.server_aplikasi}
-                />
-                <DetailField label="Cloud" value={selectedApp.cloud} />
-                <DetailField
-                  label="Perangkat Lunak"
-                  value={selectedApp.perangkat_lunak}
-                />
-                <DetailField
-                  label="Tipe Lisensi Bahasa"
-                  value={selectedApp.tipe_lisensi_bahasa}
-                />
-              </DetailSection>
-
-              {/* Security */}
-              <DetailSection title="Keamanan">
-                <DetailField label="SSL" value={selectedApp.ssl} />
-                <DetailField
-                  label="Tanggal Expired SSL"
-                  value={
-                    selectedApp.ssl_expired
-                      ? new Date(selectedApp.ssl_expired).toLocaleDateString(
-                        "id-ID",
-                        { year: "numeric", month: "long", day: "numeric" },
-                      )
-                      : null
-                  }
-                />
-                <DetailField label="WAF" value={selectedApp.waf} />
-                <DetailField
-                  label="WAF Lainnya"
-                  value={selectedApp.waf_lainnya}
-                />
-                <DetailField label="Antivirus" value={selectedApp.antivirus} />
-                <DetailField
-                  label="VA/PT Status"
-                  value={selectedApp.va_pt_status}
-                />
-                <DetailField
-                  label="VA/PT Waktu"
-                  value={selectedApp.va_pt_waktu}
-                />
-                <DetailField
-                  label="API Internal"
-                  value={selectedApp.api_internal_status}
-                />
-              </DetailSection>
-
-              {/* Infrastructure */}
-              <DetailSection title="Infrastruktur & Operasional">
-                <DetailField label="PDN Utama" value={selectedApp.nama_pdn} />
-                <DetailField
-                  label="PDN Backup"
-                  value={selectedApp.pdn_backup}
-                />
-                <DetailField
-                  label="Pusat Komputasi Utama"
-                  value={selectedApp.pusat_komputasi_utama}
-                />
-                <DetailField
-                  label="Pusat Komputasi Backup"
-                  value={selectedApp.pusat_komputasi_backup}
-                />
-                <DetailField
-                  label="Mandiri Komputasi Backup"
-                  value={selectedApp.mandiri_komputasi_backup}
-                />
-                <DetailField
-                  label="Unit Pengembang"
-                  value={selectedApp.unit_pengembang}
-                />
-                <DetailField
-                  label="Unit Operasional Teknologi"
-                  value={selectedApp.unit_operasional_teknologi}
-                />
-                <DetailField
-                  label="Status BMN"
-                  value={selectedApp.status_bmn}
-                />
-                <DetailField
-                  label="Nilai Pengembangan"
-                  value={
-                    selectedApp.nilai_pengembangan_aplikasi
-                      ? `Rp ${Number(selectedApp.nilai_pengembangan_aplikasi).toLocaleString("id-ID")}`
-                      : null
-                  }
-                />
-              </DetailSection>
-
-              {/* Additional Info */}
-              {selectedApp.keterangan && (
-                <DetailSection title="Keterangan Tambahan">
+              {/* Content */}
+              <div
+                style={{
+                  padding: "20px 24px",
+                  overflowY: "auto",
+                  flex: 1,
+                  backgroundColor: "#f9fafb",
+                }}
+              >
+                {/* Basic Info */}
+                <DetailSection title="Informasi Umum">
                   <DetailField
-                    label="Keterangan"
-                    value={selectedApp.keterangan}
+                    label="Nama Aplikasi"
+                    value={selectedApp.nama_aplikasi}
+                  />
+                  <DetailField
+                    label="Domain"
+                    value={selectedApp.domain}
+                    isLink={true}
+                  />
+                  <DetailField
+                    label="Status"
+                    value={selectedApp.nama_status}
+                    isBadge={true}
+                  />
+                  <DetailField
+                    label="Frekuensi Pemakaian"
+                    value={selectedApp.frekuensi_pemakaian}
+                  />
+                </DetailSection>
+
+                {/* Description */}
+                <DetailSection title="Deskripsi & Fungsi">
+                  <DetailField
+                    label="Deskripsi/Fungsi"
+                    value={selectedApp.deskripsi_fungsi}
+                    isTextarea={true}
+                  />
+                  <DetailField
+                    label="User/Pengguna"
+                    value={selectedApp.user_pengguna}
+                    isTextarea={true}
+                  />
+                  <DetailField
+                    label="Data yang Digunakan"
+                    value={selectedApp.data_digunakan}
+                    isTextarea={true}
+                  />
+                  <DetailField
+                    label="Luaran/Output"
+                    value={selectedApp.luaran_output}
                     isTextarea={true}
                   />
                 </DetailSection>
-              )}
 
-              {/* Dynamic Fields */}
-              {dynamicTables.length > 0 &&
-                (() => {
-                  const dynamicFields = dynamicTables.filter((table) => {
-                    const fieldName = `${table.table_name}_id`;
-                    return selectedApp[fieldName];
-                  });
+                {/* Organization */}
+                <DetailSection title="Unit & PIC">
+                  <DetailField
+                    label="Eselon 1"
+                    value={selectedApp.nama_eselon1}
+                  />
+                  <DetailField
+                    label="Eselon 2"
+                    value={selectedApp.nama_eselon2}
+                  />
+                  <DetailField label="UPT" value={selectedApp.nama_upt} />
+                  <DetailField
+                    label="PIC Internal"
+                    value={selectedApp.nama_pic_internal}
+                  />
+                  <DetailField
+                    label="Kontak PIC Internal"
+                    value={selectedApp.kontak_pic_internal}
+                  />
+                  <DetailField
+                    label="PIC Eksternal"
+                    value={selectedApp.nama_pic_eksternal}
+                  />
+                  <DetailField
+                    label="Kontak PIC Eksternal"
+                    value={selectedApp.kontak_pic_eksternal}
+                  />
+                </DetailSection>
 
-                  if (dynamicFields.length === 0) return null;
+                {/* Technical Info */}
+                <DetailSection title="Informasi Teknis">
+                  <DetailField
+                    label="Bahasa Pemrograman"
+                    value={selectedApp.bahasa_pemrograman}
+                  />
+                  <DetailField
+                    label="Basis Data"
+                    value={selectedApp.basis_data}
+                  />
+                  <DetailField
+                    label="Kerangka Pengembangan"
+                    value={selectedApp.kerangka_pengembangan}
+                  />
+                  <DetailField
+                    label="Environment"
+                    value={selectedApp.nama_environment}
+                  />
+                  <DetailField
+                    label="Cara Akses"
+                    value={(() => {
+                      if (selectedApp.nama_cara_akses) {
+                        try {
+                          const parsed = JSON.parse(selectedApp.nama_cara_akses);
+                          return Array.isArray(parsed)
+                            ? parsed.join(", ")
+                            : selectedApp.nama_cara_akses;
+                        } catch {
+                          return selectedApp.nama_cara_akses;
+                        }
+                      }
+                      return null;
+                    })()}
+                  />
+                  <DetailField
+                    label="Alamat IP Publik"
+                    value={selectedApp.alamat_ip_publik}
+                  />
+                  <DetailField
+                    label="Server Aplikasi"
+                    value={selectedApp.server_aplikasi}
+                  />
+                  <DetailField label="Cloud" value={selectedApp.cloud} />
+                  <DetailField
+                    label="Perangkat Lunak"
+                    value={selectedApp.perangkat_lunak}
+                  />
+                  <DetailField
+                    label="Tipe Lisensi Bahasa"
+                    value={selectedApp.tipe_lisensi_bahasa}
+                  />
+                </DetailSection>
 
-                  return (
-                    <DetailSection title="Informasi Tambahan">
-                      {dynamicFields.map((table) => {
-                        const fieldName = `${table.table_name}_id`;
-                        const fieldValue = selectedApp[fieldName];
-                        const data = dynamicMasterData[table.table_name] || [];
-                        const idField = table.id_field_name;
+                {/* Security */}
+                <DetailSection title="Keamanan">
+                  <DetailField label="SSL" value={selectedApp.ssl} />
+                  <DetailField
+                    label="Tanggal Expired SSL"
+                    value={
+                      selectedApp.ssl_expired
+                        ? new Date(selectedApp.ssl_expired).toLocaleDateString(
+                          "id-ID",
+                          { year: "numeric", month: "long", day: "numeric" },
+                        )
+                        : null
+                    }
+                  />
+                  <DetailField label="WAF" value={selectedApp.waf} />
+                  <DetailField
+                    label="WAF Lainnya"
+                    value={selectedApp.waf_lainnya}
+                  />
+                  <DetailField label="Antivirus" value={selectedApp.antivirus} />
+                  <DetailField
+                    label="VA/PT Status"
+                    value={selectedApp.va_pt_status}
+                  />
+                  <DetailField
+                    label="VA/PT Waktu"
+                    value={selectedApp.va_pt_waktu}
+                  />
+                  <DetailField
+                    label="API Internal"
+                    value={selectedApp.api_internal_status}
+                  />
+                </DetailSection>
 
-                        let displayValue = fieldValue;
-                        if (data.length > 0) {
-                          const item = data.find(
-                            (d) => String(d[idField]) === String(fieldValue),
-                          );
-                          if (item) {
-                            try {
-                              const schema = JSON.parse(
-                                table.table_schema || "[]",
-                              );
-                              if (schema.length > 0) {
-                                const displayField = schema[0].column_name;
-                                displayValue = item[displayField] || fieldValue;
-                              }
-                            } catch (e) {
-                              const keys = Object.keys(item).filter(
-                                (k) =>
-                                  k !== idField &&
-                                  !k.includes("_at") &&
-                                  !k.includes("_by") &&
-                                  k !== "status_aktif",
-                              );
-                              if (keys.length > 0) {
-                                displayValue = item[keys[0]] || fieldValue;
+                {/* Infrastructure */}
+                <DetailSection title="Infrastruktur & Operasional">
+                  <DetailField label="PDN Utama" value={selectedApp.nama_pdn} />
+                  <DetailField
+                    label="PDN Backup"
+                    value={selectedApp.pdn_backup}
+                  />
+                  <DetailField
+                    label="Pusat Komputasi Utama"
+                    value={selectedApp.pusat_komputasi_utama}
+                  />
+                  <DetailField
+                    label="Pusat Komputasi Backup"
+                    value={selectedApp.pusat_komputasi_backup}
+                  />
+                  <DetailField
+                    label="Mandiri Komputasi Backup"
+                    value={selectedApp.mandiri_komputasi_backup}
+                  />
+                  <DetailField
+                    label="Unit Pengembang"
+                    value={selectedApp.unit_pengembang}
+                  />
+                  <DetailField
+                    label="Unit Operasional Teknologi"
+                    value={selectedApp.unit_operasional_teknologi}
+                  />
+                  <DetailField
+                    label="Status BMN"
+                    value={selectedApp.status_bmn}
+                  />
+                  <DetailField
+                    label="Nilai Pengembangan"
+                    value={
+                      selectedApp.nilai_pengembangan_aplikasi
+                        ? `Rp ${Number(selectedApp.nilai_pengembangan_aplikasi).toLocaleString("id-ID")}`
+                        : null
+                    }
+                  />
+                </DetailSection>
+
+                {/* Additional Info */}
+                {selectedApp.keterangan && (
+                  <DetailSection title="Keterangan Tambahan">
+                    <DetailField
+                      label="Keterangan"
+                      value={selectedApp.keterangan}
+                      isTextarea={true}
+                    />
+                  </DetailSection>
+                )}
+
+                {/* Dynamic Fields */}
+                {dynamicTables.length > 0 &&
+                  (() => {
+                    const dynamicFields = dynamicTables.filter((table) => {
+                      const fieldName = `${table.table_name}_id`;
+                      return selectedApp[fieldName];
+                    });
+
+                    if (dynamicFields.length === 0) return null;
+
+                    return (
+                      <DetailSection title="Informasi Tambahan">
+                        {dynamicFields.map((table) => {
+                          const fieldName = `${table.table_name}_id`;
+                          const fieldValue = selectedApp[fieldName];
+                          const data = dynamicMasterData[table.table_name] || [];
+                          const idField = table.id_field_name;
+
+                          let displayValue = fieldValue;
+                          if (data.length > 0) {
+                            const item = data.find(
+                              (d) => String(d[idField]) === String(fieldValue),
+                            );
+                            if (item) {
+                              try {
+                                const schema = JSON.parse(
+                                  table.table_schema || "[]",
+                                );
+                                if (schema.length > 0) {
+                                  const displayField = schema[0].column_name;
+                                  displayValue = item[displayField] || fieldValue;
+                                }
+                              } catch (e) {
+                                const keys = Object.keys(item).filter(
+                                  (k) =>
+                                    k !== idField &&
+                                    !k.includes("_at") &&
+                                    !k.includes("_by") &&
+                                    k !== "status_aktif",
+                                );
+                                if (keys.length > 0) {
+                                  displayValue = item[keys[0]] || fieldValue;
+                                }
                               }
                             }
                           }
-                        }
 
-                        return (
-                          <DetailField
-                            key={table.registry_id}
-                            label={table.display_name}
-                            value={displayValue}
-                          />
-                        );
-                      })}
-                    </DetailSection>
-                  );
-                })()}
-            </div>
+                          return (
+                            <DetailField
+                              key={table.registry_id}
+                              label={table.display_name}
+                              value={displayValue}
+                            />
+                          );
+                        })}
+                      </DetailSection>
+                    );
+                  })()}
+              </div>
 
-            {/* Footer */}
-            <div
-              style={{
-                padding: "16px 24px",
-                borderTop: "1px solid #e5e7eb",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: "10px",
-                background: "linear-gradient(to top, #f9fafb 0%, #ffffff 100%)",
-              }}
-            >
-              <button
-                onClick={() => {
-                  setShowDetailModal(false);
-                  openEditModal(selectedApp.nama_aplikasi);
-                }}
+              {/* Footer */}
+              <div
                 style={{
-                  padding: "10px 20px",
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "10px",
-                  fontWeight: 600,
-                  fontSize: "13px",
-                  cursor: "pointer",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  padding: "16px 24px",
+                  borderTop: "1px solid #e5e7eb",
                   display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 8px 20px rgba(102, 126, 234, 0.5)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(102, 126, 234, 0.4)";
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                  background: "linear-gradient(to top, #f9fafb 0%, #ffffff 100%)",
                 }}
               >
-                <svg
-                  width="14"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    openEditModal(selectedApp.nama_aplikasi);
+                  }}
+                  style={{
+                    padding: "10px 20px",
+                    background:
+                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "10px",
+                    fontWeight: 600,
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 4px 12px rgba(102, 126, 234, 0.4)",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 8px 20px rgba(102, 126, 234, 0.5)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(102, 126, 234, 0.4)";
+                  }}
                 >
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
-                Edit Aplikasi
-              </button>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                style={{
-                  padding: "12px 24px",
-                  backgroundColor: "#ffffff",
-                  color: "#6b7280",
-                  border: "2px solid #e5e7eb",
-                  borderRadius: "12px",
-                  fontWeight: 600,
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f9fafb";
-                  e.currentTarget.style.borderColor = "#d1d5db";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "#ffffff";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                  e.currentTarget.style.transform = "translateY(0)";
-                }}
-              >
-                Tutup
-              </button>
+                  <svg
+                    width="14"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit Aplikasi
+                </button>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  style={{
+                    padding: "12px 24px",
+                    backgroundColor: "#ffffff",
+                    color: "#6b7280",
+                    border: "2px solid #e5e7eb",
+                    borderRadius: "12px",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f9fafb";
+                    e.currentTarget.style.borderColor = "#d1d5db";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ffffff";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }}
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </section>
+        )
+      }
+    </section >
   );
 }
 
