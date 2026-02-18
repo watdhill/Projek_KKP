@@ -100,6 +100,7 @@ function OperatorEselon1DataAplikasi() {
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [hasDraft, setHasDraft] = useState(false);
 
   const errorBorderColor = "#ef4444";
   const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
@@ -757,6 +758,14 @@ function OperatorEselon1DataAplikasi() {
   // Open modal and load master data
   const openModal = async () => {
     await fetchMasterDropdowns();
+
+    // If there is a draft from a previous unsaved add session, restore it
+    if (hasDraft && !editMode) {
+      setFieldErrors({});
+      setShowModal(true);
+      return;
+    }
+
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
@@ -835,6 +844,7 @@ function OperatorEselon1DataAplikasi() {
     });
 
     setFormData(baseFormData);
+    setHasDraft(false);
     setShowModal(true);
   };
 
@@ -843,6 +853,7 @@ function OperatorEselon1DataAplikasi() {
     try {
       await fetchMasterDropdowns();
       setFieldErrors({});
+      setHasDraft(false);
       setUserPenggunaSelected([]);
       setUserPenggunaLainnya("");
       setUnitPengembangType("");
@@ -1026,6 +1037,8 @@ function OperatorEselon1DataAplikasi() {
 
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+    // Mark draft as active when user modifies form in add mode
+    if (!editMode) setHasDraft(true);
 
     // Jika eselon2_id berubah, reset UPT (mutual exclusive) dan fetch PIC
     if (k === "eselon2_id") {
@@ -1522,6 +1535,7 @@ function OperatorEselon1DataAplikasi() {
       // refresh list
       await fetchApps();
       setShowModal(false);
+      setHasDraft(false);
       showMessage(
         "success",
         editMode

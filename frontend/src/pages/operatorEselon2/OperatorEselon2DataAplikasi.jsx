@@ -106,6 +106,7 @@ function OperatorEselon2DataAplikasi() {
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [hasDraft, setHasDraft] = useState(false);
 
   const errorBorderColor = "#ef4444";
   const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
@@ -835,6 +836,14 @@ function OperatorEselon2DataAplikasi() {
   // Open modal and load master data
   const openModal = async () => {
     await fetchMasterDropdowns();
+
+    // If there is a draft from a previous unsaved add session, restore it
+    if (hasDraft && !editMode) {
+      setFieldErrors({});
+      setShowModal(true);
+      return;
+    }
+
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
@@ -914,6 +923,7 @@ function OperatorEselon2DataAplikasi() {
     });
 
     setFormData(baseFormData);
+    setHasDraft(false);
 
     // Fetch PIC berdasarkan eselon2_id operator
     if (userEselon2Id) {
@@ -928,6 +938,7 @@ function OperatorEselon2DataAplikasi() {
     try {
       await fetchMasterDropdowns();
       setFieldErrors({});
+      setHasDraft(false);
       setShowAksesAkunPassword(false);
       setShowAksesAkunKonfirmasiPassword(false);
       const res = await fetch(
@@ -989,12 +1000,12 @@ function OperatorEselon2DataAplikasi() {
           : app.ssl || "",
         ssl_expired: app.ssl_expired
           ? (() => {
-              const date = new Date(app.ssl_expired);
-              const year = date.getFullYear();
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const day = String(date.getDate()).padStart(2, "0");
-              return `${year}-${month}-${day}`;
-            })()
+            const date = new Date(app.ssl_expired);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          })()
           : "",
         alamat_ip_publik: app.alamat_ip_publik || "",
         keterangan: app.keterangan || "",
@@ -1082,6 +1093,8 @@ function OperatorEselon2DataAplikasi() {
 
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+    // Mark draft as active when user modifies form in add mode
+    if (!editMode) setHasDraft(true);
 
     // Jika eselon2_id berubah, fetch PIC yang sesuai dan reset PIC fields
     if (k === "eselon2_id") {
@@ -1935,8 +1948,8 @@ function OperatorEselon2DataAplikasi() {
 
       const url = editMode
         ? `http://localhost:5000/api/aplikasi/${encodeURIComponent(
-            originalAppName,
-          )}`
+          originalAppName,
+        )}`
         : "http://localhost:5000/api/aplikasi";
       const method = editMode ? "PUT" : "POST";
 
@@ -1967,6 +1980,7 @@ function OperatorEselon2DataAplikasi() {
       // refresh list
       await fetchApps();
       setShowModal(false);
+      setHasDraft(false);
       showMessage(
         "success",
         editMode
@@ -2709,7 +2723,7 @@ function OperatorEselon2DataAplikasi() {
                           }}
                         >
                           {sortColumn === "status" &&
-                          sortDirection === "asc" ? (
+                            sortDirection === "asc" ? (
                             <path d="M12 4L6 10H18L12 4Z" fill="currentColor" />
                           ) : sortColumn === "status" &&
                             sortDirection === "desc" ? (
@@ -2798,7 +2812,7 @@ function OperatorEselon2DataAplikasi() {
                           }}
                         >
                           {sortColumn === "ssl_expired" &&
-                          sortDirection === "asc" ? (
+                            sortDirection === "asc" ? (
                             <path d="M12 4L6 10H18L12 4Z" fill="currentColor" />
                           ) : sortColumn === "ssl_expired" &&
                             sortDirection === "desc" ? (
@@ -3050,13 +3064,13 @@ function OperatorEselon2DataAplikasi() {
                       >
                         {app.ssl_expired
                           ? new Date(app.ssl_expired).toLocaleDateString(
-                              "id-ID",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              },
-                            )
+                            "id-ID",
+                            {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            },
+                          )
                           : "-"}
                       </td>
                       <td
@@ -3911,7 +3925,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon1_id ||
                                 String(x.eselon1_id) ===
-                                  String(formData.eselon1_id)),
+                                String(formData.eselon1_id)),
                           )
                           .map((x) => (
                             <option key={x.eselon2_id} value={x.eselon2_id}>
@@ -3950,9 +3964,9 @@ function OperatorEselon2DataAplikasi() {
                           overflowY: "auto",
                           ...(fieldErrors.cara_akses_id
                             ? {
-                                borderColor: errorBorderColor,
-                                boxShadow: errorBoxShadow,
-                              }
+                              borderColor: errorBorderColor,
+                              boxShadow: errorBoxShadow,
+                            }
                             : null),
                         }}
                       >
@@ -4091,17 +4105,17 @@ function OperatorEselon2DataAplikasi() {
                             (x) =>
                               x.status_aktif === 1 || x.status_aktif === true,
                           ).length === 0) && (
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#94a3b8",
-                              textAlign: "center",
-                              padding: "12px",
-                            }}
-                          >
-                            Tidak ada data Cara Akses
-                          </div>
-                        )}
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#94a3b8",
+                                textAlign: "center",
+                                padding: "12px",
+                              }}
+                            >
+                              Tidak ada data Cara Akses
+                            </div>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -4197,11 +4211,11 @@ function OperatorEselon2DataAplikasi() {
                           .sort((a, b) => {
                             const aKey = Number(
                               a?.frekuensi_pemakaian_id ??
-                                a?.frekuensi_pemakaian,
+                              a?.frekuensi_pemakaian,
                             );
                             const bKey = Number(
                               b?.frekuensi_pemakaian_id ??
-                                b?.frekuensi_pemakaian,
+                              b?.frekuensi_pemakaian,
                             );
 
                             const aIsNum = Number.isFinite(aKey);
@@ -4485,7 +4499,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon2_id ||
                                 String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)),
+                                String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -4550,7 +4564,7 @@ function OperatorEselon2DataAplikasi() {
                                 x.status_aktif === true) &&
                               (!formData.eselon2_id ||
                                 String(x.eselon2_id) ===
-                                  String(formData.eselon2_id)),
+                                String(formData.eselon2_id)),
                           )
                           .map((x) => (
                             <option
@@ -4754,8 +4768,8 @@ function OperatorEselon2DataAplikasi() {
                                 const nextSelected = isChecked
                                   ? [...userPenggunaSelected, opt.value]
                                   : userPenggunaSelected.filter(
-                                      (v) => v !== opt.value,
-                                    );
+                                    (v) => v !== opt.value,
+                                  );
 
                                 let nextLainnya = userPenggunaLainnya;
                                 if (!nextSelected.includes("lainnya")) {
@@ -5943,8 +5957,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.pusat_komputasi_utama &&
-                                  pusatKomputasiUtamaType === "lainnya" &&
-                                  !(pusatKomputasiUtamaLainnya || "").trim()
+                                    pusatKomputasiUtamaType === "lainnya" &&
+                                    !(pusatKomputasiUtamaLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -6273,8 +6287,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.pusat_komputasi_backup &&
-                                  pusatKomputasiBackupType === "lainnya" &&
-                                  !(pusatKomputasiBackupLainnya || "").trim()
+                                    pusatKomputasiBackupType === "lainnya" &&
+                                    !(pusatKomputasiBackupLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -6651,8 +6665,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.mandiri_komputasi_backup &&
-                                  mandiriKomputasiBackupType === "lainnya" &&
-                                  !(mandiriKomputasiBackupLainnya || "").trim()
+                                    mandiriKomputasiBackupType === "lainnya" &&
+                                    !(mandiriKomputasiBackupLainnya || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -6881,8 +6895,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.cloud &&
-                                  cloudType === "ya" &&
-                                  !(cloudYaText || "").trim()
+                                    cloudType === "ya" &&
+                                    !(cloudYaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -7082,8 +7096,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.ssl &&
-                                  sslType === "unit_kerja" &&
-                                  !(sslUnitKerjaText || "").trim()
+                                    sslType === "unit_kerja" &&
+                                    !(sslUnitKerjaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -7308,8 +7322,8 @@ function OperatorEselon2DataAplikasi() {
                                 border: "1px solid #e6eef6",
                                 borderColor:
                                   fieldErrors.antivirus &&
-                                  antivirusType === "ya" &&
-                                  !(antivirusYaText || "").trim()
+                                    antivirusType === "ya" &&
+                                    !(antivirusYaText || "").trim()
                                     ? errorBorderColor
                                     : "#e6eef6",
                               }}
@@ -8784,9 +8798,9 @@ function OperatorEselon2DataAplikasi() {
                   value={
                     selectedApp.ssl_expired
                       ? new Date(selectedApp.ssl_expired).toLocaleDateString(
-                          "id-ID",
-                          { year: "numeric", month: "long", day: "numeric" },
-                        )
+                        "id-ID",
+                        { year: "numeric", month: "long", day: "numeric" },
+                      )
                       : null
                   }
                 />
