@@ -759,6 +759,69 @@ function OperatorEselon1DataAplikasi() {
   const openModal = async () => {
     await fetchMasterDropdowns();
 
+    // Check for draft in localStorage
+    const savedDraft = localStorage.getItem("op_eselon1_app_draft");
+    if (savedDraft && !editMode) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (Object.keys(parsedDraft).length > 0) {
+          setFormData(parsedDraft);
+          setHasDraft(true);
+
+          // Restore helper states from draft data
+          const parsedUserPengguna = parseUserPenggunaString(parsedDraft.user_pengguna);
+          setUserPenggunaSelected(parsedUserPengguna.selected);
+          setUserPenggunaLainnya(parsedUserPengguna.lainnyaText);
+
+          const parsedUnitPengembang = parseUnitPengembangString(parsedDraft.unit_pengembang);
+          setUnitPengembangType(parsedUnitPengembang.type);
+          setUnitPengembangEksternal(parsedUnitPengembang.eksternalText);
+
+          const parsedUnitOperasionalTeknologi = parseUnitOperasionalTeknologiString(parsedDraft.unit_operasional_teknologi);
+          setUnitOperasionalTeknologiType(parsedUnitOperasionalTeknologi.type);
+          setUnitOperasionalTeknologiLainnya(parsedUnitOperasionalTeknologi.lainnyaText);
+
+          const parsedPusatKomputasiUtama = parsePusatKomputasiUtamaString(parsedDraft.pusat_komputasi_utama);
+          setPusatKomputasiUtamaType(parsedPusatKomputasiUtama.type);
+          setPusatKomputasiUtamaLainnya(parsedPusatKomputasiUtama.lainnyaText);
+
+          const parsedPusatKomputasiBackup = parsePusatKomputasiBackupString(parsedDraft.pusat_komputasi_backup);
+          setPusatKomputasiBackupType(parsedPusatKomputasiBackup.type);
+          setPusatKomputasiBackupLainnya(parsedPusatKomputasiBackup.lainnyaText);
+
+          const parsedMandiriKomputasiBackup = parseMandiriKomputasiBackupString(parsedDraft.mandiri_komputasi_backup);
+          setMandiriKomputasiBackupType(parsedMandiriKomputasiBackup.type);
+          setMandiriKomputasiBackupLainnya(parsedMandiriKomputasiBackup.lainnyaText);
+
+          const parsedCloud = parseCloudString(parsedDraft.cloud);
+          setCloudType(parsedCloud.type);
+          setCloudYaText(parsedCloud.yaText);
+
+          const parsedSsl = parseSslString(parsedDraft.ssl);
+          setSslType(parsedSsl.type);
+          setSslUnitKerja(parsedSsl.unitKerjaText);
+
+          const parsedAntivirus = parseAntivirusString(parsedDraft.antivirus);
+          setAntivirusType(parsedAntivirus.type);
+          setAntivirusYaText(parsedAntivirus.yaText);
+
+          // Restore PIC logic if UPT or Eselon 2 is selected
+          if (parsedDraft.upt_id) {
+            await fetchPICData("", String(parsedDraft.upt_id));
+          } else if (parsedDraft.eselon2_id) {
+            await fetchPICData(String(parsedDraft.eselon2_id), "");
+          }
+
+          setFieldErrors({});
+          setShowModal(true);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse draft from localStorage", e);
+        localStorage.removeItem("op_eselon1_app_draft");
+      }
+    }
+
     // If there is a draft from a previous unsaved add session, restore it
     if (hasDraft && !editMode) {
       setFieldErrors({});
