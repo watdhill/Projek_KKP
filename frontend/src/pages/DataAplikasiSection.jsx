@@ -185,6 +185,13 @@ function DataAplikasiSection() {
     setCurrentPage(1);
   }, [search, statusFilter, filterEselon1, filterEselon2, filterUpt]);
 
+  // Save draft to localStorage whenever formData changes (in add mode)
+  useEffect(() => {
+    if (hasDraft && !editMode) {
+      localStorage.setItem("admin_app_draft", JSON.stringify(formData));
+    }
+  }, [formData, hasDraft, editMode]);
+
   const filtered = apps.filter((a) => {
     if (statusFilter !== "all") {
       const status = (a.nama_status || "").toLowerCase();
@@ -344,7 +351,63 @@ function DataAplikasiSection() {
   const openModal = async () => {
     await fetchMasterDropdowns();
 
-    // If there is a draft from a previous unsaved add session, restore it
+    // Check for draft in localStorage
+    const savedDraft = localStorage.getItem("admin_app_draft");
+    if (savedDraft && !editMode) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        if (Object.keys(parsedDraft).length > 0) {
+          setFormData(parsedDraft);
+          setHasDraft(true);
+
+          // Restore helper states from draft data
+          const parsedUserPengguna = parseUserPenggunaString(parsedDraft.user_pengguna);
+          setUserPenggunaSelected(parsedUserPengguna.selected);
+          setUserPenggunaLainnya(parsedUserPengguna.lainnyaText);
+
+          const parsedUnitPengembang = parseUnitPengembangString(parsedDraft.unit_pengembang);
+          setUnitPengembangType(parsedUnitPengembang.type);
+          setUnitPengembangEksternal(parsedUnitPengembang.eksternalText);
+
+          const parsedUnitOperasionalTeknologi = parseUnitOperasionalTeknologiString(parsedDraft.unit_operasional_teknologi);
+          setUnitOperasionalTeknologiType(parsedUnitOperasionalTeknologi.type);
+          setUnitOperasionalTeknologiLainnya(parsedUnitOperasionalTeknologi.lainnyaText);
+
+          const parsedPusatKomputasiUtama = parsePusatKomputasiUtamaString(parsedDraft.pusat_komputasi_utama);
+          setPusatKomputasiUtamaType(parsedPusatKomputasiUtama.type);
+          setPusatKomputasiUtamaLainnya(parsedPusatKomputasiUtama.lainnyaText);
+
+          const parsedPusatKomputasiBackup = parsePusatKomputasiBackupString(parsedDraft.pusat_komputasi_backup);
+          setPusatKomputasiBackupType(parsedPusatKomputasiBackup.type);
+          setPusatKomputasiBackupLainnya(parsedPusatKomputasiBackup.lainnyaText);
+
+          const parsedMandiriKomputasiBackup = parseMandiriKomputasiBackupString(parsedDraft.mandiri_komputasi_backup);
+          setMandiriKomputasiBackupType(parsedMandiriKomputasiBackup.type);
+          setMandiriKomputasiBackupLainnya(parsedMandiriKomputasiBackup.lainnyaText);
+
+          const parsedCloud = parseCloudString(parsedDraft.cloud);
+          setCloudType(parsedCloud.type);
+          setCloudText(parsedCloud.text);
+
+          const parsedSsl = parseSslString(parsedDraft.ssl);
+          setSslType(parsedSsl.type);
+          setSslUnitKerjaText(parsedSsl.unitKerjaText);
+
+          const parsedAntivirus = parseAntivirusString(parsedDraft.antivirus);
+          setAntivirusType(parsedAntivirus.type);
+          setAntivirusText(parsedAntivirus.text);
+
+          setFieldErrors({});
+          setShowModal(true);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse draft from localStorage", e);
+        localStorage.removeItem("admin_app_draft");
+      }
+    }
+
+    // If there is a draft in memory (fallback), restore it
     if (hasDraft && !editMode) {
       setFieldErrors({});
       setShowModal(true);
@@ -904,6 +967,7 @@ function DataAplikasiSection() {
 
       setFieldErrors({});
       setHasDraft(false);
+      localStorage.removeItem("admin_app_draft");
 
       console.log("📡 Fetching app details from API...");
       const res = await fetch(
@@ -1816,6 +1880,7 @@ function DataAplikasiSection() {
       await fetchApps();
       setShowModal(false);
       setHasDraft(false);
+      localStorage.removeItem("admin_app_draft");
       showMessage(
         "success",
         editMode
