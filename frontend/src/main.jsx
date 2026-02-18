@@ -7,12 +7,24 @@ import { getStoredToken } from "./utils/authStorage";
 const originalFetch = window.fetch;
 const rewriteApiUrl = (rawUrl) => {
   if (!rawUrl) return rawUrl;
-  if (rawUrl.startsWith("http://localhost:5000")) {
-    return rawUrl.replace(
-      "http://localhost:5000",
-      `http://${window.location.hostname}:5000`,
-    );
+
+  // If some parts of the app still call the backend with an absolute
+  // `http://localhost:5000/...` URL, this breaks when the frontend is accessed
+  // via ngrok / another host. Rewrite those calls to same-origin so Vite can
+  // proxy `/api/*` to the local backend.
+  try {
+    const url = new URL(rawUrl, window.location.origin);
+    const isLocalBackendHost =
+      url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    const isBackendPort = url.port === "5000";
+
+    if (isLocalBackendHost && isBackendPort) {
+      return `${window.location.origin}${url.pathname}${url.search}${url.hash}`;
+    }
+  } catch {
+    // ignore URL parse errors and keep original
   }
+
   return rawUrl;
 };
 
