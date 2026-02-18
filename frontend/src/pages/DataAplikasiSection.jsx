@@ -132,6 +132,7 @@ function DataAplikasiSection() {
 
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [hasDraft, setHasDraft] = useState(false);
 
   const errorBorderColor = "#ef4444";
   const errorRing = "0 0 0 3px rgba(239, 68, 68, 0.12)";
@@ -342,6 +343,14 @@ function DataAplikasiSection() {
   // Open modal and load master data
   const openModal = async () => {
     await fetchMasterDropdowns();
+
+    // If there is a draft from a previous unsaved add session, restore it
+    if (hasDraft && !editMode) {
+      setFieldErrors({});
+      setShowModal(true);
+      return;
+    }
+
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
@@ -424,6 +433,7 @@ function DataAplikasiSection() {
     });
 
     setFormData(baseFormData);
+    setHasDraft(false);
     setShowModal(true);
   };
 
@@ -893,6 +903,7 @@ function DataAplikasiSection() {
       console.log("✅ Master dropdowns loaded");
 
       setFieldErrors({});
+      setHasDraft(false);
 
       console.log("📡 Fetching app details from API...");
       const res = await fetch(
@@ -1152,6 +1163,8 @@ function DataAplikasiSection() {
 
   const handleFormChange = (k, v) => {
     setFormData((prev) => ({ ...prev, [k]: v }));
+    // Mark draft as active when user modifies form in add mode
+    if (!editMode) setHasDraft(true);
 
     if (k === "akses_aplikasi_password") {
       setAksesPasswordTouched(true);
@@ -1802,6 +1815,7 @@ function DataAplikasiSection() {
       // refresh list
       await fetchApps();
       setShowModal(false);
+      setHasDraft(false);
       showMessage(
         "success",
         editMode
