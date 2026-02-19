@@ -347,6 +347,100 @@ function DataAplikasiSection() {
     }
   };
 
+  // Close modal and reset form data
+  const closeModal = () => {
+    setShowModal(false);
+    
+    // Hapus draft dari localStorage
+    localStorage.removeItem("admin_app_draft");
+    
+    // Reset semua form states ke initial value
+    setEditMode(false);
+    setOriginalAppName("");
+    setFieldErrors({});
+    setUserPenggunaSelected([]);
+    setUserPenggunaLainnya("");
+    setUnitPengembangType("");
+    setUnitPengembangEksternal("");
+    setUnitOperasionalTeknologiType("");
+    setUnitOperasionalTeknologiLainnya("");
+    setPusatKomputasiUtamaType("");
+    setPusatKomputasiUtamaLainnya("");
+    setPusatKomputasiBackupType("");
+    setPusatKomputasiBackupLainnya("");
+    setMandiriKomputasiBackupType("");
+    setMandiriKomputasiBackupLainnya("");
+    setCloudType("");
+    setCloudText("");
+    setSslType("");
+    setSslUnitKerjaText("");
+    setAntivirusType("");
+    setAntivirusText("");
+    setShowAksesPassword(false);
+    setShowAksesConfirmPassword(false);
+    setAksesPasswordTouched(false);
+    setAksesConfirmTouched(false);
+    setHasDraft(false);
+    
+    // Reset form data
+    const baseFormData = {
+      nama_aplikasi: "",
+      domain: "",
+      deskripsi_fungsi: "",
+      user_pengguna: "",
+      data_digunakan: "",
+      luaran_output: "",
+      eselon1_id: "",
+      eselon2_id: "",
+      upt_id: "",
+      cara_akses_id: [],
+      frekuensi_pemakaian: "",
+      status_aplikasi: "",
+      pdn_id: "",
+      pdn_backup: "",
+      environment_id: "",
+      pic_internal: "",
+      pic_eksternal: "",
+      bahasa_pemrograman: "",
+      basis_data: "",
+      kerangka_pengembangan: "",
+      unit_pengembang: "",
+      unit_operasional_teknologi: "",
+      nilai_pengembangan_aplikasi: "",
+      pusat_komputasi_utama: "",
+      pusat_komputasi_backup: "",
+      mandiri_komputasi_backup: "",
+      perangkat_lunak: "",
+      cloud: "",
+      ssl: "",
+      ssl_expired: "",
+      alamat_ip_publik: "",
+      keterangan: "",
+      status_bmn: "",
+      server_aplikasi: "",
+      tipe_lisensi_bahasa: "",
+      api_internal_status: "",
+      waf: "",
+      waf_lainnya: "",
+      va_pt_status: "",
+      va_pt_waktu: "",
+      antivirus: "",
+      akses_aplikasi_username: "",
+      akses_aplikasi_password: "",
+      akses_aplikasi_konfirmasi_password: "",
+      kontak_pic_internal: "",
+      kontak_pic_eksternal: "",
+    };
+    
+    // Add dynamic fields
+    dynamicTables.forEach((table) => {
+      const fieldName = `${table.table_name}_id`;
+      baseFormData[fieldName] = "";
+    });
+    
+    setFormData(baseFormData);
+  };
+
   // Open modal and load master data
   const openModal = async () => {
     await fetchMasterDropdowns();
@@ -407,13 +501,7 @@ function DataAplikasiSection() {
       }
     }
 
-    // If there is a draft in memory (fallback), restore it
-    if (hasDraft && !editMode) {
-      setFieldErrors({});
-      setShowModal(true);
-      return;
-    }
-
+    // Reset formData dan buka modal dengan form kosong
     setEditMode(false);
     setOriginalAppName("");
     setFieldErrors({});
@@ -3556,9 +3644,6 @@ function DataAplikasiSection() {
             zIndex: 60,
             animation: "fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowModal(false);
-          }}
         >
           <div
             style={{
@@ -3687,7 +3772,7 @@ function DataAplikasiSection() {
                 </h2>
               </div>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 style={{
                   background: "#f8fafc",
                   border: "none",
