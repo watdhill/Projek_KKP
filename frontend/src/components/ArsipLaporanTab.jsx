@@ -6,7 +6,7 @@ function ArsipLaporanTab() {
   const [loading, setLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [availableYears, setAvailableYears] = useState([]);
-  
+
   // State untuk create archive baru
   const [newArchiveYear, setNewArchiveYear] = useState(new Date().getFullYear());
 
@@ -14,7 +14,7 @@ function ArsipLaporanTab() {
   const [filterYear, setFilterYear] = useState("all");
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Modal generate snapshot
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [availableFormats, setAvailableFormats] = useState([]);
@@ -88,15 +88,15 @@ function ArsipLaporanTab() {
       setAvailableFormats([]);
       return;
     }
-    
+
     console.log('Fetching formats for year:', year);
-    
+
     try {
       const response = await fetch(`http://localhost:5000/api/laporan/archive/${year}/formats`);
       const data = await response.json();
-      
+
       console.log('Formats API response:', data);
-      
+
       if (data.success) {
         console.log('Setting available formats:', data.data);
         setAvailableFormats(data.data || []);
@@ -115,7 +115,7 @@ function ArsipLaporanTab() {
       alert("Tahun tidak boleh kosong");
       return;
     }
-    
+
     if (!confirm(`Arsipkan format laporan untuk tahun ${year}?`)) return;
 
     setLoading(true);
@@ -149,7 +149,7 @@ function ArsipLaporanTab() {
       alert("Tahun tidak boleh kosong");
       return;
     }
-    
+
     if (!confirm(`Arsipkan data aplikasi untuk tahun ${year}?`)) return;
 
     setLoading(true);
@@ -183,7 +183,7 @@ function ArsipLaporanTab() {
       alert("Tahun tidak boleh kosong");
       return;
     }
-    
+
     const confirmed = confirm(
       `PERINGATAN!\n\nAnda akan menghapus semua arsip untuk tahun ${year}:\n` +
       `- Format laporan yang diarsipkan\n` +
@@ -192,14 +192,14 @@ function ArsipLaporanTab() {
       `Tindakan ini TIDAK DAPAT DIBATALKAN!\n\n` +
       `Apakah Anda yakin ingin melanjutkan?`
     );
-    
+
     if (!confirmed) return;
 
     // Double confirmation
     const doubleConfirmed = confirm(
       `Konfirmasi terakhir!\n\nKetik "DELETE" untuk menghapus arsip tahun ${year}`
     );
-    
+
     if (!doubleConfirmed) return;
 
     setLoading(true);
@@ -213,9 +213,9 @@ function ArsipLaporanTab() {
           },
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         alert(`${data.message}`);
         // Refresh both archives and snapshots
@@ -232,15 +232,15 @@ function ArsipLaporanTab() {
       setLoading(false);
     }
   };
-  
+
   const handleCreateArchiveAll = async () => {
     if (!newArchiveYear) {
       alert("Masukkan tahun terlebih dahulu");
       return;
     }
-    
+
     if (!confirm(`Arsipkan format dan data untuk tahun ${newArchiveYear}?`)) return;
-    
+
     setLoading(true);
     try {
       // Archive format first
@@ -253,13 +253,13 @@ function ArsipLaporanTab() {
         }
       );
       const formatData = await formatResponse.json();
-      
+
       if (!formatData.success) {
         alert(formatData.message || "Gagal mengarsipkan format");
         setLoading(false);
         return;
       }
-      
+
       // Then archive data
       const dataResponse = await fetch(
         `http://localhost:5000/api/laporan/archive/data/${newArchiveYear}`,
@@ -270,7 +270,7 @@ function ArsipLaporanTab() {
         }
       );
       const dataData = await dataResponse.json();
-      
+
       if (dataData.success) {
         alert(`Berhasil mengarsipkan format dan data tahun ${newArchiveYear}!`);
         fetchArchives();
@@ -286,7 +286,7 @@ function ArsipLaporanTab() {
 
   const handleGenerateSnapshot = async () => {
     // Generate snapshot name jika tidak diisi
-    const snapshotName = snapshotForm.name.trim() || 
+    const snapshotName = snapshotForm.name.trim() ||
       `Laporan_${snapshotForm.year}_${new Date().getTime()}`;
 
     if (!snapshotForm.year) {
@@ -479,7 +479,7 @@ function ArsipLaporanTab() {
               }}
             />
           </div>
-          
+
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               onClick={() => handleArchiveFormat(newArchiveYear)}
@@ -505,7 +505,7 @@ function ArsipLaporanTab() {
             >
               Arsipkan Format
             </button>
-            
+
             <button
               onClick={() => handleArchiveData(newArchiveYear)}
               disabled={loading}
@@ -530,7 +530,7 @@ function ArsipLaporanTab() {
             >
               Arsipkan Data
             </button>
-            
+
             <button
               onClick={handleCreateArchiveAll}
               disabled={loading}
@@ -578,9 +578,12 @@ function ArsipLaporanTab() {
           gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
           gap: "16px",
           marginBottom: "24px",
+          maxHeight: "520px",
+          overflowY: "auto",
+          paddingRight: "4px",
         }}
       >
-        {archives.slice(0, 4).map((archive) => (
+        {archives.map((archive) => (
           <div
             key={archive.year}
             style={{
@@ -694,7 +697,7 @@ function ArsipLaporanTab() {
                   </button>
                 )}
               </div>
-              
+
               {/* Delete Button - Only show if archive exists */}
               {(archive.has_format_archive || archive.has_data_archive) && (
                 <button

@@ -13,7 +13,7 @@ const pool = require("../config/database");
  */
 exports.archiveFormat = async (req, res) => {
   const connection = await pool.getConnection();
-  
+
   try {
     const { year } = req.params;
     const notes = req.body?.notes || null;
@@ -156,7 +156,7 @@ exports.archiveFormat = async (req, res) => {
  */
 exports.archiveData = async (req, res) => {
   const connection = await pool.getConnection();
-  
+
   try {
     const { year } = req.params;
     const trigger = req.body?.trigger || "manual";
@@ -185,14 +185,11 @@ exports.archiveData = async (req, res) => {
       });
     }
 
-    // Get all data aplikasi
-    // For current year, archive all
-    // For past years, archive data created in that year
-    const yearCondition =
-      parseInt(year) === new Date().getFullYear()
-        ? "" // Current year: archive all
-        : `WHERE YEAR(created_at) = ${year}`; // Past year: by created date
-
+    // Get all data aplikasi currently in the database.
+    // Archive always snapshots the current state of all data,
+    // regardless of when each record was created. This ensures
+    // archiving for past years (e.g. 2025 from 2026) still works
+    // even if no records were created specifically in that year.
     const [dataAplikasi] = await connection.query(`
       SELECT 
         nama_aplikasi as original_id,
@@ -222,13 +219,21 @@ exports.archiveData = async (req, res) => {
         deskripsi_fungsi as penjelasan_aplikasi,
         keterangan
       FROM data_aplikasi
-      ${yearCondition}
+      ORDER BY nama_aplikasi
     `);
 
+    // If no data exists at all, still return success with 0 records.
+    // An archive with 0 applications is valid — it simply means the
+    // database was empty at the time of archiving.
     if (dataAplikasi.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `Tidak ada data aplikasi untuk tahun ${year}`,
+      await connection.commit();
+      return res.status(201).json({
+        success: true,
+        message: `Archive tahun ${year} dibuat, namun tidak ada data aplikasi saat ini`,
+        data: {
+          year,
+          applications_archived: 0,
+        },
       });
     }
 
@@ -259,8 +264,8 @@ exports.archiveData = async (req, res) => {
           app.cara_akses || null,  // Already JSON or null
           app.pic_internal,
           app.pic_eksternal,
-          app.kontak_pic_internal ? JSON.stringify({phone: app.kontak_pic_internal}) : null,
-          app.kontak_pic_eksternal ? JSON.stringify({phone: app.kontak_pic_eksternal}) : null,
+          app.kontak_pic_internal ? JSON.stringify({ phone: app.kontak_pic_internal }) : null,
+          app.kontak_pic_eksternal ? JSON.stringify({ phone: app.kontak_pic_eksternal }) : null,
           app.penyedia_hosting,
           app.keamanan_aplikasi,
           app.sertifikat_ssl,
@@ -492,7 +497,7 @@ exports.getArchivedDataCount = async (req, res) => {
  */
 exports.deleteArchive = async (req, res) => {
   const connection = await pool.getConnection();
-  
+
   try {
     const { year } = req.params;
 
@@ -547,10 +552,10 @@ exports.deleteArchive = async (req, res) => {
  */
 exports.getAvailableFormats = async (req, res) => {
   const connection = await pool.getConnection();
-  
+
   try {
     const { year } = req.params;
-    
+
     // Validation
     if (!year || isNaN(year)) {
       return res.status(400).json({
